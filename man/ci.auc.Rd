@@ -1,0 +1,208 @@
+\encoding{UTF-8}
+\name{ci.auc}
+\alias{ci.auc}
+\alias{ci.auc.auc}
+\alias{ci.auc.default}
+\alias{ci.auc.formula}
+\alias{ci.auc.roc}
+\alias{ci.auc.smooth.roc}
+
+\title{
+  Compute the confidence interval of the AUC
+}
+
+\description{
+  This function computes the confidence interval (CI) of an area under
+  the curve (AUC). By default, the 95\% CI is computed with 2000
+  stratified bootstrap replicates.
+}
+
+\usage{
+ci.auc(...)
+\S3method{ci.auc}{roc}(roc, conf.level=0.95, boot.n=2000,
+boot.stratified=TRUE, reuse.auc=TRUE,
+progress=getOption("pROCProgress")$name, ...)
+\S3method{ci.auc}{smooth.roc}(smooth.roc, conf.level=0.95, boot.n=2000,
+boot.stratified=TRUE, reuse.auc=TRUE,
+progress=getOption("pROCProgress")$name, ...)
+\S3method{ci.auc}{auc}(auc, ...)
+\S3method{ci.auc}{formula}(formula, data, ...)
+\S3method{ci.auc}{default}(response, predictor, ...)
+}
+		   
+\arguments{
+  \item{roc, smooth.roc}{a \dQuote{roc} object from the
+	\code{\link{roc}} function, or a \dQuote{smooth.roc} object from the
+	\code{\link{smooth.roc}} function.
+  }
+  \item{auc}{an \dQuote{auc} object from the \code{\link{auc}} function.}
+  \item{response, predictor}{arguments for the \code{\link{roc}} function.}
+  \item{formula, data}{a formula (and possibly a data object) of type
+	response~predictor for the \code{\link{roc}} function.
+  }
+  \item{conf.level}{the width of the confidence interval as [0,1], never
+  in percent. Default: 0.95, resulting in a 95\% CI.
+  }
+  \item{boot.n}{the number of bootstrap replicates. Default: 2000.}
+  \item{boot.stratified}{should the bootstrap be stratified (default, same number
+	of cases/controls in each replicate than in the original sample) or
+	not.
+  }
+  \item{reuse.auc}{if \code{TRUE} (default) and the \dQuote{roc} object
+    contains an \dQuote{auc} field, re-use these specifications for the
+    test. If false, use optional \code{\dots} arguments to
+	\code{\link{auc}}. See details.
+  }
+  \item{progress}{the name of progress bar to display. Typically
+    \dQuote{none}, \dQuote{win}, \dQuote{tk} or \dQuote{text} (see the
+    \code{name} argument to \code{\link[plyr:create-progress-bar-4d]{create_progress_bar}} for
+    more information), but a list as returned by \code{\link[plyr:create-progress-bar-4d]{create_progress_bar}}
+    is also accepted. See also the \dQuote{Progress bars} section of
+    \link[=pROC-package]{this package's documentation}.
+  }
+  \item{\dots}{further arguments passed to or from other methods,
+    especially arguments for \code{\link{roc}} and \code{roc.test.roc}
+    when calling \code{roc.test.default} or \code{roc.test.formula}.
+    Arguments for \code{\link{auc}}
+    and \code{\link{txtProgressBar}} (only \code{char} and \code{style})
+    if applicable.
+  }
+}
+
+\details{
+  This function calls \code{\link{auc}} \code{boot.n} times with the parameters defined
+  in \dQuote{roc$auc} to compute a CI. When it is called with two vectors (response,
+  predictor) or a formula (response~predictor) arguments, the \code{\link{roc}}
+  function is called to build the ROC curve first.
+
+  The confidence interval is computed by bootstrap, according to the
+  method described by Carpenter and Bithell (2000). \code{boot.n} bootstrap
+  replicates are drawn. Stratification of bootstrap can be controlled
+  with \code{boot.stratified}. In stratified bootstrap, each replicate
+  contains the same number of cases and controls than the original
+  sample. Stratification is especially useful if one group has only
+  little observations, or if groups are not balanced.
+  Higher numbers of \code{boot.n} will give a more precise estimate of the CI,
+  but take more time to compute. 2000 is recommanded by Carpenter and
+  Bithell.
+
+  For \link[=smooth.roc]{smoothed ROC curves}, smoothing is performed again at each
+  bootstrap replicate with the parameters originally provided.
+  If a density smoothing was performed with user-provided
+  \code{density.cases} or \code{density.controls} the bootstrap cannot
+  be performed and an error is issued.
+}
+
+\section{AUC specification}{
+  The comparison of the CI needs a specification of the AUC. This allows
+  to compute the CI for full or partial AUCs. The specification is defined by:
+  \enumerate{
+    \item the \dQuote{auc} field in the \dQuote{\link{roc}} object if
+    \code{reuse.auc} is set to \code{TRUE} (default). It is naturally
+    inherited from any call to \code{\link{roc}} and fits most cases.
+    \item passing the specification to \code{\link{auc}} with \dots
+    (arguments \code{partial.auc}, \code{partial.auc.correct} and
+    \code{partial.auc.focus}). In this case, you must ensure either that
+    the \code{\link{roc}} object do not contain an \code{auc} field (if
+    you called \code{\link{roc}} with \code{auc=FALSE}), or set
+    \code{reuse.auc=FALSE}.
+  }
+
+  If \code{reuse.auc=FALSE} the \code{\link{auc}} function will always
+  be called with \code{\dots} to determine the specification, even if
+  the \dQuote{\link{roc}} object do contain an \code{auc} field.
+
+  As well if the \dQuote{\link{roc}} object do not contain an \code{auc}
+  field, the \code{\link{auc}} function will always be called with
+  \code{\dots} to determine the specification.
+
+  Warning: if the roc object passed to ci contains an \code{auc}
+  field and \code{reuse.auc=TRUE}, \link{auc} is not called and
+  arguments such as \code{partial.auc} are silently ignored.
+  
+}
+
+\section{Warnings}{
+  If \code{boot.stratified=FALSE} and the sample has a large imbalance between
+  cases and controls, it could happen that one or more of the replicates
+  contains no case or control observation, or that there are not enough
+  points for smoothing, producing a \code{NA} area.
+  The warning \dQuote{NA value(s) produced during bootstrap were ignored.}
+  will be issued and the observation will be ignored. If you have a large
+  imbalance in your sample, it could be safer to keep
+  \code{boot.stratified=TRUE}.
+}
+
+\section{Errors}{
+  If \code{density.cases} and \code{density.controls} were provided
+  for smoothing, the error \dQuote{Cannot compute the statistic on ROC
+  curves smoothed with density.controls and density.cases.} is issued.
+}
+
+\value{
+A numeric vector of length 3 and class \dQuote{ci.auc}, with the lower
+bound, the median and the upper bound of the CI, and the following attributes:
+\item{conf.level}{the width of the CI, in fraction.}
+\item{boot.n}{the number of bootstrap replicates.}
+\item{boot.stratified}{whether or not the bootstrapping was stratified.}
+\item{aucs}{the n AUC that were computed, potentially useful for further
+analysis.}
+\item{auc}{an object of class \dQuote{\link{auc}} stored for reference about the
+  compued AUC details (partial, percent, ...)}
+}
+\references{
+  James Carpenter and John Bithell (2000) ``Bootstrap condence intervals:
+  when, which, what? A practical guide for medical statisticians''.
+  \emph{Statistics in Medicine} \bold{19}, 1141--1164.
+}
+
+\seealso{
+  \code{\link{roc}}, \code{\link{auc}}, \code{\link{ci}}
+}
+
+\examples{
+data(aSAH)
+
+# Syntax (response, predictor):
+ci.auc(aSAH$outcome, aSAH$s100b)
+
+# With a roc object:
+rocobj <- roc(aSAH$outcome, aSAH$s100b)
+# default values
+ci.auc(rocobj)
+ci(rocobj)
+ci(auc(rocobj))
+ci(rocobj$auc)
+
+# Partial AUC and customized bootstrap:
+ci.auc(aSAH$outcome, aSAH$s100b,
+       boot.n=500, conf.level=0.9, stratified=FALSE, partial.auc=c(1, .8),
+       partial.auc.focus="se", partial.auc.correct=TRUE)
+
+# Note that the following will NOT give a CI of the partial AUC:
+ci.auc(rocobj, boot.n=500, conf.level=0.9, stratified=FALSE,
+       partial.auc=c(1, .8), partial.auc.focus="se", partial.auc.correct=TRUE)
+# This is because rocobj$auc is not a partial AUC.
+# You can overcome this problem with reuse.auc:
+ci.auc(rocobj, boot.n=500, conf.level=0.9, stratified=FALSE,
+       partial.auc=c(1, .8), partial.auc.focus="se", partial.auc.correct=TRUE,
+       reuse.auc=TRUE)
+
+# Alternatively, you can get the CI directly from roc():
+rocobj <- roc(aSAH$outcome,
+              aSAH$s100b, ci=TRUE, of="auc", boot.n=100)
+rocobj$ci
+
+# Get a specific resampled AUC:
+attr(rocobj$ci, "aucs")[42]
+
+# On a smoothed ROC, the CI is re-computed automatically
+smooth(rocobj)
+# Or you can compute a new one:
+ci.auc(smooth(rocobj, method="density", reuse.ci=FALSE), boot.n=100)
+}
+
+\keyword{univar}
+\keyword{nonparametric}
+\keyword{utilities}
+\keyword{roc}

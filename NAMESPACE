@@ -1,0 +1,14 @@
+export(roc, roc.formula, roc.default,
+       auc, auc.formula, auc.roc, auc.smooth.roc, auc.default,
+       ci, ci.formula, ci.default, ci.roc, ci.smooth.roc,
+       ci.thresholds, ci.thresholds.formula, ci.thresholds.default, ci.thresholds.roc, ci.thresholds.smooth.roc,
+       ci.sp, ci.sp.formula, ci.sp.default, ci.sp.roc, ci.sp.smooth.roc,
+       ci.se, ci.se.formula, ci.se.default, ci.se.roc, ci.se.smooth.roc,
+       ci.auc, ci.auc.formula, ci.auc.default, ci.auc.roc, ci.auc.smooth.roc, ci.auc.auc,
+       coords, coords.roc, coords.smooth.roc,
+       plot.ci.thresholds, plot.ci.sp, plot.ci.se,
+       plot.roc, plot.smooth.roc, plot.roc.formula, plot.roc.default, plot.roc.roc, plot.roc.smooth.roc,
+       print.roc, print.smooth.roc, print.auc, print.ci.auc, print.ci.thresholds, print.ci.se, print.ci.sp,
+       roc.test, roc.test.auc, roc.test.roc, roc.test.smooth.roc, roc.test.default, roc.test.formula,
+       smooth, smooth.roc, smooth.default, smooth.smooth.roc
+       )
