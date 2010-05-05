@@ -51,6 +51,7 @@ plot.roc.roc <- function(x,
                          col=par("col"),
                          lty=par("lty"),
                          lwd=2,
+                         type="l",
                          # Identity line
                          identity=!add,
                          identity.col="darkgrey",
@@ -70,6 +71,7 @@ plot.roc.roc <- function(x,
                          print.auc.x=ifelse(x$percent, 50, .5), 
                          print.auc.y=ifelse(x$percent, 50, .5),
                          print.auc.adj=c(0,1),
+                         print.auc.col=col,
                          print.auc.cex=par("cex"),
                          # Grid
                          grid=FALSE,
@@ -219,7 +221,7 @@ plot.roc.roc <- function(x,
   # Identity line
   if (identity) suppressWarnings(abline(ifelse(percent, 100, 1), -1, col=identity.col, lwd=identity.lwd, lty=identity.lty, ...))
   # Actually plot the ROC curve
-  suppressWarnings(points(sp, se, type="l", lwd=lwd, col=col, lty=lty, ...))
+  suppressWarnings(lines(sp, se, type=type, lwd=lwd, col=col, lty=lty, ...))
   # Plot the ci bars
   if (ci && class(x$ci) != "ci.auc") {
     if (ci.type=="bars")
@@ -266,11 +268,11 @@ plot.roc.roc <- function(x,
   if (print.auc) {
     if (ci && class(x$ci) == "ci.auc") {
       labels <- sprintf(print.auc.pattern, x$auc, x$ci[1], x$ci[2])
-      suppressWarnings(text(print.auc.x, print.auc.y, labels, adj=print.auc.adj, cex=print.auc.cex, col=col, ...))
+      suppressWarnings(text(print.auc.x, print.auc.y, labels, adj=print.auc.adj, cex=print.auc.cex, col=print.auc.col, ...))
     }
     else
       labels <- sprintf(print.auc.pattern, x$auc)
-    suppressWarnings(text(print.auc.x, print.auc.y, labels, adj=print.auc.adj, cex=print.auc.cex, col=col, ...))
+    suppressWarnings(text(print.auc.x, print.auc.y, labels, adj=print.auc.adj, cex=print.auc.cex, col=print.auc.col, ...))
   }
   
   invisible(x)

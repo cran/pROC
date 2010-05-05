@@ -46,13 +46,13 @@ roc.test.formula <- function (formula, data, ...){
 }
 
 roc.test.default <- function(response, predictor1, predictor2=NULL, na.rm=TRUE, smooth.method=c("binormal", "density", "fitdistr"), ...) {
-  if ((class(predictor1) == "matrix" | class(predictor1) == "data.frame")) {
+  if (is.matrix(predictor1) | is.data.frame(predictor1)) {
     if (!is.null(predictor2))
       stop("Predictor2 must not be specified if predictor1 is a matrix or a data.frame.")
     if (dim(predictor1)[2] == 2 & length(response) == dim(predictor1)[1]) {
       roc1 <- roc(response, predictor1[,1], ...)
       roc2 <- roc(response, predictor1[,2], ...)
-      if (class(predictor1) == "data.frame")
+      if (is.data.frame(predictor1))
         data.names <- paste(names(predictor1), collapse=" and ")
       else
         data.names <- paste(deparse(substitute(predictor1[,1])), "and", deparse(substitute(predictor1[,2])))

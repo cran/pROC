@@ -52,6 +52,7 @@
     \code{\link{ci.sp}} \tab Compute the CI of specificities at given sensitivities \cr
     \code{\link{ci.thresholds}} \tab Compute the CI of specificity and sensitivity of thresholds \cr
     \code{\link{coords}} \tab Coordinates of a ROC curve \cr
+    \code{\link{lines.roc}} \tab Add a ROC line to a ROC plot \cr
     \code{\link{plot.ci}} \tab Plot CIs \cr
     \code{\link{plot.roc}} \tab Plot a ROC curve \cr
     \code{\link[=print.roc]{print}} \tab Print a ROC curve object \cr

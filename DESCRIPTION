@@ -1,8 +1,8 @@
 Package: pROC
 Type: Package
-Title: pROC
-Version: 1.0.1
-Date: 2010-04-28
+Title: display and analyze ROC curves
+Version: 1.1
+Date: 2010-05-05
 Encoding: UTF-8
 Depends: plyr, MASS, utils, stats, graphics, R (>= 2.10)
 Suggests: tcltk
@@ -16,7 +16,8 @@ Description: Tools for visualizing, smoothing and comparing receiver
         U-statistics or bootstrap. Confidence intervals can be computed
         for (p)AUC or ROC curves.
 License: GPL (>= 3)
+URL: http://expasy.org/tools/pROC/
 LazyLoad: yes
-Packaged: 2010-04-28 08:39:08 UTC; ROBINX
+Packaged: 2010-05-05 09:00:20 UTC; ROBINX
 Repository: CRAN
-Date/Publication: 2010-04-28 09:19:47
+Date/Publication: 2010-05-06 05:40:21

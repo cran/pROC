@@ -1,3 +1,10 @@
+1.1 (2010-05-02)
+  * Added 'lines.roc' functions for ROC
+  * Added 'type' argument for both 'lines.roc' and 'plot.roc'
+  * Added 'print.auc.col' argument to 'plot.roc'
+  * Fixed a warning in 'roc.test.default' when the 'class' of predictor1 had several elements
+  * Fixed an encoding failure during the checks on MacOS X
+
 1.0.1 (2010-04-28)
   * Reduced examples execution time. Added low "boot.n" in the slowest examples and "reuse.auc" and "reuse.ci" arguments in smooth.roc.roc.
 

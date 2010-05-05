@@ -44,7 +44,7 @@ with(aSAH, table(gender, outcome))
 # Age
 with(aSAH, by(age, outcome, mean))
 with(aSAH, by(age, outcome,
-     function(x) sprintf("mean: \%.1f (±\%.1f), median: \%.1f (\%i-\%i)",
+     function(x) sprintf("mean: \%.1f (+/- \%.1f), median: \%.1f (\%i-\%i)",
                          mean(x), sd(x), median(x), min(x), max(x))))
 
 # WFNS score

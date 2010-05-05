@@ -32,6 +32,7 @@ mgp=c(2.5, 1, 0),
 col=par("col"),
 lty=par("lty"),
 lwd=2,
+type="l",
 # Identity line
 identity=!add,
 identity.col="darkgrey",
@@ -51,6 +52,7 @@ print.auc.pattern=NULL,
 print.auc.x=ifelse(x$percent, 50, .5),
 print.auc.y=ifelse(x$percent, 50, .5),
 print.auc.adj=c(0,1),
+print.auc.col=col,
 print.auc.cex=par("cex"),
 # Grid
 grid=FALSE,
@@ -98,6 +100,7 @@ ci.col=ifelse(ci.type=="bars", par("fg"), "gainsboro"),
   \item{col,lty, lwd}{color, line type and line width for the ROC
     curve. See \link{par} for more details.
   }
+  \item{type}{type of plotting as in \code{\link{plot}}.}
   \item{identity}{logical: whether or not the identity line (no discrimination
     line) must be displayed. Default: only on new plots.
   }
@@ -140,9 +143,9 @@ ci.col=ifelse(ci.type=="bars", par("fg"), "gainsboro"),
   \item{print.auc.x, print.auc.y}{x and y position for the printing of
     the AUC.
   }
-  \item{print.auc.adj, print.auc.cex}{the text adjustment and character
-    expansion factor for the printing of the AUC. See \link{par} for
-    more details.
+  \item{print.auc.adj, print.auc.cex, print.auc.col}{the text
+    adjustment, character expansion factor and color for the printing of
+    the AUC. See \link{par} for more details.
   }
   \item{grid}{boolean or numeric vector of length 1 or 2. Should a
     background grid be added to the plot? Numeric: show a grid with the
