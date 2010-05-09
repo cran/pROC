@@ -73,7 +73,7 @@ This function returns the confidence interval object invisibly.
 }
 \examples{
 data(aSAH)
-
+\dontrun{
 # Start a ROC plot
 rocobj <- plot.roc(aSAH$outcome, aSAH$s100b)
 plot(rocobj)
@@ -97,7 +97,7 @@ plot(ci.sp.obj, type="shape", col="blue")
 # Direct syntax (response, predictor):
 plot.roc(aSAH$outcome, aSAH$s100b,
          ci=TRUE, of="thresholds")
-
+}
 }
 
 \keyword{univar}

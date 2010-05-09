@@ -1,4 +1,9 @@
-1.1 (2010-05-02)
+1.2 (2010-05-09)
+  * Added DeLong for CI of AUC
+  * Return value of ci.auc does not contain an 'aucs' item anymore.
+  * Put most examples with bootstrap within \dontrun{} blocks for faster (but less useful) checks execution
+
+1.1 (2010-05-05)
   * Added 'lines.roc' functions for ROC
   * Added 'type' argument for both 'lines.roc' and 'plot.roc'
   * Added 'print.auc.col' argument to 'plot.roc'

@@ -304,8 +304,10 @@ s <- smooth(roc.unif, method="density", density=unif.density)
 plot(roc.unif)
 plot(s, add=TRUE, col="grey")
 
+\dontrun{
 # you can bootstrap a ROC curve smoothed with a density function:
 ci(s, boot.n=100)
+}
 }
 
 \keyword{univar}

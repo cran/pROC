@@ -85,15 +85,16 @@ ci(rocobj, of="auc")
 ci.auc(rocobj)
 
 # Of thresholds, sp, se...
+\dontrun{
 ci(rocobj, of="thresholds")
 ci(rocobj, of="thresholds", thresholds=0.51)
 ci(rocobj, of="thresholds", thresholds="all")
 ci(rocobj, of="sp", sensitivities=c(.95, .9, .85))
 ci(rocobj, of="se")
+}
 
 # Alternatively, you can get the CI directly from roc():
-rocobj <- roc(aSAH$outcome,
-              aSAH$s100b, ci=TRUE, of="auc")
+rocobj <- roc(aSAH$outcome, aSAH$s100b, ci=TRUE, of="auc")
 rocobj$ci
 
 }

@@ -132,6 +132,7 @@ progress=getOption("pROCProgress")$name, ...)
 \examples{
 data(aSAH)
 
+\dontrun{
 # Syntax (response, predictor):
 ci.thresholds(aSAH$outcome, aSAH$s100b)
 
@@ -143,6 +144,7 @@ ci.thresholds(rocobj)
 ci.thresholds(aSAH$outcome, aSAH$s100b,
               boot.n=500, conf.level=0.9, stratified=FALSE,
               thresholds=c(0.5, 1, 2))
+}
 
 # Alternatively, you can get the CI directly from roc():
 rocobj <- roc(aSAH$outcome,

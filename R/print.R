@@ -92,13 +92,16 @@ print.ci.auc <- function(x, digits=max(3, getOption("digits") - 3), ...) {
   signif.ci <- signif(x, digits=digits)
   cat(attr(x, "conf.level")*100, "% CI: ", sep="")
   cat(signif.ci[1], ifelse(attr(attr(x, "auc"), "percent"), "%", ""), "-", signif.ci[3], ifelse(attr(attr(x, "auc"), "percent"), "%", ""), sep="")
-  cat(" (", attr(x, "boot.n"), " ", ifelse(attr(x, "boot.stratified"), "stratified", "non-stratified"), " replicates)\n", sep="")
+  if (attr(x, "method") == "delong")
+    cat(" (DeLong)\n", sep="")
+  else
+    cat(" (", attr(x, "boot.n"), " ", ifelse(attr(x, "boot.stratified"), "stratified", "non-stratified"), " bootstrap replicates)\n", sep="")
   invisible(x)
 }
 
 print.ci.thresholds <- function(x, digits=max(3, getOption("digits") - 3), ...) {
   cat(attr(x, "conf.level")*100, "% CI", sep="")
-  cat(" (", attr(x, "boot.n"), " ", ifelse(attr(x, "boot.stratified"), "stratified", "non-stratified"), " replicates):\n", sep="")
+  cat(" (", attr(x, "boot.n"), " ", ifelse(attr(x, "boot.stratified"), "stratified", "non-stratified"), " bootstrap replicates):\n", sep="")
   signif.sp <- signif(x$sp, digits=digits)
   signif.se <- signif(x$se, digits=digits)
   print(data.frame(thresholds=attr(x, "thresholds"), sp.low=signif.sp[,1], sp.median=signif.sp[,2], sp.high=signif.sp[,3], se.low=signif.se[,1], se.median=signif.se[,2], se.high=signif.se[,3]), row.names=FALSE)
@@ -107,7 +110,7 @@ print.ci.thresholds <- function(x, digits=max(3, getOption("digits") - 3), ...) 
 
 print.ci.sp <- function(x, digits=max(3, getOption("digits") - 3), ...) {
   cat(attr(x, "conf.level")*100, "% CI", sep="")
-  cat(" (", attr(x, "boot.n"), " ", ifelse(attr(x, "boot.stratified"), "stratified", "non-stratified"), " replicates):\n", sep="")
+  cat(" (", attr(x, "boot.n"), " ", ifelse(attr(x, "boot.stratified"), "stratified", "non-stratified"), " bootstrap replicates):\n", sep="")
   signif.sp <- signif(x, digits=digits)
   print(data.frame(se=attr(x, "sensitivities"), sp.low=signif.sp[,1], sp.median=signif.sp[,2], sp.high=signif.sp[,3]), row.names=FALSE)
   invisible(x)
@@ -115,7 +118,7 @@ print.ci.sp <- function(x, digits=max(3, getOption("digits") - 3), ...) {
 
 print.ci.se <- function(x, digits=max(3, getOption("digits") - 3), ...) {
   cat(attr(x, "conf.level")*100, "% CI", sep="")
-  cat(" (", attr(x, "boot.n"), " ", ifelse(attr(x, "boot.stratified"), "stratified", "non-stratified"), " replicates):\n", sep="")
+  cat(" (", attr(x, "boot.n"), " ", ifelse(attr(x, "boot.stratified"), "stratified", "non-stratified"), " bootstrap replicates):\n", sep="")
   signif.se <- signif(x, digits=digits)
   print(data.frame(sp=attr(x, "specificities"), se.low=signif.se[,1], se.median=signif.se[,2], se.high=signif.se[,3]), row.names=FALSE)
   invisible(x)

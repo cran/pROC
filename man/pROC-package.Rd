@@ -153,18 +153,22 @@ roc2 <- roc(aSAH$outcome, aSAH$wfns,
 ## Confidence intervals ##
 
 # CI of the AUC
-ci(roc1)
+ci(roc2)
 
+\dontrun{
 # CI of the curve
 sens.ci <- ci.se(roc1, specificities=seq(0, 100, 5))
 plot(sens.ci, type="shape", col="lightblue")
 plot(sens.ci, type="bars")
+}
 
 # need to re-add roc2 over the shape
 plot(roc2, add=TRUE)
 
+\dontrun{
 # CI of thresholds
 plot(ci.thresholds(roc2))
+}
 
 
 ## Comparisons ##
@@ -172,6 +176,7 @@ plot(ci.thresholds(roc2))
 # Test on the whole AUC
 roc.test(roc1, roc2, reuse.auc=FALSE)
 
+\dontrun{
 # Test on a portion of the whole AUC
 roc.test(roc1, roc2, reuse.auc=FALSE, partial.auc=c(100, 90),
          partial.auc.focus="se", partial.auc.correct=TRUE)
@@ -179,7 +184,7 @@ roc.test(roc1, roc2, reuse.auc=FALSE, partial.auc=c(100, 90),
 # With modified bootstrap parameters
 roc.test(roc1, roc2, reuse.auc=FALSE, partial.auc=c(100, 90),
          partial.auc.correct=TRUE, boot.n=1000, boot.stratified=FALSE)
-
+}
 }
 
 

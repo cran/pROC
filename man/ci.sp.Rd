@@ -142,6 +142,7 @@ boot.stratified=TRUE, progress=getOption("pROCProgress")$name, ...)
 \examples{
 data(aSAH)
 
+\dontrun{
 # Syntax (response, predictor):
 ci.sp(aSAH$outcome, aSAH$s100b)
 
@@ -151,6 +152,7 @@ ci.sp(rocobj)
 
 # Customized bootstrap and specific specificities:
 ci.sp(rocobj, c(.95, .9, .85), boot.n=500, conf.level=0.9, stratified=FALSE)
+}
 
 # Alternatively, you can get the CI directly from roc():
 rocobj <- roc(aSAH$outcome,
@@ -161,10 +163,12 @@ rocobj$ci
 plot(rocobj)
 plot(rocobj$ci)
 
+\dontrun{
 # On a smoothed ROC, the CI is re-computed automatically
 smooth(rocobj)
 # Or you can compute a new one:
 ci.sp(smooth(rocobj, method="density", reuse.ci=FALSE), boot.n=100)
+}
 }
 
 \keyword{univar}

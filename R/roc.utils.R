@@ -109,3 +109,12 @@ sort.smooth.roc <- function(roc) {
   }
   return(roc)
 }
+
+# Mann-Whitney Kernel used by delong.test and ci.auc.delong
+MW.kernel <- function(x, y) {
+  # x, y: numeric vectors of length 1
+  # returns: numeric vectors of length 1
+  if (y < x) return(1)
+  if (y == x) return(.5)
+  if (y > x) return(0)
+}

@@ -361,15 +361,6 @@ delong.test <- function(roc1, roc2) {
   return(zscore)
 }
 
-# Mann-Whitney Kernel used by delong.test
-MW.kernel <- function(x, y) {
-  # x, y: numeric vectors of length 1
-  # returns: numeric vectors of length 1
-  if (y < x) return(1)
-  if (y == x) return(.5)
-  if (y > x) return(0)
-}
-
 # Bootstrap test, used by roc.test.roc
 bootstrap.test <- function(roc1, roc2, boot.n, boot.stratified, smoothing.args, progress) {
 
