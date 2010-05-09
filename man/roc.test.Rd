@@ -25,7 +25,7 @@ boot.stratified=TRUE, progress=getOption("pROCProgress")$name, ...)
 \S3method{roc.test}{auc}(roc1, roc2, ...)
 \S3method{roc.test}{smooth.roc}(roc1, roc2, ...)
 \S3method{roc.test}{formula}(formula, data, ...)
-\S3method{roc.test}{default}(response, predictor1, predictor2=NULL, na.rm=TRUE, smooth.method=c("binormal", "density", "fitdistr"), ...)
+\S3method{roc.test}{default}(response, predictor1, predictor2=NULL, na.rm=TRUE, method=NULL, ...)
 }
 
 \arguments{
@@ -65,12 +65,6 @@ boot.stratified=TRUE, progress=getOption("pROCProgress")$name, ...)
     should the bootstrap be stratified (same number 
     of cases/controls in each replicate than in the original sample) or
     not. Default: \var{TRUE}.
-  }
-  \item{smooth.method}{in \code{roc.test.formula} and
-	\code{roc.test.default}, the \code{method} argument to
-	\code{\link{smooth.roc}} (if \code{smooth=TRUE}) must be passed as
-	\code{smooth.method} to avoid possible confusions with the
-	\code{method} argument to \code{roc.test.roc}.
   }
   \item{progress}{the name of progress bar to display. Typically
     \dQuote{none}, \dQuote{win}, \dQuote{tk} or \dQuote{text} (see the

@@ -65,10 +65,16 @@ grid.col="#DDDDDD",
 auc.polygon=FALSE,
 auc.polygon.col="gainsboro",
 auc.polygon.lty=par("lty"),
+auc.polygon.density=NULL,
+auc.polygon.angle=45,
+auc.polygon.border=NULL,
 # Polygon for the maximal AUC possible                           
 max.auc.polygon=FALSE,
 max.auc.polygon.col="#EEEEEE", 
 max.auc.polygon.lty=par("lty"),
+max.auc.polygon.density=NULL,
+max.auc.polygon.angle=45,
+max.auc.polygon.border=NULL,
 # Confidence interval
 ci=!is.null(x$ci),
 ci.type=c("bars", "shape", "no"),
@@ -168,14 +174,18 @@ ci.col=ifelse(ci.type=="bars", par("fg"), "gainsboro"),
   \item{auc.polygon}{boolean. Whether or not to display the area as a
     polygon.
   }
-  \item{auc.polygon.col, auc.polygon.lty}{color (col) and line type
-    (lty) for the AUC polygon. See \link{par} for more details.
+  \item{auc.polygon.col, auc.polygon.lty, auc.polygon.density,
+    auc.polygon.angle, auc.polygon.border}{color (col), line type
+    (lty), density, angle and border for the AUC polygon. See
+    \code{\link{polygon}} and \code{\link{par}} for more details.
   }
   \item{max.auc.polygon}{boolean. Whether or not to display the maximal
     possible area as a polygon.
   }
-  \item{max.auc.polygon.col, max.auc.polygon.lty}{color (col) and line type
-    (lty) for the maximum AUC polygon. See \link{par} for more details.
+  \item{max.auc.polygon.col, max.auc.polygon.lty, max.auc.polygon.density,
+    max.auc.polygon.angle, max.auc.polygon.border}{color (col), line type
+    (lty), density, angle and border for the maximum AUC polygon. See
+    \code{\link{polygon}} and \code{\link{par}} for more details.
   }
   \item{ci}{boolean. Should we plot the confidence intervals?}
   \item{ci.type, ci.col}{\code{type} and \code{col} arguments for

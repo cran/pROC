@@ -245,7 +245,7 @@ stratified.ci.smooth.auc <- function(roc, smooth.roc.call, auc.call) {
 
   # call smooth.roc and auc.smooth.roc
   smooth.roc.call$roc <- roc
-  auc.call$smooth.roc <- try(eval(smooth.roc.call))
+  auc.call$smooth.roc <- try(eval(smooth.roc.call), silent=TRUE)
   if (class(auc.call$smooth.roc) == "try-error")
     return(NA)
   return(eval(auc.call))
@@ -274,7 +274,7 @@ nonstratified.ci.smooth.auc <- function(roc, smooth.roc.call, auc.call) {
 
   # call smooth.roc and auc.smooth.roc
   smooth.roc.call$roc <- roc
-  auc.call$smooth.roc <- try(eval(smooth.roc.call))
+  auc.call$smooth.roc <- try(eval(smooth.roc.call), silent=TRUE)
   if (class(auc.call$smooth.roc) == "try-error")
     return(NA)
   return(eval(auc.call))

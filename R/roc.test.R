@@ -45,7 +45,7 @@ roc.test.formula <- function (formula, data, ...){
   return(testres)
 }
 
-roc.test.default <- function(response, predictor1, predictor2=NULL, na.rm=TRUE, smooth.method=c("binormal", "density", "fitdistr"), ...) {
+roc.test.default <- function(response, predictor1, predictor2=NULL, na.rm=TRUE, method=NULL, ...) {
   if (is.matrix(predictor1) | is.data.frame(predictor1)) {
     if (!is.null(predictor2))
       stop("Predictor2 must not be specified if predictor1 is a matrix or a data.frame.")
@@ -71,12 +71,12 @@ roc.test.default <- function(response, predictor1, predictor2=NULL, na.rm=TRUE, 
       predictor1 <- predictor1[!nas]
       predictor2 <- predictor2[!nas]
     }
-    roc1 <- roc(response, predictor1, method=smooth.method, ...)
-    roc2 <- roc(response, predictor2, method=smooth.method, ...)
+    roc1 <- roc(response, predictor1, ...)
+    roc2 <- roc(response, predictor2, ...)
     call <- match.call()
     data.names <- paste(deparse(call$predictor1), "and", deparse(call$predictor2))
   }
-  test <- roc.test.roc(roc1, roc2, ...)
+  test <- roc.test.roc(roc1, roc2, method=method, ...)
   test$data.names <- data.names
   return(test)
 }
@@ -364,6 +364,12 @@ delong.test <- function(roc1, roc2) {
 # Bootstrap test, used by roc.test.roc
 bootstrap.test <- function(roc1, roc2, boot.n, boot.stratified, smoothing.args, progress) {
 
+  # rename method into smooth.method for roc
+  smoothing.args$roc1$smooth.method <- smoothing.args$roc1$method
+  smoothing.args$roc1$method <- NULL
+  smoothing.args$roc2$smooth.method <- smoothing.args$roc2$method
+  smoothing.args$roc2$method <- NULL
+
   # Prepare arguments for later calls to roc
   auc1skeleton <- attributes(roc1$auc)
   auc1skeleton$roc <- NULL
@@ -411,10 +417,10 @@ stratified.bootstrap.test <- function(roc1, roc2, auc1skeleton, auc2skeleton) {
   auc1skeleton$predictor <- c(roc1$controls[idx.controls], roc1$cases[idx.cases])
   auc2skeleton$predictor <- c(roc2$controls[idx.controls], roc2$cases[idx.cases])
   # Resampled ROC might not be smoothable: catch errors
-  auc1 <- try(do.call("roc.default", auc1skeleton)$auc)
+  auc1 <- try(do.call("roc.default", auc1skeleton)$auc, silent=TRUE)
   if (class(auc1) == "try-error")
     auc1 <- NA
-  auc2 <- try(do.call("roc.default", auc2skeleton)$auc)
+  auc2 <- try(do.call("roc.default", auc2skeleton)$auc, silent=TRUE)
   if (class(auc2) == "try-error")
     auc2 <- NA
   return(c(auc1, auc2))
@@ -430,10 +436,10 @@ nonstratified.bootstrap.test <- function(roc1, roc2, auc1skeleton, auc2skeleton)
   auc2skeleton$response <- roc2$response[idx.all]
   auc2skeleton$predictor <- roc2$predictor[idx.all]
   # Resampled ROC might not be smoothable: catch errors
-  auc1 <- try(do.call("roc.default", auc1skeleton)$auc)
+  auc1 <- try(do.call("roc.default", auc1skeleton)$auc, silent=TRUE)
   if (class(auc1) == "try-error")
     auc1 <- NA
-  auc2 <- try(do.call("roc.default", auc2skeleton)$auc)
+  auc2 <- try(do.call("roc.default", auc2skeleton)$auc, silent=TRUE)
   if (class(auc2) == "try-error")
     auc2 <- NA
   return(c(auc1, auc2))

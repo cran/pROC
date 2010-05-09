@@ -164,7 +164,7 @@ stratified.ci.smooth.se <- function(roc, sp, smooth.roc.call) {
 
   # call smooth.roc and auc.smooth.roc
   smooth.roc.call$roc <- roc
-  smooth.roc <- try(eval(smooth.roc.call))
+  smooth.roc <- try(eval(smooth.roc.call), silent=TRUE)
   if (class(smooth.roc) == "try-error")
     return(NA)
   return(sapply(sp, function(x) coords.smooth.roc(smooth.roc, x, input="specificity", ret="sensitivity")))
@@ -192,7 +192,7 @@ nonstratified.ci.smooth.se <- function(roc, sp, smooth.roc.call) {
 
   # call smooth.roc and auc.smooth.roc
   smooth.roc.call$roc <- roc
-  smooth.roc <- try(eval(smooth.roc.call))
+  smooth.roc <- try(eval(smooth.roc.call), silent=TRUE)
   if (class(smooth.roc) == "try-error")
     return(NA)
   return(sapply(sp, function(x) coords.smooth.roc(smooth.roc, x, input="specificity", ret="sensitivity")))

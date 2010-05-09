@@ -82,9 +82,10 @@ reuse.auc=TRUE, reuse.ci=TRUE, ...)
   This simple approach was found to work well for most ROC curves, but
   it may produce hooked smooths in some situations (see in Hanley (1988)). 
 
-  If \code{method="density"}, the \code{\link{density}}
-  function is employed to generate a smooth
-  density of the control and case observations, unless
+  With \code{method="density"}, the \code{\link{density}}
+  function is employed to generate a smooth kernel
+  density of the control and case observations as described by Zhou
+  \emph{et al.} (1997), unless
   \code{density.controls} or \code{density.cases} are provided
   directly. \code{bw} can be given to
   specify a bandwidth to use with \code{\link{density}}. It can be a
@@ -209,6 +210,11 @@ reuse.auc=TRUE, reuse.ci=TRUE, ...)
 \references{
   James E. Hanley (1988) ``The robustness of the ``binormal'' assumptions
   used in fitting ROC curves''. \emph{Medical Decision Making} \bold{8}, 197--203.
+  
+  Kelly H. Zou, W. J. Hall and David E. Shapiro (1997) ``Smooth
+  non-parametric receiver operating characteristic (ROC) curves for
+  continuous diagnostic tests''. \emph{Statistics in Medicine}
+  \bold{18}, 2143--2156. DOI: 10.1002/(SICI)1097-0258(19971015)16:19<2143::AID-SIM655>3.0.CO;2-3.
 }
 
 \seealso{

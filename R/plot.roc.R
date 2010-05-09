@@ -94,10 +94,16 @@ plot.roc.roc <- function(x,
                          auc.polygon=FALSE,
                          auc.polygon.col="gainsboro", # Other arguments can be passed to polygon() using "..." (for these two we cannot)
                          auc.polygon.lty=par("lty"),
+                         auc.polygon.density=NULL,
+                         auc.polygon.angle=45,
+                         auc.polygon.border=NULL,
                          # Should we show the maximum possible area as another polygon?
                          max.auc.polygon=FALSE,
                          max.auc.polygon.col="#EEEEEE", # Other arguments can be passed to polygon() using "..." (for these two we cannot)
                          max.auc.polygon.lty=par("lty"),
+                         max.auc.polygon.density=NULL,
+                         max.auc.polygon.angle=45,
+                         max.auc.polygon.border=NULL,
                          # Confidence interval
                          ci=!is.null(x$ci),
                          ci.type=c("bars", "shape", "no"),
@@ -159,7 +165,7 @@ plot.roc.roc <- function(x,
         map.x <- c(partial.auc[2], partial.auc[2], partial.auc[1], partial.auc[1])
       }
     }
-    suppressWarnings(polygon(map.x, map.y, col=max.auc.polygon.col, lty=max.auc.polygon.lty, ...))
+    suppressWarnings(polygon(map.x, map.y, col=max.auc.polygon.col, lty=max.auc.polygon.lty, border=max.auc.polygon.border, density=max.auc.polygon.density, angle=max.auc.polygon.angle, ...))
   }
   # Plot the ci shape
   if (ci && class(x$ci) != "ci.auc") {
@@ -170,7 +176,7 @@ plot.roc.roc <- function(x,
   # Plot the polygon displaying the actual area
   if (auc.polygon) {
     if (identical(partial.auc, FALSE)) {
-      suppressWarnings(polygon(c(sp, 0), c(se, 0), col=auc.polygon.col, lty=auc.polygon.lty, ...))
+      suppressWarnings(polygon(c(sp, 0), c(se, 0), col=auc.polygon.col, lty=auc.polygon.lty, border=auc.polygon.border, density=auc.polygon.density, angle=auc.polygon.angle, ...))
     }
     else {
       if (partial.auc.focus == "sensitivity") {
@@ -211,10 +217,10 @@ plot.roc.roc <- function(x,
       y.int <- c(0, y.int, 0)
       if (partial.auc.focus == "sensitivity") {
         # for SE, invert x and y again
-        suppressWarnings(polygon(y.int, x.int, col=auc.polygon.col, lty=auc.polygon.lty, ...))
+        suppressWarnings(polygon(y.int, x.int, col=auc.polygon.col, lty=auc.polygon.lty, border=auc.polygon.border, density=auc.polygon.density, angle=auc.polygon.angle, ...))
       }
       else {
-        suppressWarnings(polygon(x.int, y.int, col=auc.polygon.col, lty=auc.polygon.lty, ...))
+        suppressWarnings(polygon(x.int, y.int, col=auc.polygon.col, lty=auc.polygon.lty, border=auc.polygon.border, density=auc.polygon.density, angle=auc.polygon.angle, ...))
       }
     }
   }

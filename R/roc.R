@@ -54,16 +54,19 @@ roc.default <- function(response, predictor,
                         na.rm=TRUE,
                         direction=c("auto", "<", ">"), # direction of the comparison. Auto: automatically define in which group the median is higher and take the good direction to have an AUC >= 0.5
 
-                        # optional smoothing
-                        smooth=FALSE,
-                        
                         # what computation must be done
+                        smooth=FALSE, # call smooth.roc on the current object
                         auc=TRUE, # call auc.roc on the current object
                         ci=FALSE, # call ci.roc on the current object
                         plot=FALSE, # call plot.roc on the current object
 
-                        # further arguments passed to plot, auc, ci, smooth.
+                        # disambiguate method for ci and smooth
+                        smooth.method="binormal",
+                        ci.method=NULL,
+                        # capture density for smooth.roc here (do not pass to graphical functions)
                         density=NULL,
+                        
+                        # further arguments passed to plot, auc, ci, smooth.
                         ... 
                        
                         ) {
@@ -202,7 +205,7 @@ roc.default <- function(response, predictor,
       density.controls <- density
     if (missing(density.cases))
       density.cases <- density
-    roc <- smooth.roc(roc, density=density, density.controls=density.controls, density.cases=density.cases, ...)
+    roc <- smooth.roc(roc, density=density, density.controls=density.controls, density.cases=density.cases, method=smooth.method, ...)
     roc$call <- match.call()
   }
 
@@ -211,7 +214,7 @@ roc.default <- function(response, predictor,
     roc$auc <- auc(roc, ...)
   # compute CI
   if (ci)
-    roc$ci <- ci(roc, ...)
+    roc$ci <- ci(roc, method=ci.method, ...)
   # plot
   if (plot)
     plot.roc(roc, ...)
