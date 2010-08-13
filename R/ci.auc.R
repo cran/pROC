@@ -216,7 +216,7 @@ nonstratified.ci.auc <- function(roc) {
   splitted <- split(predictor, response)
   controls <- splitted[[as.character(roc$levels[1])]]
   cases <- splitted[[as.character(roc$levels[2])]]
-  thresholds <- roc.utils.thresholds(predictor)
+  thresholds <- roc.utils.thresholds(c(controls, cases))
 
   perfs <- sapply(thresholds, roc.utils.perfs, controls=controls, cases=cases, direction=roc$direction)
   roc$sensitivities <- perfs[2,]
@@ -259,7 +259,7 @@ nonstratified.ci.smooth.auc <- function(roc, smooth.roc.call, auc.call) {
   splitted <- split(predictor, response)
   controls <- splitted[[as.character(roc$levels[1])]]
   cases <- splitted[[as.character(roc$levels[2])]]
-  thresholds <- roc.utils.thresholds(predictor)
+  thresholds <- roc.utils.thresholds(c(controls, cases))
 
   perfs <- sapply(thresholds, roc.utils.perfs, controls=controls, cases=cases, direction=roc$direction)
 
@@ -305,5 +305,15 @@ ci.auc.delong <- function(roc, conf.level) {
   if (roc$direction == ">") {
     ci <- 1 - ci
   }
+
+  # According to Pepe (p. 107), we should probably be doing something like
+  # log(roc$auc / (1 - roc$auc)) + pnorm( 1-conf.level/2) * (S / (roc$auc * (1 - roc$auc)))
+  # log(roc$auc / (1 - roc$auc)) - pnorm( 1-conf.level/2) * (S / (roc$auc * (1 - roc$auc)))
+  # for logit AUC, so that for AUC:
+  # exp(log(roc$auc / (1 - roc$auc)) + pnorm( 1-conf.level/2) * (S / (roc$auc * (1 - roc$auc)))) * (1 - roc$auc)
+  # exp(log(roc$auc / (1 - roc$auc)) - pnorm( 1-conf.level/2) * (S / (roc$auc * (1 - roc$auc)))) * (1 - roc$auc)
+  # However the bounds are very very much smaller (about 10 times) than bootstrap, which seems unrealistic
+  # Stay with normal conf interval for now.
+
   return(ci)
 }

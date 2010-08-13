@@ -34,7 +34,7 @@ smooth.smooth.roc <- function(smooth.roc, ...) {
 smooth.roc <- function(roc, method = c("binormal", "density", "fitdistr"), n = 512, bw = "nrd0",
                        density = NULL, density.controls = density, density.cases = density,
                        start = NULL, start.controls = start, start.cases = start,
-                       reuse.auc = TRUE, reuse.ci = TRUE,
+                       reuse.auc = TRUE, reuse.ci = FALSE,
                        ...) {
   method <- match.arg(method)
 
@@ -173,6 +173,9 @@ smooth.roc.binormal <- function(roc, n) {
 }
 
 smooth.roc.fitdistr <- function(roc, n, densfun.controls, densfun.cases, start.controls, start.cases, ...) {
+  if (!require(MASS))
+    stop("Package MASS not available, required with method='fitdistr'")
+
   densfuns.list <- list(beta = "dbeta", cauchy = "dcauchy", "chi-squared" = "dchisq", exponential = "dexp", f = "df",
                         gamma = "dgamma", geometric = "dgeom", "log-normal" = "dlnorm", lognormal = "dlnorm",
                         logistic = "dlogis", "negative binomial" = "dnbinom", normal = "dnorm", poisson = "dpois",
@@ -197,7 +200,7 @@ smooth.roc.fitdistr <- function(roc, n, densfun.controls, densfun.cases, start.c
   if (mode(densfun.cases) != "function")
     fit.cases$densfun <- densfun.cases
 
-  x <- seq(min(roc$predictor), max(roc$predictor), length.out=512)
+  x <- seq(min(c(roc$controls, roc$cases)), max(c(roc$controls, roc$cases)), length.out=512)
 
   # get the actual function name for do.call
   if (is.character(densfun.controls))

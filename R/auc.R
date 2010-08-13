@@ -40,8 +40,9 @@ auc.roc <- function(roc,
                     partial.auc.correct=FALSE,
                     ... # unused required to allow roc passing arguments to plot or ci.
                     ) {
-
-  partial.auc.focus <- match.arg(partial.auc.focus)
+  if (!identical(partial.auc, FALSE)) {
+    partial.auc.focus <- match.arg(partial.auc.focus)
+  }
   
   # Validate partial.auc
   if (! identical(partial.auc, FALSE) & !(is.numeric(partial.auc) && length(partial.auc)==2))

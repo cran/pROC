@@ -18,7 +18,7 @@ smooth(...)
 method=c("binormal", "density", "fitdistr"), n=512, bw = "nrd0",
 density=NULL, density.controls=density, density.cases=density,
 start=NULL, start.controls=start, start.cases=start, 
-reuse.auc=TRUE, reuse.ci=TRUE, ...)
+reuse.auc=TRUE, reuse.ci=FALSE, ...)
 \S3method{smooth}{smooth.roc}(smooth.roc, ...)
 }
 
@@ -60,12 +60,14 @@ reuse.auc=TRUE, reuse.ci=TRUE, ...)
     and \code{start.cases} allows to specify different distributions for
     controls and cases.
   }
-  \item{reuse.auc, reuse.ci}{if \code{TRUE} (default) and the \dQuote{roc} objects
-    contain \dQuote{auc} or \dQuote{ci} fields, re-use these specifications for the
-    test. If \code{FALSE}, the object returned will not contain
+  \item{reuse.auc, reuse.ci}{if \code{TRUE} (default for reuse.auc) and the \dQuote{roc} objects
+    contain \dQuote{auc} or \dQuote{ci} fields, re-use these
+    specifications to regenerate \code{\link{auc}} or \code{\link{ci}}
+    on the smoothed ROC curve with the original parameters. If
+    \code{FALSE}, the object returned will not contain
     \dQuote{auc} or \dQuote{ci} fields. It is currently not possible to
-    redefine the options directly: you need to call \code{\link{auc}} or
-    \code{\link{ci}} later.
+    redefine \code{\link{auc}} and \code{\link{ci}} options directly: you need to call \code{\link{auc}} or
+    \code{\link{ci}} later for that.
   }
   \item{\dots}{further arguments passed to or from other methods, and
     especially to \code{\link{density}} (only \code{cut}, \code{adjust},

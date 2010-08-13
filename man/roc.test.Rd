@@ -19,13 +19,15 @@
 }
 \usage{
 roc.test(...)
-\S3method{roc.test}{roc}(roc1, roc2, method=c("delong", "bootstrap"), alternative =
-c("two.sided", "less", "greater"), reuse.auc=TRUE, boot.n=2000,
-boot.stratified=TRUE, progress=getOption("pROCProgress")$name, ...)
+\S3method{roc.test}{roc}(roc1, roc2, method=c("delong", "bootstrap",
+"venkatraman"), alternative = c("two.sided", "less", "greater"),
+reuse.auc=TRUE, boot.n=2000, boot.stratified=TRUE, ties.method="first",
+progress=getOption("pROCProgress")$name, ...)
 \S3method{roc.test}{auc}(roc1, roc2, ...)
 \S3method{roc.test}{smooth.roc}(roc1, roc2, ...)
 \S3method{roc.test}{formula}(formula, data, ...)
-\S3method{roc.test}{default}(response, predictor1, predictor2=NULL, na.rm=TRUE, method=NULL, ...)
+\S3method{roc.test}{default}(response, predictor1, predictor2=NULL,
+na.rm=TRUE, method=NULL, ...)
 }
 
 \arguments{
@@ -46,61 +48,73 @@ boot.stratified=TRUE, progress=getOption("pROCProgress")$name, ...)
   \item{na.rm}{if \code{TRUE}, the observations with \code{NA} values
     will be removed.
   }
-  \item{method}{the method to use, either \dQuote{delong} or
-    \dQuote{bootstrap}. The first letter is sufficient. If omitted, the
+  \item{method}{the method to use, either \dQuote{delong},
+    \dQuote{bootstrap} or \dQuote{venkatraman}. The first letter is sufficient. If omitted, the
 	appropriate method is selected as explained in details.
   }
   \item{alternative}{specifies the alternative hypothesis. Either of
-    \code{two.sided}, \code{less} or \code{greater}. The first letter is
-    sufficient. Default: two.sided.
+    \dQuote{two.sided}, \dQuote{less} or \dQuote{greater}. The first letter is
+    sufficient. Default: \dQuote{two.sided}. Only \dQuote{two.sided} is available
+    with \code{method="venkatraman"}.
   }
   \item{reuse.auc}{if \code{TRUE} (default) and the \dQuote{roc} objects
     contain an \dQuote{auc} field, re-use these specifications for the
     test. See details.
   }
-  \item{boot.n}{for \code{method="bootstrap"} only: the number of
-    bootstrap replicates. Default: \var{2000}.
+  \item{boot.n}{for \code{method="bootstrap"} and \code{method="venkatraman"} only: the number of
+    bootstrap replicates or permutations. Default: \var{2000}.
   }
   \item{boot.stratified}{for \code{method="bootstrap"} only:
     should the bootstrap be stratified (same number 
     of cases/controls in each replicate than in the original sample) or
-    not. Default: \var{TRUE}.
+    not. Ignored with \code{method="venkatraman"}. Default: \var{TRUE}.
+  }
+  \item{ties.method}{for \code{method="venkatraman"} only: argument for
+    \code{\link{rank}} specifying how ties are handled. Defaults to
+    \dQuote{first} as described in the paper.
   }
   \item{progress}{the name of progress bar to display. Typically
     \dQuote{none}, \dQuote{win}, \dQuote{tk} or \dQuote{text} (see the
-    \code{name} argument to \code{\link[plyr:create-progress-bar-4d]{create_progress_bar}} for
-    more information), but a list as returned by \code{\link[plyr:create-progress-bar-4d]{create_progress_bar}}
+    \code{name} argument to \code{\link[plyr]{create_progress_bar}} for
+    more information), but a list as returned by \code{\link[plyr]{create_progress_bar}}
     is also accepted. See also the \dQuote{Progress bars} section of
     \link[=pROC-package]{this package's documentation}.
   }
   \item{\dots}{further arguments passed to or from other methods,
     especially arguments for \code{\link{roc}} and \code{roc.test.roc}
     when calling \code{roc.test.default} or \code{roc.test.formula}.
-    Arguments for \code{\link{auc}}
+    Arguments for \code{\link{auc}},
     and \code{\link{txtProgressBar}} (only \code{char} and \code{style})
     if applicable.
   }
 }
 
 \details{
-  This function is typically called with the two \link{roc} objects to
+  This function compares two ROC curves. It is typically called with the two \link{roc} objects to
   compare. \code{roc.test.default} is provided as a convenience
   method and creates two \link{roc} objects before calling
   \code{roc.test.roc}.
 
-  If \code{alternative="two.sided"}, a two-sided test is performed. If
-  \code{alternative="less"}, the alternative is that the AUC of roc1 is
-  smaller than the AUC of roc2.
+  Three methods are available: \dQuote{delong}, \dQuote{bootstrap} and \dQuote{venkatraman} (see
+  \dQuote{Computational details} section below). \dQuote{delong} and
+  \dQuote{bootstrap} are tests over the AUC whereas \dQuote{venkatraman}
+  compares the the ROC curves themselves.
 
-  Two methods are available: \dQuote{delong} and \dQuote{bootstrap} (see
-  \dQuote{Computational details} section below). Default is to use
-  \dQuote{delong} method except for comparison of partial AUC, smoothed
+  Default is to use \dQuote{delong} method except for comparison of partial AUC, smoothed
   curves and curves with different \code{direction}, where \code{bootstrap}
   is used. Using \dQuote{delong} for partial AUC and smoothed ROCs is not
   supported in pROC (a warning is produced and \dQuote{bootstrap} is employed instead).
   It is spurious to use \dQuote{delong} for \code{\link{roc}} with different
   \code{direction} (a warning is issued but the spurious comparison is
-  enforced).
+  enforced). \dQuote{venkatraman}'s test cannot be employed to compare smoothed
+  ROC curves. Additionally, partial AUC specifications are ignored (with
+  a warning), and comparison of ROC curves with different
+  \code{direction} should be used with care (a warning is produced as well).
+
+  If \code{alternative="two.sided"}, a two-sided test for difference in AUC is performed. If
+  \code{alternative="less"}, the alternative is that the AUC of roc1 is
+  smaller than the AUC of roc2. For \code{method="venkatraman"}, only
+  \dQuote{two.sided} test is available.
 
   For \link[=smooth.roc]{smoothed ROC curves}, smoothing is performed again at each
   bootstrap replicate with the parameters originally provided.
@@ -110,7 +124,7 @@ boot.stratified=TRUE, progress=getOption("pROCProgress")$name, ...)
 }
 
 \section{AUC specification}{
-  The comparison of the ROC curves needs a specification of the
+  The comparison of the AUC of the ROC curves needs a specification of the
   AUC. The specification is defined by:
   \enumerate{
     \item the \dQuote{auc} field in the \dQuote{\link{roc}} objects if
@@ -130,6 +144,8 @@ boot.stratified=TRUE, progress=getOption("pROCProgress")$name, ...)
   As well if the \dQuote{\link{roc}} objects do not contain an \code{auc}
   field, the \code{\link{auc}} function will always be called with
   \code{\dots} to determine the specification.
+
+  The AUC specification is ignored in the Venkatraman test.
 
   Warning: if the roc object passed to roc.test contains an \code{auc}
   field and \code{reuse.auc=TRUE}, \link{auc} is not called and
@@ -158,6 +174,9 @@ boot.stratified=TRUE, progress=getOption("pROCProgress")$name, ...)
   With \code{method="delong"}, the processing is done as described in
   DeLong \emph{et al.} (1988). Only comparison of two ROC curves is
   implemented.
+
+  With \code{method="venkatraman"}, the processing is done as described
+  in Venkatraman and Begg (1996) with \code{boot.n} permutation of sample ranks.
 }
 
 \section{Warnings}{
@@ -176,9 +195,18 @@ boot.stratified=TRUE, progress=getOption("pROCProgress")$name, ...)
     bootstrap test instead.} is issued. The \code{method} argument is
   ignored and \dQuote{bootstrap} is used instead.
 
-  DeLong's test ignores the direction of the ROC curve so that if two
+  If \code{method="venkatraman"}, and the AUC specification specifies a
+  partial AUC, the AUC specification is ignored with the warning
+  \dQuote{Partial AUC is ignored in Venkatraman's test.}.
+
+  If \code{method="venkatraman"}, and \code{alternative} is
+  \dQuote{less} or \dQuote{greater}, the warning \dQuote{Only two-sided
+    tests are available for Venkatraman.} is produced and a two tailed
+  test is performed instead.
+
+  Both DeLong and Venkatraman's test ignores the direction of the ROC curve so that if two
   ROC curves have a different differ in the value of
-  \code{direction}, the warning \dQuote{DeLong's test should not be
+  \code{direction}, the warning \dQuote{(DeLong|Venkatraman)'s test should not be
     applied to ROC curves with a different direction.} is
   printed. However, the spurious test is enforced.
 
@@ -208,7 +236,15 @@ boot.stratified=TRUE, progress=getOption("pROCProgress")$name, ...)
   
   If \code{density.cases} and \code{density.controls} were provided
   for smoothing, the error \dQuote{Cannot compute the statistic on ROC
-  curves smoothed with density.controls and density.cases.} is issued.
+    curves smoothed with density.controls and density.cases.} is
+  issued. 
+
+  With \code{method="venkatraman"}, the processing is done as described
+  in Venkatraman and Begg (1996) with \code{boot.n} permutation of
+  sample ranks (with ties breaking). For consistency reasons, the same argument \code{boot.n} as
+  in bootstrap defines the number of permutations to execute,
+  even though no bootstrap is performed.
+
 }
 
 \value{
@@ -232,6 +268,11 @@ boot.stratified=TRUE, progress=getOption("pROCProgress")$name, ...)
   }
 }
 
+\section{Acknowledgements}{
+  We would like to thank E. S. Venkatraman and Colin B. Begg for their
+  support in the implementation of their test.
+}
+
 \references{
   Elisabeth R. DeLong, David M. DeLong and Daniel L. Clarke-Pearson
   (1988) ``Comparing the areas under two or more correlated receiver
@@ -245,6 +286,11 @@ boot.stratified=TRUE, progress=getOption("pROCProgress")$name, ...)
   Xavier Robin, Natacha Turck, Jean-Charles Sanchez and Markus Müller
   (2009) ``Combination of protein biomarkers''. \emph{useR! 2009}, Rennes.
   \url{http://www.agrocampus-ouest.fr/math/useR-2009/abstracts/user_author.html}
+
+  E. S. Venkatraman and Colin B. Begg (1996) ``A distribution-free
+  procedure for comparing receiver operating characteristic curves from
+  a paired experiment''. \emph{Biometrika} \bold{83}, 835--848.
+  DOI: 10.1093/biomet/83.4.835
 }
 
 \seealso{
@@ -259,12 +305,12 @@ roc1 <- roc(aSAH$outcome, aSAH$s100b)
 roc2 <- roc(aSAH$outcome, aSAH$wfns)
 roc.test(roc1, roc2)
 
-\dontrun{
+#@#\dontrun{
 # The latter used Delong's test. To use bootstrap test:
 roc.test(roc1, roc2, method="bootstrap")
 # Increase boot.n for a more precise p-value:
 roc.test(roc1, roc2, method="bootstrap", boot.n=10000)
-}
+#@#}
 
 # Alternative syntaxes
 roc.test(aSAH$outcome, aSAH$s100b, aSAH$wfns)
@@ -275,18 +321,18 @@ roc.test(aSAH$outcome, data.frame(aSAH$s100b, aSAH$wfns))
 # should be lower than AUC of roc2):
 roc.test(roc1, roc2, alternative="less")
 
-\dontrun{
+#@#\dontrun{
 # Comparison can be done on smoothed ROCs
 # Smoothing is re-done at each iteration, and execution is slow
 roc.test(smooth(roc1), smooth(roc2))
 # or:
 roc.test(aSAH$outcome, aSAH$s100b, aSAH$wfns, smooth=TRUE,
 smooth.method="density", boot.n=100)
-}
+#@#}
 # or from an AUC (no smoothing)
 roc.test(auc(roc1), roc2)
 
-\dontrun{
+#@#\dontrun{
 # Comparison of partial AUC:
 roc3 <- roc(aSAH$outcome, aSAH$s100b, partial.auc=c(1, 0.8), partial.auc.focus="se")
 roc4 <- roc(aSAH$outcome, aSAH$wfns, partial.auc=c(1, 0.8), partial.auc.focus="se")
@@ -296,15 +342,18 @@ roc.test(roc3, roc4, method="bootstrap")
 
 # Alternatively, we could re-use roc1 and roc2 to get the same result:
 roc.test(roc1, roc2, reuse.auc=FALSE, partial.auc=c(1, 0.8), partial.auc.focus="se")
-}
+#@#}
 
 # Spurious use of DeLong's test with different direction:
 roc5 <- roc(aSAH$outcome, aSAH$s100b, direction="<")
 roc6 <- roc(aSAH$outcome, aSAH$s100b, direction=">")
 roc.test(roc5, roc6, method="delong")
+
+# Comparisons of the ROC curves
+roc.test(roc1, roc2, method="venkatraman")
 }
 
-\keyword{univar}
+\keyword{multivariate}
 \keyword{nonparametric}
 \keyword{utilities}
 \keyword{htest}

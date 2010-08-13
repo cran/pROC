@@ -85,8 +85,8 @@ coords.smooth.roc <- function(smooth.roc, x, input=c("specificity", "sensitivity
 
 coords.roc <- function(roc, x, input=c("threshold", "specificity", "sensitivity"), ret=c("threshold", "specificity", "sensitivity"), as.list=FALSE, ...) {
   # make sure x was provided
-  if (missing(x))
-    stop("'x' must be a numeric or character vector.")
+  if (missing(x) || length(x) == 0)
+    stop("'x' must be a numeric or character vector of positive length.")
   # match input 
   input <- match.arg(input)
   # match return

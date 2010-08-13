@@ -57,12 +57,22 @@ roc.utils.thresholds <- function(predictor) {
 
 # Find all the local maximas of the ROC curve. Returns a logical vector
 roc.utils.max.thresholds.idx <- function(thresholds, sp, se) {
+  reversed <- FALSE
   if (is.unsorted(sp)) {
     # make sure SP is sorted increasingly, and sort thresholds accordingly
     thresholds <- rev(thresholds)
     sp <- rev(sp)
     se <- rev(se)
+    reversed <- TRUE
   }
+  # TODO: find whether the duplicate check is still needed.
+  # Should have been fixed by passing only c(controls, cases)
+  # instead of whole 'predictor' to roc.utils.thresholds in roc.default
+  # but are there other potential issues like that?
+  dup <- duplicated(data.frame(sp, se))
+  thresholds <- thresholds[!dup]
+  sp <- sp[!dup]
+  se <- se[!dup]
   # Find the local maximas
   local.maximas <- ifelse(se[1] > se[2], TRUE, FALSE)
   for (i in 2:(length(thresholds)-1)) {
@@ -76,11 +86,23 @@ roc.utils.max.thresholds.idx <- function(thresholds, sp, se) {
       local.maximas <- c(local.maximas, FALSE)
   }
   local.maximas <- c(local.maximas, ifelse(sp[length(thresholds)] > sp[length(thresholds)-1], TRUE, FALSE))
+  if (any(dup)) {
+    lms <- rep(FALSE, length(dup))
+    lms[!dup] <- local.maximas
+    local.maximas <- lms
+  }
+  if (reversed)
+    rev(local.maximas)
+
   return(local.maximas)
 }
 
 # Define which progress bar to use
 roc.utils.get.progress.bar <- function(name = getOption("pROCProgress")$name, title = "Bootstrap", label = "", width = getOption("pROCProgress")$width, char = getOption("pROCProgress")$char, style = getOption("pROCProgress")$style, ...) {
+  if (name == "tk") { # load tcltk if possible
+    if (!require(tcltk))
+      stop("Package tcltk not available, required with progress='tk'")
+  }
   if (name == "none")
     progress_none()
   else if (name == "text")

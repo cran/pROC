@@ -54,7 +54,7 @@ plot.ci.sp <- function(x, type=c("bars", "shape"), length=.01*ifelse(attr(x, "ro
 plot.ci.se <- function(x, type=c("bars", "shape"), length=.01*ifelse(attr(x, "roc")$percent, 100, 1), col=ifelse(type=="bars", par("fg"), "gainsboro"), no.roc=FALSE, ...) {
   type <- match.arg(type)
   if (type == "bars") {
-    sapply(1:dim(x)[1], function(n) {
+    sapply(1:dim(x)[1], function(n, ...) {
       sp <- attr(x, "specificities")[n]
       suppressWarnings(segments(sp, x[n,1], sp, x[n,3], col=col, ...))
       suppressWarnings(segments(sp - length, x[n,1], sp + length, x[n,1], col=col, ...))

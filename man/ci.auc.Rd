@@ -59,8 +59,8 @@ progress=getOption("pROCProgress")$name, ...)
   }
   \item{progress}{the name of progress bar to display. Typically
     \dQuote{none}, \dQuote{win}, \dQuote{tk} or \dQuote{text} (see the
-    \code{name} argument to \code{\link[plyr:create-progress-bar-4d]{create_progress_bar}} for
-    more information), but a list as returned by \code{\link[plyr:create-progress-bar-4d]{create_progress_bar}}
+    \code{name} argument to \code{\link[plyr]{create_progress_bar}} for
+    more information), but a list as returned by \code{\link[plyr]{create_progress_bar}}
     is also accepted. See also the \dQuote{Progress bars} section of
     \link[=pROC-package]{this package's documentation}.
   }

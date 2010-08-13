@@ -1,4 +1,5 @@
 export(roc, roc.formula, roc.default,
+       are.paired, are.paired.auc, are.paired.roc, are.paired.smooth.roc,
        auc, auc.formula, auc.roc, auc.smooth.roc, auc.default,
        ci, ci.formula, ci.default, ci.roc, ci.smooth.roc,
        ci.thresholds, ci.thresholds.formula, ci.thresholds.default, ci.thresholds.roc, ci.thresholds.smooth.roc,

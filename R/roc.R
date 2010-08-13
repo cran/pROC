@@ -180,7 +180,7 @@ roc.default <- function(response, predictor,
   else if (direction == "auto" && median(controls) > median(cases))
     direction <- ">"
   # compute SE / SP
-  thresholds <- roc.utils.thresholds(predictor)
+  thresholds <- roc.utils.thresholds(c(controls, cases))
   perfs <- sapply(thresholds, roc.utils.perfs, controls=controls, cases=cases, direction=direction)
   se <- perfs[2,]
   sp <- perfs[1,]
