@@ -222,7 +222,7 @@ coords.roc <- function(roc, x, input=c("threshold", "specificity", "sensitivity"
       }
     }
     if (as.list) {
-      list <- list(threshold=res[1], sensitivity=res[2], specificity=res[3])
+      list <- list(threshold=res[1], specificity=res[2], sensitivity=res[3])
       return(list[ret])
     }
     else {

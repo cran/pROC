@@ -305,12 +305,12 @@ roc1 <- roc(aSAH$outcome, aSAH$s100b)
 roc2 <- roc(aSAH$outcome, aSAH$wfns)
 roc.test(roc1, roc2)
 
-#@#\dontrun{
+\dontrun{
 # The latter used Delong's test. To use bootstrap test:
 roc.test(roc1, roc2, method="bootstrap")
 # Increase boot.n for a more precise p-value:
 roc.test(roc1, roc2, method="bootstrap", boot.n=10000)
-#@#}
+}
 
 # Alternative syntaxes
 roc.test(aSAH$outcome, aSAH$s100b, aSAH$wfns)
@@ -321,18 +321,18 @@ roc.test(aSAH$outcome, data.frame(aSAH$s100b, aSAH$wfns))
 # should be lower than AUC of roc2):
 roc.test(roc1, roc2, alternative="less")
 
-#@#\dontrun{
+\dontrun{
 # Comparison can be done on smoothed ROCs
 # Smoothing is re-done at each iteration, and execution is slow
 roc.test(smooth(roc1), smooth(roc2))
 # or:
 roc.test(aSAH$outcome, aSAH$s100b, aSAH$wfns, smooth=TRUE,
 smooth.method="density", boot.n=100)
-#@#}
+}
 # or from an AUC (no smoothing)
 roc.test(auc(roc1), roc2)
 
-#@#\dontrun{
+\dontrun{
 # Comparison of partial AUC:
 roc3 <- roc(aSAH$outcome, aSAH$s100b, partial.auc=c(1, 0.8), partial.auc.focus="se")
 roc4 <- roc(aSAH$outcome, aSAH$wfns, partial.auc=c(1, 0.8), partial.auc.focus="se")
@@ -342,15 +342,17 @@ roc.test(roc3, roc4, method="bootstrap")
 
 # Alternatively, we could re-use roc1 and roc2 to get the same result:
 roc.test(roc1, roc2, reuse.auc=FALSE, partial.auc=c(1, 0.8), partial.auc.focus="se")
-#@#}
+}
 
 # Spurious use of DeLong's test with different direction:
 roc5 <- roc(aSAH$outcome, aSAH$s100b, direction="<")
 roc6 <- roc(aSAH$outcome, aSAH$s100b, direction=">")
 roc.test(roc5, roc6, method="delong")
 
+\dontrun{
 # Comparisons of the ROC curves
 roc.test(roc1, roc2, method="venkatraman")
+}
 }
 
 \keyword{multivariate}

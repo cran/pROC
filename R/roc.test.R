@@ -266,6 +266,8 @@ roc.test.roc <- function(roc1, roc2, method=c("delong", "bootstrap", "venkatrama
     pval <- sum(stats[[2]]>=stats[[1]])/boot.n
     htest$p.value <- pval
     htest$method <- "Venkatraman's test for two paired ROC curves"
+    htest$estimate <- NULL # AUC not relevant in venkatraman
+    names(null.value) <- "difference in ROC operating points"
   }
   else { # method == "bootstrap"
     # Check if called with density.cases or density.controls
