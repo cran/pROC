@@ -273,7 +273,7 @@ plot.roc.roc <- function(x,
   # Print the AUC on the plot
   if (print.auc) {
     if (ci && class(x$ci) == "ci.auc") {
-      labels <- sprintf(print.auc.pattern, x$auc, x$ci[1], x$ci[2])
+      labels <- sprintf(print.auc.pattern, x$auc, x$ci[1], x$ci[3])
       suppressWarnings(text(print.auc.x, print.auc.y, labels, adj=print.auc.adj, cex=print.auc.cex, col=print.auc.col, ...))
     }
     else

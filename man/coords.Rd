@@ -65,7 +65,7 @@ as.list=FALSE, ...)
   are reported, even if the exact threshold do not define the ROC
   curve. The following convenience characters are allowed: \dQuote{all},
   \dQuote{local maximas} and \dQuote{best}. They will return all the
-  thresholds, only the thresholds defining local maximas (angles of the
+  thresholds, only the thresholds defining local maximas (upper angles of the
   ROC curve), or only the threshold(s) corresponding to the best sum of
   sensitivity + specificity respectively. Note that \dQuote{best} can
   return more than one threshold. If \code{x} is a character, the

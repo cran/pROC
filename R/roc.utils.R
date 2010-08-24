@@ -74,18 +74,26 @@ roc.utils.max.thresholds.idx <- function(thresholds, sp, se) {
   sp <- sp[!dup]
   se <- se[!dup]
   # Find the local maximas
-  local.maximas <- ifelse(se[1] > se[2], TRUE, FALSE)
-  for (i in 2:(length(thresholds)-1)) {
-    if (sp[i] > sp[i-1] & se[i] > se[i+1])
-      local.maximas <- c(local.maximas, TRUE)
-    else if (sp[i] > sp[i-1] & se[i] == 0)
-      local.maximas <- c(local.maximas, TRUE)
-    else if (se[i] > se[i-1] & sp[i] == 1)
-      local.maximas <- c(local.maximas, TRUE)
-    else
-      local.maximas <- c(local.maximas, FALSE)
+  if (length(thresholds) == 1) {
+    local.maximas <- TRUE # let's consider that if there is only 1 point, we should print it.
   }
-  local.maximas <- c(local.maximas, ifelse(sp[length(thresholds)] > sp[length(thresholds)-1], TRUE, FALSE))
+  else if (length(thresholds) == 2) {
+    local.maximas <- c(se[1] > se[2], sp[2] > sp[1])
+  }
+  else {
+    local.maximas <- se[1] > se[2]
+    for (i in 2:(length(thresholds)-1)) {
+      if (sp[i] > sp[i-1] & se[i] > se[i+1])
+        local.maximas <- c(local.maximas, TRUE)
+      else if (sp[i] > sp[i-1] & se[i] == 0)
+        local.maximas <- c(local.maximas, TRUE)
+      else if (se[i] > se[i-1] & sp[i] == 1)
+        local.maximas <- c(local.maximas, TRUE)
+      else
+        local.maximas <- c(local.maximas, FALSE)
+    }
+    local.maximas <- c(local.maximas, sp[length(thresholds)] > sp[length(thresholds)-1])
+  }
   if (any(dup)) {
     lms <- rep(FALSE, length(dup))
     lms[!dup] <- local.maximas
@@ -93,6 +101,9 @@ roc.utils.max.thresholds.idx <- function(thresholds, sp, se) {
   }
   if (reversed)
     rev(local.maximas)
+
+  # Remove +-Inf at the limits of the curve
+  local.maximas <- local.maximas & is.finite(thresholds)
 
   return(local.maximas)
 }
