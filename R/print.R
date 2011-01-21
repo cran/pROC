@@ -55,6 +55,39 @@ print.smooth.roc <- function(x, digits=max(3, getOption("digits") - 3), call=TRU
   invisible(x)
 }
 
+print.multiclass.roc <- function(x, digits=max(3, getOption("digits") - 3), call=TRUE, ...) {
+  # do we print the call?
+  if (call)
+    cat("\nCall:\n", deparse(x$call), "\n\n", sep="")
+  # get predictor name
+  if ("predictor" %in% names(x$call))
+    predictor.name <- as.character(x$call[match("predictor", names(x$call))])
+  else if (!is.null(x$call$formula)) 
+    predictor.name <- attr(terms(as.formula(x$call$formula)), "term.labels")
+  # Get response
+  if ("response" %in% names(x$call))
+    response.name <- as.character(x$call[match("response", names(x$call))])
+  else if (!is.null(x$call$formula)) {
+    formula.attrs <- attributes(terms(as.formula(x$call$formula)))
+    response.name <- rownames(formula.attrs$factors)[formula.attrs$response]
+  }
+  cat("Data: ", predictor.name, " with ", length(x$levels), " levels of ", response.name, ": ", paste(x$levels, collapse=", "),  ".\n", sep="")
+
+  # AUC if exists
+  if (!is.null(x$auc)) {
+    print(x$auc, digits=digits, ...)
+  }
+  else
+    cat("Multi-class area under the curve not computed.\n")
+
+  # CI if exists, print it
+  if(!is.null(x$ci)) {
+    print(x$ci, digits=digits, ...)
+  }
+
+  invisible(x)
+}
+
 print.roc <- function(x, digits=max(3, getOption("digits") - 3), call=TRUE, ...) {
   # do we print the call?
   if (call)
@@ -80,6 +113,17 @@ print.roc <- function(x, digits=max(3, getOption("digits") - 3), call=TRUE, ...)
 print.auc <- function(x, digits=max(3, getOption("digits") - 3), ...) {
   if (identical(attr(x, "partial.auc"), FALSE))
     cat("Area under the curve: ", signif(x, digits=digits), ifelse(attr(x, "percent"), "%", ""), "\n", sep="")
+  else {
+    cat(ifelse(identical(attr(x, "partial.auc.correct"), TRUE), "Corrected p", "P"), "artial area under the curve", sep="")
+    cat(" (", attr(x, "partial.auc.focus"), " ", attr(x, "partial.auc")[1], ifelse(attr(x, "percent"), "%", ""), "-", attr(x, "partial.auc")[2], ifelse(attr(x, "percent"), "%", ""), ")", sep="")
+    cat(": ", signif(x, digits=digits), ifelse(attr(x, "percent"), "%", ""), "\n", sep="")
+  }
+  invisible(x)
+}
+
+print.multiclass.auc <- function(x, digits=max(3, getOption("digits") - 3), ...) {
+  if (identical(attr(x, "partial.auc"), FALSE))
+    cat("Multi-class area under the curve: ", signif(x, digits=digits), ifelse(attr(x, "percent"), "%", ""), "\n", sep="")
   else {
     cat(ifelse(identical(attr(x, "partial.auc.correct"), TRUE), "Corrected p", "P"), "artial area under the curve", sep="")
     cat(" (", attr(x, "partial.auc.focus"), " ", attr(x, "partial.auc")[1], ifelse(attr(x, "percent"), "%", ""), "-", attr(x, "partial.auc")[2], ifelse(attr(x, "percent"), "%", ""), ")", sep="")
@@ -124,7 +168,6 @@ print.ci.se <- function(x, digits=max(3, getOption("digits") - 3), ...) {
   invisible(x)
 }
 
-
 print.dataline <- function(x) {
   # Case / Controls call
   if ("cases" %in%  names(x$call) && "controls" %in% names(x$call)) {
@@ -138,7 +181,16 @@ print.dataline <- function(x) {
       predictor.name <- attr(terms(as.formula(x$call$formula)), "term.labels")
     else
       return()
-    cat("Data: ", predictor.name, " in ", length(x$controls), " controls (response ", x$levels[1], ") ", x$direction, " ", length(x$cases), " cases (response ", x$levels[2], ").\n", sep="")
+    # Get response
+    if ("response" %in% names(x$call))
+      response.name <- as.character(x$call[match("response", names(x$call))])
+    else if (!is.null(x$call$formula)) {
+      formula.attrs <- attributes(terms(as.formula(x$call$formula)))
+      response.name <- rownames(formula.attrs$factors)[formula.attrs$response]
+    }
+    else
+      return()
+    cat("Data: ", predictor.name, " in ", length(x$controls), " controls (", response.name, " ", x$levels[1], ") ", x$direction, " ", length(x$cases), " cases (", response.name, " ", x$levels[2], ").\n", sep="")
   }
 }
 

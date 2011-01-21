@@ -5,13 +5,14 @@
 \alias{auc.formula}
 \alias{auc.roc}
 \alias{auc.smooth.roc}
+\alias{auc.multiclass.roc}
 
 \title{
   Compute the area under the ROC curve
 }
 \description{
   This function computes the numeric value of area under the ROC curve
-  (AUC). Two syntaxes are possible: one object of class \dQuote{\link{roc}}, or either
+  (AUC) with the trapezoidal rule. Two syntaxes are possible: one object of class \dQuote{\link{roc}}, or either
   two vectors (response, predictor) or a formula (response~predictor) as
   in the \code{\link{roc}} function.
   By default, the total AUC is computed, but a portion of the ROC curve
@@ -22,14 +23,16 @@ auc(...)
 \S3method{auc}{roc}(roc, partial.auc=FALSE, partial.auc.focus=c("specificity",
 "sensitivity"), partial.auc.correct=FALSE, ...)
 \S3method{auc}{smooth.roc}(smooth.roc, ...)
+\S3method{auc}{multiclass.roc}(multiclass.roc, ...)
 \S3method{auc}{formula}(formula, data, ...)
 \S3method{auc}{default}(response, predictor, ...)
 }
 
 \arguments{
-  \item{roc, smooth.roc}{a \dQuote{roc} object from the
-	\code{\link{roc}} function, or a \dQuote{smooth.roc} object from the
-	\code{\link{smooth.roc}} function.
+  \item{roc, smooth.roc, multiclass.roc}{a \dQuote{roc} object from the
+	\code{\link{roc}} function, a \dQuote{smooth.roc} object from the
+	\code{\link{smooth.roc}} function, or a  \dQuote{multiclass.roc} from the
+	\code{\link{multiclass.roc}} function.
   }
   \item{response, predictor}{arguments for the \code{\link{roc}} function.}
   \item{formula, data}{a formula (and possibly a data object) of type response~predictor for the \code{\link{roc}} function.}
@@ -49,7 +52,8 @@ auc(...)
   }
   \item{\dots}{further arguments passed to or from other methods,
     especially arguments for \code{\link{roc}} when calling
-	\code{auc.default} or \code{auc.formula}.  Note that the \code{auc}
+	\code{auc.default}, \code{auc.formula}, \code{auc.smooth.roc}.
+	Note that the \code{auc}
 	argument of \code{\link{roc}} is not allowed. Unused in
 	\code{auc.roc}. 
   }
@@ -87,11 +91,23 @@ auc(...)
 
   There is no difference in the computation of the area under a smoothed
   ROC curve.
-  
 }
+\section{Multi-class AUCs}{
+  With an object of class \dQuote{multiclass.roc}, a multi-class AUC is
+  computed as an average AUC as defined by Hand and Till (equation 7).
+
+  \deqn{auc=\frac{2}{c(c-1)}\sum{aucs}}{2/(count * (count -
+    1))*sum(aucs)}
+
+  with aucs all the pairwise roc curves.
+
+}
+
 \value{
-  The numeric AUC value, of class \dQuote{auc}, in fraction of the area in percent if
-  \code{percent=TRUE}, with the following attributes:
+  The numeric AUC value, of class \dQuote{auc} (or
+  \dQuote{multiclass.auc} if a \dQuote{multiclass.roc} was supplied), in
+  fraction of the area or in percent if \code{percent=TRUE}, with the
+  following attributes:
   \item{partial.auc}{if the AUC is full (FALSE) or partial (and in this
     case the bounds), as defined in argument.}
   \item{partial.auc.focus}{only for a partial AUC, if the bound specifies
@@ -99,12 +115,18 @@ auc(...)
   \item{partial.auc.correct}{only for a partial AUC, was it corrected?
     As defined in argument.}
   \item{percent}{whether the AUC is given in percent or fraction.}
-  \item{roc}{the original ROC curve, as a \dQuote{\link{roc}} object.}
+  \item{roc}{the original ROC curve, as a \dQuote{\link{roc}},
+    \dQuote{\link{smooth.roc}} or \dQuote{\link{multiclass.roc}} object.}
 }
 \references{
   Tom Fawcett (2006) ``An introduction to ROC analysis''. \emph{Pattern
     Recognition Letters} \bold{27}, 861--874. DOI:
   10.1016/j.patrec.2005.10.010.
+
+  David J. Hand and Robert J. Till (2001). A Simple Generalisation of
+  the Area Under the ROC Curve for Multiple Class Classification
+  Problems. \emph{Machine Learning} \bold{45}(2), p. 171--186. DOI:
+  10.1023/A:1010920819831
 
   Donna Katzman McClish (1989) ``Analyzing a Portion of the ROC
   Curve''. \emph{Medical Decision Making} \bold{9}(3), 190--195. DOI:

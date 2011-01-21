@@ -1,7 +1,17 @@
+1.4 (2011-01-21)
+  * 'smooth' does not apply on 'ordered' factors anymore
+  * Multi-class AUC support
+  * Can choose how 'best' thresold is determined ('best.method' and 'best.weights' in 'coords' and 'print.thres.best.method' and 'print.thres.best.weights' in 'plot.roc')
+  * Minor fixes in documentation
+  * 'print' now prints the response instead of "response" and more informative data in 'htest's
+  * Bootstrap with 'ci.auc' consumes much less memory
+  * Unpaired bootstrap and DeLong's test
+  * Specificity and sensitivity tests (in 'roc.test')
+
 1.3.2 (2010-08-24)
   * 'print.auc' printed incorrect CI in 'plot.roc' (thanks to Alexander B. Leichtle for the report)
-  * failed to detect local maximas in 'coords' when 2 or less points were selected
-  * don't consider ROC extremities (+-Inf at 1.0/0.0 SE<->SP) as local maximas
+  * Failed to detect local maximas in 'coords' when 2 or less points were selected
+  * Don't consider ROC extremities (+-Inf at 1.0/0.0 SE<->SP) as local maximas
 
 1.3.1 (2010-08-18)
   * Sensitivity and specificity were inverted in coords when results were reported as list

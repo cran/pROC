@@ -37,6 +37,9 @@ smooth.roc <- function(roc, method = c("binormal", "density", "fitdistr"), n = 5
                        reuse.auc = TRUE, reuse.ci = FALSE,
                        ...) {
   method <- match.arg(method)
+  
+  if (is.ordered(roc$original.predictor) && (method == "density" || method =="fitidstr"))
+    stop("ROC curves of ordered predictors can be smoothed only with binormal smoothing.")
 
   if (mode(method) == "function") {
     sesp <- method(roc=roc, n=n, bw=bw, density=density, density.controls=density.controls, density.cases=density.cases, start.controls=start.controls, start.cases=start.cases, ...)
@@ -174,7 +177,7 @@ smooth.roc.binormal <- function(roc, n) {
 
 smooth.roc.fitdistr <- function(roc, n, densfun.controls, densfun.cases, start.controls, start.cases, ...) {
   if (!require(MASS))
-    stop("Package MASS not available, required with method='fitdistr'")
+    stop("Package MASS not available, required with method='fitdistr'. Please install it with 'install.packages(\"MASS\").")
 
   densfuns.list <- list(beta = "dbeta", cauchy = "dcauchy", "chi-squared" = "dchisq", exponential = "dexp", f = "df",
                         gamma = "dgamma", geometric = "dgeom", "log-normal" = "dlnorm", lognormal = "dlnorm",

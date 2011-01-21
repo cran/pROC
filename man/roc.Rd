@@ -91,7 +91,7 @@ plot=FALSE, smooth.method="binormal", ci.method=NULL, density=NULL, ...)
     \itemize{
       \item \code{\link{auc}}: \code{partial.auc}, \code{partial.auc.focus}, \code{partial.auc.correct}.
       \item \code{\link{ci}}: \code{of}, \code{conf.level}, \code{boot.n}, \code{boot.stratified}, \code{progress}
-      \item \code{\link{ci.auc}}:, \code{reuse.auc}
+      \item \code{\link{ci.auc}}:, \code{reuse.auc}, \code{method}
       \item \code{\link{ci.thresholds}}: \code{thresholds}
       \item \code{\link{ci.sp}}: \code{sensitivities}
       \item \code{\link{ci.se}}: \code{specificities}
@@ -163,7 +163,7 @@ plot=FALSE, smooth.method="binormal", ci.method=NULL, density=NULL, ...)
   
 }
 \value{
-  If the data contained any \code{NA} value, \code{NA} is
+  If the data contained any \code{NA} value and \code{na.rm=FALSE}, \code{NA} is
   returned. Otherwise, if \code{smooth=FALSE}, a list of class
   \dQuote{roc} with the following fields: 
   \item{auc}{if called with \code{auc=TRUE}, a numeric of class \dQuote{auc} as
@@ -176,10 +176,11 @@ plot=FALSE, smooth.method="binormal", ci.method=NULL, density=NULL, ...)
     \code{NA} values were removed, a \code{na.action} attribute similar
     to \code{\link{na.omit}} stores the row numbers.
   }
-  \item{predictor}{the predictor vector as passed in argument. If
+  \item{predictor}{the predictor vector converted to numeric as used to build the ROC curve. If
     \code{NA} values were removed, a \code{na.action} attribute similar
     to \code{\link{na.omit}} stores the row numbers.
   }
+  \item{original.predictor}{the predictor vector as passed in argument.}
   \item{levels}{the levels of the response as defined in argument.}
   \item{controls}{the predictor values for the control observations.}
   \item{cases}{the predictor values for the cases.}

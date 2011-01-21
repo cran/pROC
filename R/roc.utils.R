@@ -103,7 +103,8 @@ roc.utils.max.thresholds.idx <- function(thresholds, sp, se) {
     rev(local.maximas)
 
   # Remove +-Inf at the limits of the curve
-  local.maximas <- local.maximas & is.finite(thresholds)
+  #local.maximas <- local.maximas & is.finite(thresholds)
+  # Question: why did I do that? It breaks coords.roc when partial.auc contains only the extreme point
 
   return(local.maximas)
 }

@@ -33,6 +33,28 @@ auc.smooth.roc <- function(smooth.roc, ...) {
   auc.roc(smooth.roc, ...) # force usage of auc.roc: compatible
 }
 
+auc.multiclass.roc <- function(multiclass.roc, ...) {
+  sum <- sum(sapply(multiclass.roc$rocs, auc, ...))
+  count <- length(multiclass.roc$levels)
+  # Hand & Till formula:
+  auc <- (2 * sum) / (count * (count - 1))
+
+  # Prepare auc object
+  auc <- as.vector(auc) # remove potential pre-existing attributes
+  attr(auc, "percent") <- multiclass.roc$percent
+  attr(auc, "roc") <- multiclass.roc
+  # Get partial auc details from first computed auc
+  # TODO: find a better way to recover partial.auc!
+  aucs <- lapply(multiclass.roc$rocs, auc, ...) # keep individual AUCs in a list for later
+  attr(auc, "partial.auc") <- attr(aucs[[1]], "partial.auc")
+  if (!identical(attr(aucs[[1]], "partial.auc"), FALSE)) {
+    attr(auc, "partial.auc.focus") <- attr(aucs[[1]], "partial.auc.focus")
+    attr(auc, "partial.auc.correct") <- attr(aucs[[1]], "partial.auc.correct") 
+  }
+  class(auc) <- "multiclass.auc"
+  return(auc)
+}
+
 auc.roc <- function(roc,
                     # Partial auc definition
                     partial.auc=FALSE, # false (consider total area) or numeric length 2: boundaries of the AUC to consider, between 0 and 1, or 0 and 100 if percent is TRUE

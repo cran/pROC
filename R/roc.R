@@ -74,6 +74,7 @@ roc.default <- function(response, predictor,
   direction <- match.arg(direction)
   # Response / Predictor
   if (!missing(response) && !is.null(response) && !missing(predictor) && !is.null(predictor)) {
+    original.predictor <- predictor # store a copy of the original predictor (before converting ordered to numeric)
     # ensure predictor is numeric
     if (!is.numeric(predictor)) {
       if (is.ordered(predictor))
@@ -115,6 +116,10 @@ roc.default <- function(response, predictor,
       stop("Cases must be numeric or ordered.")
     if (!is.numeric(controls))
       stop("Controls must be numeric or ordered.")
+    # build response/predictor
+    response <- c(rep(0, length(controls)), rep(1, length(cases)))
+    predictor <- c(controls, cases)
+    original.predictor <- c(controls, cases)
     # remove nas
     if (na.rm) {
       if (any(is.na(controls)))
@@ -129,8 +134,6 @@ roc.default <- function(response, predictor,
       stop("No control observation.")
     if (length(cases) == 0)
       stop("No case observation.")
-    response <- c(rep(0, length(controls)), rep(1, length(cases)))
-    predictor <- c(controls, cases)
     levels <- c(0, 1)
   }
   else if (!missing(density.cases) && !is.null(density.cases) && !missing(density.controls) && !is.null(density.controls)) {
@@ -179,6 +182,7 @@ roc.default <- function(response, predictor,
     direction <- "<"
   else if (direction == "auto" && median(controls) > median(cases))
     direction <- ">"
+
   # compute SE / SP
   thresholds <- roc.utils.thresholds(c(controls, cases))
   perfs <- sapply(thresholds, roc.utils.perfs, controls=controls, cases=cases, direction=direction)
@@ -196,6 +200,7 @@ roc.default <- function(response, predictor,
   roc$direction <- direction
   roc$cases <- cases
   roc$controls <- controls
+  roc$original.predictor <- original.predictor
   roc$predictor <- predictor
   roc$response <- response
 

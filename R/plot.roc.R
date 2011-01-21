@@ -65,6 +65,8 @@ plot.roc.roc <- function(x,
                          print.thres.pattern=ifelse(x$percent, "%.1f (%.1f%%, %.1f%%)", "%.3f (%.3f, %.3f)"),
                          print.thres.cex=par("cex"),
                          print.thres.pattern.cex=print.thres.cex,
+                         print.thres.best.method=NULL,
+                         print.thres.best.weights=c(1, 0.5),
                          # Print the AUC on the plot
                          print.auc=FALSE,
                          print.auc.pattern=NULL,
@@ -244,10 +246,10 @@ plot.roc.roc <- function(x,
     else if (print.thres == "all" || print.thres == "local maximas")
       stop("'all' and 'local maximas' 'print.thres' unsupported on a smoothed ROC plot.") 
     else if (print.thres == "best") {
-      co <- coords(x, print.thres)
+      co <- coords(x, print.thres, best.method=print.thres.best.method, best.weights=print.thres.best.weights)
       if (class(co) == "matrix") {
-        suppressWarnings(points(co[1,], co[2,], pch=print.thres.pch, cex=print.thres.cex, col=print.thres.col, ...))
-        suppressWarnings(text(co[1,], co[2,], sprintf(print.thres.pattern, NA, co[1,], co[2,]), adj=print.thres.adj, cex=print.thres.pattern.cex, col=print.thres.col, ...))
+        suppressWarnings(points(co[2,], co[1,], pch=print.thres.pch, cex=print.thres.cex, col=print.thres.col, ...))
+        suppressWarnings(text(co[2,], co[1,], sprintf(print.thres.pattern, NA, co[2,], co[1,]), adj=print.thres.adj, cex=print.thres.pattern.cex, col=print.thres.col, ...))
       }
       else {
         suppressWarnings(points(co[1], co[2], pch=print.thres.pch, cex=print.thres.cex, col=print.thres.col, ...))
@@ -258,7 +260,7 @@ plot.roc.roc <- function(x,
   else if (is.numeric(print.thres) || is.character(print.thres)) {
     if (is.character(print.thres) && print.thres == "no") {} # do nothing
     else {
-      co <- coords(x, print.thres)
+      co <- coords(x, print.thres, best.method=print.thres.best.method, best.weights=print.thres.best.weights)
       if (class(co) == "matrix") {
         suppressWarnings(points(co[2,], co[3,], pch=print.thres.pch, cex=print.thres.cex, col=print.thres.col, ...))
         suppressWarnings(text(co[2,], co[3,], sprintf(print.thres.pattern, co[1,], co[2,], co[3,]), adj=print.thres.adj, cex=print.thres.pattern.cex, col=print.thres.col, ...))

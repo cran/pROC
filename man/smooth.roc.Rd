@@ -8,7 +8,7 @@
  Smooth a ROC curve
 }
 \description{
-  This function smoothes a ROC curve. By default, a binormal smoothing
+  This function smoothes a ROC curve of numeric predictor. By default, a binormal smoothing
   is performed, but density or custom smoothings are supported.
 }
 \usage{
@@ -207,6 +207,12 @@ reuse.auc=TRUE, reuse.ci=FALSE, ...)
   cannot be smoothed and the error \dQuote{Cannot smooth a ROC curve
     generated directly with numeric 'density.controls' and
     'density.cases'.} is produced.
+    
+  \code{fitdistr} and \code{density} smoothing methods require a
+  \link{numeric} \code{predictor}. If the ROC curve to smooth was
+  generated with an ordered factor only binormal smoothing can be
+  applied and the message \dQuote{ROC curves of ordered predictors can
+  be smoothed only with binormal smoothing.} is displayed otherwise.
 }
 
 \references{

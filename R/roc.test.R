@@ -41,7 +41,12 @@ roc.test.formula <- function (formula, data, ...){
 
   testres <- roc.test.default(response, m[[term.labels[1]]], m[[term.labels[2]]], ...)
   testres$call <- cl
-  testres$data.names <- paste(term.labels, collapse=" and ")
+  # data.names for pretty print()ing
+  if (missing(data))
+    testres$data.names <- sprintf("%s and %s by %s (%s, %s)", term.labels[1], term.labels[2], names(m)[1], testres$roc1$levels[1], testres$roc1$levels[2])
+  else
+    testres$data.names <- sprintf("%s and %s in %s by %s (%s, %s)", term.labels[1], term.labels[2], deparse(substitute(data)), names(m)[1], testres$roc1$levels[1], testres$roc1$levels[2])
+
   return(testres)
 }
 
@@ -52,10 +57,12 @@ roc.test.default <- function(response, predictor1, predictor2=NULL, na.rm=TRUE, 
     if (dim(predictor1)[2] == 2 & length(response) == dim(predictor1)[1]) {
       roc1 <- roc(response, predictor1[,1], ...)
       roc2 <- roc(response, predictor1[,2], ...)
-      if (is.data.frame(predictor1))
-        data.names <- paste(names(predictor1), collapse=" and ")
+      if (!is.null(names(predictor1)))
+        data.names <- sprintf("%s and %s in %s by %s (%s, %s)", names(predictor1)[1], names(predictor1)[2], deparse(substitute(predictor1)), deparse(substitute(response)), roc1$levels[1], roc1$levels[2])
+      else if (!is.null(colnames(predictor1)))
+        data.names <- sprintf("%s and %s in %s by %s (%s, %s)", colnames(predictor1)[1], colnames(predictor1)[2], deparse(substitute(predictor1)), deparse(substitute(response)), roc1$levels[1], roc1$levels[2])
       else
-        data.names <- paste(deparse(substitute(predictor1[,1])), "and", deparse(substitute(predictor1[,2])))
+        data.names <- sprintf("%s by %s (%s, %s)", deparse(substitute(predictor1)), deparse(substitute(response)), roc1$levels[1], roc1$levels[2])
     }
     else {
       stop("Wrong dimension for predictor1 as a matrix or a data.frame.")
@@ -74,7 +81,7 @@ roc.test.default <- function(response, predictor1, predictor2=NULL, na.rm=TRUE, 
     roc1 <- roc(response, predictor1, ...)
     roc2 <- roc(response, predictor2, ...)
     call <- match.call()
-    data.names <- paste(deparse(call$predictor1), "and", deparse(call$predictor2))
+    data.names <- sprintf("%s and %s by %s (%s, %s)", deparse(call$predictor1), deparse(call$predictor2), deparse(call$response), roc1$levels[1], roc1$levels[2])
   }
   test <- roc.test.roc(roc1, roc2, method=method, ...)
   test$data.names <- data.names
@@ -95,7 +102,16 @@ roc.test.smooth.roc <- function(roc1, roc2, ...) {
   return(testres)
 }
 
-roc.test.roc <- function(roc1, roc2, method=c("delong", "bootstrap", "venkatraman"), alternative = c("two.sided", "less", "greater"), reuse.auc=TRUE, boot.n=2000, boot.stratified=TRUE, ties.method="first", progress=getOption("pROCProgress")$name, ...) {
+roc.test.roc <- function(roc1, roc2,
+                         method=c("delong", "bootstrap", "venkatraman", "sensitivity", "specificity"),
+                         sensitivity=NULL, specificity=NULL,
+                         alternative = c("two.sided", "less", "greater"),
+                         paired=NULL,
+                         reuse.auc=TRUE,
+                         boot.n=2000, boot.stratified=TRUE,
+                         ties.method="first",
+                         progress=getOption("pROCProgress")$name,
+                         ...) {
   alternative <- match.arg(alternative)
   data.names <- paste(deparse(substitute(roc1)), "and", deparse(substitute(roc2)))
   if (class(roc2) == "auc")
@@ -122,31 +138,54 @@ roc.test.roc <- function(roc1, roc2, method=c("delong", "bootstrap", "venkatrama
     smoothing.args$roc2 <- list(smooth=FALSE)
   }
 
-  # Check ROC curves are paired
-  paired <- are.paired(roc1, roc2, return.paired.rocs=TRUE, reuse.auc=TRUE, reuse.ci=FALSE, reuse.smooth=TRUE)
-  if (!paired) {
-    stop("The ROC test is defined only on paired ROC curves")
+  # Check if we do a paired or unpaired roc.test
+  if (is.null(paired)) {
+    # then determine whether the rocs are paired or not
+    rocs.are.paired <- are.paired(roc1, roc2, return.paired.rocs=TRUE, reuse.auc=TRUE, reuse.ci=FALSE, reuse.smooth=TRUE)
+    if (rocs.are.paired) {
+      paired <- TRUE
+      roc1 <- attr(rocs.are.paired, "roc1")
+      roc2 <- attr(rocs.are.paired, "roc2")
+    }
+    else {
+      paired <- FALSE
+      roc1 <- roc1
+      roc2 <- roc2
+    }
   }
-  paired.roc1 <- attr(paired, "roc1")
-  paired.roc2 <- attr(paired, "roc2")
+  else if (paired) {
+    # make sure the rocs are really paired
+    rocs.are.paired <- rocs.are.paired <- are.paired(roc1, roc2, return.paired.rocs=TRUE, reuse.auc=TRUE, reuse.ci=FALSE, reuse.smooth=TRUE)
+    if (! rocs.are.paired) 
+      stop("The paired ROC test cannot be applied to unpaired curves.")
+    roc1 <- attr(rocs.are.paired, "roc1")
+    roc2 <- attr(rocs.are.paired, "roc2")
+  }
+  else { # assume unpaired
+    rocs.are.paired <- are.paired(roc1, roc2, return.paired.rocs=FALSE)
+    if (rocs.are.paired) 
+      warning("The ROC curves seem to be paired. Consider performing a paired roc.test.")
+    roc1 <- roc1
+    roc2 <- roc2
+  }
 
   # check that the AUC was computed, or do it now
-  if (is.null(paired.roc1$auc) | !reuse.auc) {
+  if (is.null(roc1$auc) | !reuse.auc) {
     if (smoothing.args$roc1$smooth) {
-      paired.roc1$auc <- auc(smooth.roc=do.call("smooth.roc", c(list(roc=paired.roc1), smoothing.args$roc1)), ...)
+      roc1$auc <- auc(smooth.roc=do.call("smooth.roc", c(list(roc=roc1), smoothing.args$roc1)), ...)
     }
     else
-      paired.roc1$auc <- auc(paired.roc1, ...)
+      roc1$auc <- auc(roc1, ...)
   }
-  if (is.null(paired.roc2$auc) | !reuse.auc) {
+  if (is.null(roc2$auc) | !reuse.auc) {
     if (smoothing.args$roc2$smooth)
-      paired.roc2$auc <- auc(smooth.roc=do.call("smooth.roc", c(list(roc=paired.roc2), smoothing.args$roc2)), ...)
+      roc2$auc <- auc(smooth.roc=do.call("smooth.roc", c(list(roc=roc2), smoothing.args$roc2)), ...)
     else
-      paired.roc2$auc <- auc(paired.roc2, ...)
+      roc2$auc <- auc(roc2, ...)
   }
     
   # check that the full AUC was requested in auc. Otherwise, issue a warning
-  if (!identical(attributes(paired.roc1$auc)[names(attributes(paired.roc1$auc))!="roc"], attributes(paired.roc2$auc)[names(attributes(paired.roc2$auc))!="roc"]))
+  if (!identical(attributes(roc1$auc)[names(attributes(roc1$auc))!="roc"], attributes(roc2$auc)[names(attributes(roc2$auc))!="roc"]))
     warning("Different AUC specifications in the ROC curves. Enforcing the inconsistency, but unexpected results may be produced.")
   # check that the full AUC was requested in auc. Otherwise, issue a warning
   if (!identical(smoothing.args$roc1, smoothing.args$roc2))
@@ -155,7 +194,7 @@ roc.test.roc <- function(roc1, roc2, method=c("delong", "bootstrap", "venkatrama
   # Check the method
   if (missing(method) | is.null(method)) {
     # determine method if missing
-    if (is.numeric(attr(paired.roc1$auc, "partial.auc")) && length(attr(paired.roc1$auc, "partial.auc") == 2)) {
+    if (is.numeric(attr(roc1$auc, "partial.auc")) && length(attr(roc1$auc, "partial.auc") == 2)) {
       # partial auc: go for bootstrap
       method <- "bootstrap"
     }
@@ -163,8 +202,8 @@ roc.test.roc <- function(roc1, roc2, method=c("delong", "bootstrap", "venkatrama
       # smoothing in one or both: bootstrap
       method <- "bootstrap"
     }
-    else if (paired.roc1$direction != paired.roc2$direction) {
-      # delong doesn't work well with opposite directions (will report high significance if paired.roc1$auc and paired.roc2$auc are similar and high)
+    else if (roc1$direction != roc2$direction) {
+      # delong doesn't work well with opposite directions (will report high significance if roc1$auc and roc2$auc are similar and high)
       method <- "bootstrap"
     }
     else {
@@ -175,7 +214,7 @@ roc.test.roc <- function(roc1, roc2, method=c("delong", "bootstrap", "venkatrama
     method <- match.arg(method)
     if (method == "delong") {
       # delong NA to pAUC: warn + change
-      if (is.numeric(attr(paired.roc1$auc, "partial.auc")) && length(attr(paired.roc1$auc, "partial.auc") == 2)) {
+      if ((is.numeric(attr(roc1$auc, "partial.auc")) && length(attr(roc1$auc, "partial.auc") == 2)) || (is.numeric(attr(roc2$auc, "partial.auc")) && length(attr(roc2$auc, "partial.auc") == 2))) {
         warning("Using DeLong's test for partial AUC is not supported. Using bootstrap test instead.")
         method <- "bootstrap"
       }
@@ -183,48 +222,50 @@ roc.test.roc <- function(roc1, roc2, method=c("delong", "bootstrap", "venkatrama
         warning("Using DeLong's test for smoothed ROCs is not supported. Using bootstrap test instead.")
         method <- "bootstrap"
       }
-      if (paired.roc1$direction != paired.roc2$direction)
+      if (roc1$direction != roc2$direction)
         warning("DeLong's test should not be applied to ROC curves with a different direction.")
     }
     else if (method == "venkatraman") {
-      if (is.numeric(attr(paired.roc1$auc, "partial.auc")) && length(attr(paired.roc1$auc, "partial.auc") == 2))
+      if (is.numeric(attr(roc1$auc, "partial.auc")) && length(attr(roc1$auc, "partial.auc") == 2))
         warning("Partial AUC is ignored in Venkatraman's test.")
       if (smoothing.args$roc1$smooth || smoothing.args$roc2$smooth)
         stop("Using Venkatraman's test for smoothed ROCs is not supported.")
-      if (paired.roc1$direction != paired.roc2$direction)
-        warning("Venkatraman's test should not be applied to ROC curves with a different direction.")
+      if (roc1$direction != roc2$direction)
+        warning("Venkatraman's test should not be applied to ROC curves with different directions.")
       if (alternative != "two.sided") {
-        warning("Only two-sided tests are available for Venkatraman.")
+        warning("Only two-sided tests are available for Venkatraman. Performing two-sided test instead.")
         alternative <- "two.sided"
       }
+      if (! paired)
+        stop("Using Venkatraman's test for unpaired ROCs is not supported.")
     }
   }
 
   # Prepare the return value htest
   if (smoothing.args$roc1$smooth)
-    estimate <- do.call("smooth.roc", c(list(roc=paired.roc1), smoothing.args$roc1))$auc
+    estimate <- do.call("smooth.roc", c(list(roc=roc1), smoothing.args$roc1))$auc
   else
-    estimate <- paired.roc1$auc
+    estimate <- roc1$auc
   if (smoothing.args$roc2$smooth)
-    estimate <- c(estimate, do.call("smooth.roc", c(list(roc=paired.roc2), smoothing.args$roc2))$auc)
+    estimate <- c(estimate, do.call("smooth.roc", c(list(roc=roc2), smoothing.args$roc2))$auc)
   else
-    estimate <- c(estimate, paired.roc2$auc)
-  if (identical(attr(paired.roc1$auc, "partial.auc"), FALSE)) {
+    estimate <- c(estimate, roc2$auc)
+  if (identical(attr(roc1$auc, "partial.auc"), FALSE)) {
     nest <- paste(ifelse(smoothing.args$roc1$smooth, "Smoothed ", ""), "AUC of roc1", sep="")
   }
   else {
-    nest <- paste(ifelse (attr(paired.roc1$auc, "partial.auc.correct"), "Corrected ", ""),
+    nest <- paste(ifelse (attr(roc1$auc, "partial.auc.correct"), "Corrected ", ""),
                   ifelse (smoothing.args$roc1$smooth, "Smoothed ", ""),
-                  "pAUC (", attr(paired.roc1$auc, "partial.auc")[1], "-", attr(paired.roc1$auc, "partial.auc")[2], " ", attr(paired.roc1$auc, "partial.auc.focus"),
+                  "pAUC (", attr(roc1$auc, "partial.auc")[1], "-", attr(roc1$auc, "partial.auc")[2], " ", attr(roc1$auc, "partial.auc.focus"),
                         ") of roc1", sep="")
   }
-  if (identical(attr(paired.roc2$auc, "partial.auc"), FALSE)) {
+  if (identical(attr(roc2$auc, "partial.auc"), FALSE)) {
     nest <- c(nest, paste(ifelse(smoothing.args$roc2$smooth, "Smoothed ", ""), "AUC of roc2", sep=""))
   }
   else {
-    nest <- c(nest, paste(ifelse (attr(paired.roc2$auc, "partial.auc.correct"), "Corrected ", ""),
+    nest <- c(nest, paste(ifelse (attr(roc2$auc, "partial.auc.correct"), "Corrected ", ""),
                           ifelse (smoothing.args$roc2$smooth, "Smoothed ", ""),
-                          "pAUC (", attr(paired.roc2$auc, "partial.auc")[1], "-", attr(paired.roc2$auc, "partial.auc")[2], " ", attr(paired.roc2$auc, "partial.auc.focus"),
+                          "pAUC (", attr(roc2$auc, "partial.auc")[1], "-", attr(roc2$auc, "partial.auc")[2], " ", attr(roc2$auc, "partial.auc.focus"),
                           ") of roc2", sep=""))
   }
   nest <- sub("Corrected Smoothed", "Corrected smoothed", nest) # no upper on smoothed if corrected.
@@ -240,23 +281,41 @@ roc.test.roc <- function(roc1, roc2, method=c("delong", "bootstrap", "venkatrama
   class(htest) <- "htest"
   
   if (method == "delong") {
-    stat <- delong.test(paired.roc1, paired.roc2)
-    names(stat) <- "Z"
-    htest$statistic <- stat
-    htest$method <- "DeLong's test for two correlated ROC curves"
+    if (paired) {
+      stat <- delong.paired.test(roc1, roc2)
+      names(stat) <- "Z"
+      htest$statistic <- stat
+      htest$method <- "DeLong's test for two correlated ROC curves"
+      
+      if (alternative == "two.sided")
+        pval <- 2*pnorm(-abs(stat))
+      else if (alternative == "less")
+        pval <- pnorm(-stat)
+      else
+        pval <- pnorm(stat)
+      htest$p.value <- pval
+    }
+    else {
+      stats <- delong.unpaired.test(roc1, roc2)
+      stat <- stats[1]
+      df <- stats[2]
+      htest$statistic <- c("D"=stat)
+      htest$parameter <- c("df"=df)
+      htest$method <- "DeLong's test for two ROC curves"
 
-    if (alternative == "two.sided")
-      pval <- 2*pnorm(-abs(stat))
-    else if (alternative == "less")
-      pval <- pnorm(-stat)
-    else
-      pval <- pnorm(stat)
-    htest$p.value <- pval
+      if (alternative == "two.sided")
+        pval <- 2*pt(-abs(stat), df=df)
+      else if (alternative == "less")
+        pval <- pt(-stat, df=df)
+      else
+        pval <- pt(stat, df=df)
+      htest$p.value <- pval
+    }
   }
   else if (method == "venkatraman") {
     if(class(progress) != "list")
       progress <- roc.utils.get.progress.bar(progress, title="Venkatraman ROC test", label="Permutations in progress...", ...)
-    stats <- venkatraman.test(paired.roc1, paired.roc2, boot.n, ties.method, progress)
+    stats <- venkatraman.test(roc1, roc2, boot.n, ties.method, progress)
     stat <- stats[[1]]
     names(stat) <- "E"
     htest$statistic <- stat
@@ -269,22 +328,48 @@ roc.test.roc <- function(roc1, roc2, method=c("delong", "bootstrap", "venkatrama
     htest$estimate <- NULL # AUC not relevant in venkatraman
     names(null.value) <- "difference in ROC operating points"
   }
-  else { # method == "bootstrap"
+  else { # method == "bootstrap" or "sensitivity" or "specificity"
     # Check if called with density.cases or density.controls
     if (is.null(smoothing.args) || is.numeric(smoothing.args$density.cases) || is.numeric(smoothing.args$density.controls))
       stop("Cannot compute the statistic on ROC curves smoothed with numeric density.controls and density.cases.")
 
     if(class(progress) != "list")
       progress <- roc.utils.get.progress.bar(progress, title="Bootstrap ROC test", label="Bootstrap in progress...", ...)
-    stat <- bootstrap.test(paired.roc1, paired.roc2, boot.n, boot.stratified, smoothing.args, progress)
+
+    if (method == "specificity") {
+      if (! is.numeric(specificity) || length(specificity) != 1) {
+        stop("Argument 'specificity' must be numeric of length 1 for a specificity test.")
+      }
+      stat <- bootstrap.test(roc1, roc2, "sp", specificity, paired, boot.n, boot.stratified, smoothing.args, progress)
+      if (paired)
+        htest$method <- "Specificity test for two correlated ROC curves"
+      else
+        htest$method <- "Specificity test for two ROC curves"
+    }
+    else if (method == "sensitivity") {
+      if (! is.numeric(sensitivity) || length(sensitivity) != 1) {
+        stop("Argument 'sensitivity' must be numeric of length 1 for a sensitivity test.")
+      }
+      stat <- bootstrap.test(roc1, roc2, "se", sensitivity, paired, boot.n, boot.stratified, smoothing.args, progress)
+      if (paired)
+        htest$method <- "Sensitivity test for two correlated ROC curves"
+      else
+        htest$method <- "Sensitivity test for two ROC curves"
+    }
+    else {
+      stat <- bootstrap.test(roc1, roc2, "boot", NULL, paired, boot.n, boot.stratified, smoothing.args, progress)
+      if (paired)
+        htest$method <- "Bootstrap test for two correlated ROC curves"
+      else
+        htest$method <- "Bootstrap test for two ROC curves"
+    }
     stat <- as.vector(stat) # remove auc attributes
     names(stat) <- "D"
     htest$statistic <- stat
     parameter <- c(boot.n, boot.stratified)
     names(parameter) <- c("boot.n", "boot.stratified")
     htest$parameter <- parameter
-    htest$method <- "Bootstrap test for two correlated ROC curves"
-
+    
     if (alternative == "two.sided")
       pval <- 2*pnorm(-abs(stat))
     else if (alternative == "less")
@@ -294,15 +379,14 @@ roc.test.roc <- function(roc1, roc2, method=c("delong", "bootstrap", "venkatrama
     htest$p.value <- pval
   }
 
-  htest$roc1 <- paired.roc1
-  htest$roc2 <- paired.roc2
+  htest$roc1 <- roc1
+  htest$roc2 <- roc2
   # Restore smoothing if necessary
   if (smoothing.args$roc1$smooth)
     htest$roc1 <- do.call("smooth.roc", c(list(roc=roc1), smoothing.args$roc1))
   if (smoothing.args$roc2$smooth)
     htest$roc2 <- do.call("smooth.roc", c(list(roc=roc2), smoothing.args$roc2))
   return(htest)
-
 }
 
 venkatraman.test <- function(roc1, roc2, boot.n, ties.method="first", progress) {
@@ -345,8 +429,8 @@ venkatraman.stat <- function(R, S, D, levels) {
   return(sum(abs((S.fn + S.fp) - (R.fn + R.fp))))
 }
 
-# Delong's test, used by roc.test.roc
-delong.test <- function(roc1, roc2) {
+# Delong's test paired, used by roc.test.roc
+delong.paired.test <- function(roc1, roc2) {
 
   # Get data from roc1 and roc2
   YR <- roc1$controls # = C2, n, YRj
@@ -393,8 +477,57 @@ delong.test <- function(roc1, roc2) {
   return(zscore)
 }
 
-# Bootstrap test, used by roc.test.roc
-bootstrap.test <- function(roc1, roc2, boot.n, boot.stratified, smoothing.args, progress) {
+# Delong's test unpaired, used by roc.test.roc
+delong.unpaired.test <- function(roc1, roc2) {
+
+  # Get data from roc1 and roc2
+  YR <- roc1$controls # = C2, n, YRj
+  XR <- roc1$cases # = C1, m, XRi
+  YS <- roc2$controls # = C2, n, YSj
+  XS <- roc2$cases # = C1, m, XSi
+
+  nr <- length(YR)
+  mr <- length(XR)
+  mnr <- mr*nr
+
+  ns <- length(YS)
+  ms <- length(XS)
+  mns <- ms*ns
+
+  # Compute Mann-Whitney statistics and deduce thetaR and thetaS
+  MWR <- sapply(1:nr, function(j) sapply(1:mr, function(i, j) MW.kernel(XR[i], YR[j]), j=j))
+  MWS <- sapply(1:ns, function(j) sapply(1:ms, function(i, j) MW.kernel(XS[i], YS[j]), j=j))
+
+  thetaR <- sum(MWR)/mnr
+  thetaS <- sum(MWS)/mns
+
+  # Delong-specific computations
+  VR10 <- sapply(1:mr, function(i) {sum(MWR[i,])})/nr
+  VR01 <- sapply(1:nr, function(j) {sum(MWR[,j])})/mr
+  VS10 <- sapply(1:ms, function(i) {sum(MWS[i,])})/ns
+  VS01 <- sapply(1:ns, function(j) {sum(MWS[,j])})/ms
+
+  SR10 <- sum((VR10 - thetaR) * (VR10 - thetaR))/(mr-1)
+  SS10 <- sum((VS10 - thetaS) * (VS10 - thetaS))/(ms-1)
+
+  SR01 <- sum((VR01 - thetaR) * (VR01 - thetaR))/(nr-1)
+  SS01 <- sum((VS01 - thetaS) * (VS01 - thetaS))/(ns-1)
+
+  SR <- SR10/mr + SR01/nr
+  SS <- SS10/ms + SS01/ns
+
+  ntotR <- nr + mr
+  ntotS <- ns + ms
+  SSR <- sqrt((SR) + (SS))
+  t <- (thetaR - thetaS) / SSR
+  df <- ((SR) + (SS))^2 /
+    (((SR)^2 / (ntotR-1)) + ((SS)^2 / (ntotS -1 )))
+
+  return(c(t, df))
+}
+
+# Paired bootstrap test, used by roc.test.roc
+bootstrap.test <- function(roc1, roc2, test, x, paired, boot.n, boot.stratified, smoothing.args, progress) {
 
   # rename method into smooth.method for roc
   smoothing.args$roc1$smooth.method <- smoothing.args$roc1$method
@@ -415,21 +548,22 @@ bootstrap.test <- function(roc1, roc2, boot.n, boot.stratified, smoothing.args, 
   auc2skeleton <- c(auc2skeleton, smoothing.args$roc2)
 
   if (boot.stratified) { # precompute sorted responses if stratified
-    response <- factor(c(rep(roc1$levels[1], length(roc1$controls)), rep(roc1$levels[2], length(roc1$cases))), levels=roc1$levels)
-    auc1skeleton$response <- response
-    auc2skeleton$response <- response
-    aucs <- raply(boot.n, stratified.bootstrap.test(roc1, roc2, auc1skeleton, auc2skeleton), .progress=progress)
+    response.roc1 <- factor(c(rep(roc1$levels[1], length(roc1$controls)), rep(roc1$levels[2], length(roc1$cases))), levels=roc1$levels)
+    response.roc2 <- factor(c(rep(roc2$levels[1], length(roc2$controls)), rep(roc2$levels[2], length(roc2$cases))), levels=roc2$levels)
+    auc1skeleton$response <- response.roc1
+    auc2skeleton$response <- response.roc2
+    resampled.values <- raply(boot.n, stratified.bootstrap.test(roc1, roc2, test, x, paired, auc1skeleton, auc2skeleton), .progress=progress)
   }
   else {
-    aucs <- raply(boot.n, nonstratified.bootstrap.test(roc1, roc2, auc1skeleton, auc2skeleton), .progress=progress)
+    resampled.values <- raply(boot.n, nonstratified.bootstrap.test(roc1, roc2, test, x, paired, auc1skeleton, auc2skeleton), .progress=progress)
   }
 
   # compute the statistics
-  diffs <- aucs[,1] - aucs[,2]
+  diffs <- resampled.values[,1] - resampled.values[,2]
 
   # are there NA values?
-  if (sum(is.na(diffs)) > 0) {
-    warning("NA value(s) produced during bootstrap were ignored.")
+  if ((num.NAs <- sum(is.na(diffs))) > 0) {
+    warning(sprintf("%i NA value(s) produced during bootstrap were ignored.", num.NAs))
     diffs <- diffs[!is.na(diffs)]
   }
 
@@ -442,47 +576,101 @@ bootstrap.test <- function(roc1, roc2, boot.n, boot.stratified, smoothing.args, 
     smoothing.args$roc2$method <- smoothing.args$roc2$smooth.method
     roc2 <- do.call("smooth.roc", c(list(roc=roc2), smoothing.args$roc2))
   }
-  
-  D <- (roc1$auc - roc2$auc) / sd(diffs)
+
+  if (test == "sp") {
+    coord1 <- coords(roc1, x=x, input=c("specificity"), ret=c("sensitivity"), as.list=FALSE)
+    coord2 <- coords(roc2, x=x, input=c("specificity"), ret=c("sensitivity"), as.list=FALSE)
+    D <- (coord1 - coord2) / sd(diffs)
+  }
+  else if (test == "se") {
+    coord1 <- coords(roc1, x=x, input=c("sensitivity"), ret=c("specificity"), as.list=FALSE)
+    coord2 <- coords(roc2, x=x, input=c("sensitivity"), ret=c("specificity"), as.list=FALSE)
+    D <- (coord1 - coord2) / sd(diffs)
+  }
+  else {
+    D <- (roc1$auc - roc2$auc) / sd(diffs)
+  }
   if (is.nan(D) && all(diffs == 0) && roc1$auc == roc2$auc)
     D <- 0 # special case: no difference between AUCs produces a NaN
 
   return(D)
 }
 
-stratified.bootstrap.test <- function(roc1, roc2, auc1skeleton, auc2skeleton) {
+stratified.bootstrap.test <- function(roc1, roc2, test, x, paired, auc1skeleton, auc2skeleton) {
   # sample control and cases separately for a stratified bootstrap
-  idx.controls <- sample(1:length(roc1$controls), replace=TRUE)
-  idx.cases <- sample(1:length(roc1$cases), replace=TRUE)
+  idx.controls.roc1 <- sample(1:length(roc1$controls), replace=TRUE)
+  idx.cases.roc1 <- sample(1:length(roc1$cases), replace=TRUE)
   # finish roc skeletons
-  auc1skeleton$predictor <- c(roc1$controls[idx.controls], roc1$cases[idx.cases])
-  auc2skeleton$predictor <- c(roc2$controls[idx.controls], roc2$cases[idx.cases])
-  # Resampled ROC might not be smoothable: catch errors
-  auc1 <- try(do.call("roc.default", auc1skeleton)$auc, silent=TRUE)
-  if (class(auc1) == "try-error")
-    auc1 <- NA
-  auc2 <- try(do.call("roc.default", auc2skeleton)$auc, silent=TRUE)
-  if (class(auc2) == "try-error")
-    auc2 <- NA
-  return(c(auc1, auc2))
-#  return(c(do.call("roc.default", auc1skeleton)$auc, do.call("roc.default", auc2skeleton)$auc))
+  auc1skeleton$predictor <- c(roc1$controls[idx.controls.roc1], roc1$cases[idx.cases.roc1])
+  if (paired) {
+    auc2skeleton$predictor <- c(roc2$controls[idx.controls.roc1], roc2$cases[idx.cases.roc1])
+  }
+  else { # for unpaired, resample roc2 separately
+    idx.controls.roc2 <- sample(1:length(roc2$controls), replace=TRUE)
+    idx.cases.roc2 <- sample(1:length(roc2$cases), replace=TRUE)
+    auc2skeleton$predictor <- c(roc2$controls[idx.controls.roc2], roc2$cases[idx.cases.roc2])
+  }
+
+  # re-compute the resampled ROC curves
+  roc1 <- try(do.call("roc.default", auc1skeleton), silent=TRUE)
+  roc2 <- try(do.call("roc.default", auc2skeleton), silent=TRUE)
+  # resampled ROCs might not be smoothable: return NA
+  if (class(roc1) == "try-error" || class(roc2) == "try-error") {
+    return(c(NA, NA))
+  }
+  else {
+    if (test == "sp") {
+      coord1 <- coords(roc1, x=x, input=c("specificity"), ret=c("sensitivity"), as.list=FALSE)
+      coord2 <- coords(roc1, x=x, input=c("specificity"), ret=c("sensitivity"), as.list=FALSE)
+      return(c(coord1, coord2))
+    }
+    else if (test == "se") {
+      coord1 <- coords(roc1, x=x, input=c("sensitivity"), ret=c("specificity"), as.list=FALSE)
+      coord2 <- coords(roc1, x=x, input=c("sensitivity"), ret=c("specificity"), as.list=FALSE)
+      return(c(coord1, coord2))
+    }
+    else {
+      return(c(roc1$auc, roc2$auc))
+    }
+  }
 }
 
-nonstratified.bootstrap.test <- function(roc1, roc2, auc1skeleton, auc2skeleton) {
+nonstratified.bootstrap.test <- function(roc1, roc2, test, x, paired, auc1skeleton, auc2skeleton) {
   # sample all patients
-  idx.all <- sample(1:length(roc1$response), replace=TRUE)
+  idx.all.roc1 <- sample(1:length(roc1$response), replace=TRUE)
   # finish roc skeletons
-  auc1skeleton$response <- roc1$response[idx.all]
-  auc1skeleton$predictor <- roc1$predictor[idx.all]
-  auc2skeleton$response <- roc2$response[idx.all]
-  auc2skeleton$predictor <- roc2$predictor[idx.all]
-  # Resampled ROC might not be smoothable: catch errors
-  auc1 <- try(do.call("roc.default", auc1skeleton)$auc, silent=TRUE)
-  if (class(auc1) == "try-error")
-    auc1 <- NA
-  auc2 <- try(do.call("roc.default", auc2skeleton)$auc, silent=TRUE)
-  if (class(auc2) == "try-error")
-    auc2 <- NA
-  return(c(auc1, auc2))
-#  return(c(do.call("roc.default", auc1skeleton)$auc, do.call("roc.default", auc2skeleton)$auc))
+  auc1skeleton$response <- roc1$response[idx.all.roc1]
+  auc1skeleton$predictor <- roc1$predictor[idx.all.roc1]
+  if (paired) { # if paired, resample roc2 as roc1
+    auc2skeleton$response <- roc2$response[idx.all.roc1]
+    auc2skeleton$predictor <- roc2$predictor[idx.all.roc1]
+  }
+  else { # if unpaired, resample roc2 separately
+    idx.all.roc2 <- sample(1:length(roc2$response), replace=TRUE)
+    auc2skeleton$response <- roc2$response[idx.all.roc2]
+    auc2skeleton$predictor <- roc2$predictor[idx.all.roc2]
+  }
+
+  # re-compute the resampled ROC curves
+  roc1 <- try(do.call("roc.default", auc1skeleton), silent=TRUE)
+  roc2 <- try(do.call("roc.default", auc2skeleton), silent=TRUE)
+  # resampled ROCs might not be smoothable: return NA
+  if (class(roc1) == "try-error" || class(roc2) == "try-error") {
+    return(c(NA, NA))
+  }
+  else {
+    if (test == "sp") {
+      coord1 <- coords(roc1, x=x, input=c("specificity"), ret=c("sensitivity"), as.list=FALSE)
+      coord2 <- coords(roc1, x=x, input=c("specificity"), ret=c("sensitivity"), as.list=FALSE)
+      return(c(coord1, coord2))
+    }
+    else if (test == "se") {
+      coord1 <- coords(roc1, x=x, input=c("sensitivity"), ret=c("specificity"), as.list=FALSE)
+      coord2 <- coords(roc1, x=x, input=c("sensitivity"), ret=c("specificity"), as.list=FALSE)
+      return(c(coord1, coord2))
+    }
+    else {
+      return(c(roc1$auc, roc2$auc))
+    }
+  }
 }

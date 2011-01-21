@@ -2,11 +2,13 @@
 \name{print}
 \alias{print.roc}
 \alias{print.smooth.roc}
+\alias{print.multiclass.roc}
 \alias{print.ci.auc}
 \alias{print.ci.thresholds}
 \alias{print.ci.se}
 \alias{print.ci.sp}
 \alias{print.auc}
+\alias{print.multiclass.auc}
 
 \title{
   Print a ROC curve object
@@ -16,9 +18,12 @@
 }
 \usage{
 \S3method{print}{roc}(x, digits=max(3, getOption("digits") - 3), call=TRUE, ...)
+\S3method{print}{multiclass.roc}(x, digits=max(3, getOption("digits") -
+  3), call=TRUE, ...) 
 \S3method{print}{smooth.roc}(x, digits=max(3, getOption("digits") - 3),
 call=TRUE, ...)
 \S3method{print}{auc}(x, digits=max(3, getOption("digits") - 3), ...)
+\S3method{print}{multiclass.auc}(x, digits=max(3, getOption("digits") - 3), ...)
 \S3method{print}{ci.auc}(x, digits=max(3, getOption("digits") - 3), ...)
 \S3method{print}{ci.thresholds}(x, digits=max(3, getOption("digits") - 3), ...)
 \S3method{print}{ci.se}(x, digits=max(3, getOption("digits") - 3), ...)

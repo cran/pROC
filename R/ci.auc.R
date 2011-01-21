@@ -205,7 +205,7 @@ stratified.ci.auc <- function(roc) {
   roc$sensitivities <- perfs[2,]
   roc$specificities <- perfs[1,]
 
-  auc.roc(roc, partial.auc=attr(roc$auc, "partial.auc"), partial.auc.focus=attr(roc$auc, "partial.auc.focus"), partial.auc.correct=attr(roc$auc, "partial.auc.correct"))
+  as.numeric(auc.roc(roc, partial.auc=attr(roc$auc, "partial.auc"), partial.auc.focus=attr(roc$auc, "partial.auc.focus"), partial.auc.correct=attr(roc$auc, "partial.auc.correct")))
 }
 
 # Returns an auc in a non stratified manner
@@ -222,7 +222,7 @@ nonstratified.ci.auc <- function(roc) {
   roc$sensitivities <- perfs[2,]
   roc$specificities <- perfs[1,]
   
-  auc.roc(roc, partial.auc=attr(roc$auc, "partial.auc"), partial.auc.focus=attr(roc$auc, "partial.auc.focus"), partial.auc.correct=attr(roc$auc, "partial.auc.correct"))
+  as.numeric(auc.roc(roc, partial.auc=attr(roc$auc, "partial.auc"), partial.auc.focus=attr(roc$auc, "partial.auc.focus"), partial.auc.correct=attr(roc$auc, "partial.auc.correct")))
 }
 
 # Returns a smoothed auc in a stratified manner
@@ -248,7 +248,7 @@ stratified.ci.smooth.auc <- function(roc, smooth.roc.call, auc.call) {
   auc.call$smooth.roc <- try(eval(smooth.roc.call), silent=TRUE)
   if (class(auc.call$smooth.roc) == "try-error")
     return(NA)
-  return(eval(auc.call))
+  return(as.numeric(eval(auc.call)))
 }
 
 # Returns a smoothed auc in a non stratified manner
@@ -277,7 +277,7 @@ nonstratified.ci.smooth.auc <- function(roc, smooth.roc.call, auc.call) {
   auc.call$smooth.roc <- try(eval(smooth.roc.call), silent=TRUE)
   if (class(auc.call$smooth.roc) == "try-error")
     return(NA)
-  return(eval(auc.call))
+  return(as.numeric(eval(auc.call)))
 }
 
 

@@ -46,6 +46,8 @@ print.thres.col="black",
 print.thres.pattern=ifelse(x$percent, "\%.1f (\%.1f\%\%, \%.1f\%\%)", "\%.3f (\%.3f, \%.3f)"),
 print.thres.cex=par("cex"),
 print.thres.pattern.cex=print.thres.cex,
+print.thres.best.method=NULL,
+print.thres.best.weights=c(1, 0.5),
 # Print the AUC on the plot
 print.auc=FALSE,
 print.auc.pattern=NULL,
@@ -135,6 +137,11 @@ ci.col=ifelse(ci.type=="bars", par("fg"), "gainsboro"),
   }
   \item{print.thres.pattern.cex}{the character expansion factor (cex) for the
     threshold text pattern. See \link{par} for more details.
+  }
+  \item{print.thres.best.method, print.thres.best.weights}{if
+    \code{print.thres="best"} or \code{print.thres=TRUE}, what method must be used to determine which
+    threshold is the best. See argument \code{best.method} and \code{best.weights} to
+    \code{\link{coords}} for more details.
   }
   \item{print.auc}{boolean. Should the numeric value of AUC be printed
     on the plot?

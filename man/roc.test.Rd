@@ -20,9 +20,10 @@
 \usage{
 roc.test(...)
 \S3method{roc.test}{roc}(roc1, roc2, method=c("delong", "bootstrap",
-"venkatraman"), alternative = c("two.sided", "less", "greater"),
-reuse.auc=TRUE, boot.n=2000, boot.stratified=TRUE, ties.method="first",
-progress=getOption("pROCProgress")$name, ...)
+"venkatraman", "sensitivity", "specificity"), sensitivity = NULL,
+specificity = NULL, alternative = c("two.sided", "less", "greater"),
+paired=NULL, reuse.auc=TRUE, boot.n=2000, boot.stratified=TRUE,
+ties.method="first", progress=getOption("pROCProgress")$name, ...)
 \S3method{roc.test}{auc}(roc1, roc2, ...)
 \S3method{roc.test}{smooth.roc}(roc1, roc2, ...)
 \S3method{roc.test}{formula}(formula, data, ...)
@@ -52,10 +53,18 @@ na.rm=TRUE, method=NULL, ...)
     \dQuote{bootstrap} or \dQuote{venkatraman}. The first letter is sufficient. If omitted, the
 	appropriate method is selected as explained in details.
   }
+  \item{sensitivity, specificity}{if \code{method="sensitivity"} or
+    \code{method="specificity"}, the respective level where the test
+    must be assessed as a numeric of length 1. }
   \item{alternative}{specifies the alternative hypothesis. Either of
     \dQuote{two.sided}, \dQuote{less} or \dQuote{greater}. The first letter is
     sufficient. Default: \dQuote{two.sided}. Only \dQuote{two.sided} is available
     with \code{method="venkatraman"}.
+  }
+  \item{paired}{a logical indicating whether you want a paired roc.test.
+    If \code{NULL}, the paired status will be auto-detected by \code{\link{are.paired}}.
+    If \code{TRUE} but the paired status cannot be assessed by \code{\link{are.paired}}
+    will produce an error.
   }
   \item{reuse.auc}{if \code{TRUE} (default) and the \dQuote{roc} objects
     contain an \dQuote{auc} field, re-use these specifications for the
@@ -98,7 +107,8 @@ na.rm=TRUE, method=NULL, ...)
   Three methods are available: \dQuote{delong}, \dQuote{bootstrap} and \dQuote{venkatraman} (see
   \dQuote{Computational details} section below). \dQuote{delong} and
   \dQuote{bootstrap} are tests over the AUC whereas \dQuote{venkatraman}
-  compares the the ROC curves themselves.
+  compares the the ROC curves themselves. \dQuote{delong} and \dQuote{bootstrap} are available
+  as both paired and unpaired tests, whereas \dQuote{venkatraman} is only paired yet.
 
   Default is to use \dQuote{delong} method except for comparison of partial AUC, smoothed
   curves and curves with different \code{direction}, where \code{bootstrap}
@@ -115,6 +125,15 @@ na.rm=TRUE, method=NULL, ...)
   \code{alternative="less"}, the alternative is that the AUC of roc1 is
   smaller than the AUC of roc2. For \code{method="venkatraman"}, only
   \dQuote{two.sided} test is available.
+  
+  If the \code{paired} argument is not provided, the \code{\link{are.paired}} function is
+  employed to detect the paired status of the ROC curves. It will test if the original \code{response} is
+  identical between the two ROC curves (this is always the case if the call is made with 
+  \code{roc.test.default}). This detection is unlikely to raise false positives, but
+  this possibility cannot be excluded entierly. It would require equal sample sizes
+  and \code{response} values and order in both ROC curves. If it happens to you, use \code{paired=FALSE}.
+  If you know the ROC curves are paired you can pass \code{paired=TRUE}. However this is
+  useless as it will be tested anyway.
 
   For \link[=smooth.roc]{smoothed ROC curves}, smoothing is performed again at each
   bootstrap replicate with the parameters originally provided.
@@ -157,7 +176,7 @@ na.rm=TRUE, method=NULL, ...)
   With \code{method="bootstrap"}, the processing is done as follow:
   \enumerate{
     \item \code{boot.n} bootstrap replicates are drawn from the
-    data. If \code{stratified} is \var{TRUE}, each replicate contains
+    data. If \code{boot.stratified} is \var{TRUE}, each replicate contains
     exactly the same number of controls and cases than the original
     sample, otherwise if \var{FALSE} the numbers can vary.
     \item for each bootstrap replicate, the AUC of the two ROC curves
@@ -170,13 +189,25 @@ na.rm=TRUE, method=NULL, ...)
     \item \var{D} is then compared to the normal distribution,
     according to the value of \code{alternative}.
   }
-  
+
   With \code{method="delong"}, the processing is done as described in
   DeLong \emph{et al.} (1988). Only comparison of two ROC curves is
   implemented.
 
   With \code{method="venkatraman"}, the processing is done as described
-  in Venkatraman and Begg (1996) with \code{boot.n} permutation of sample ranks.
+  in Venkatraman and Begg (1996) with \code{boot.n} permutation of
+  sample ranks (with ties breaking). For consistency reasons, the same argument \code{boot.n} as
+  in bootstrap defines the number of permutations to execute,
+  even though no bootstrap is performed.
+
+  For \code{method="specificity"}, the test assesses if the sensitivity of
+  the ROC curves are different at the level of specificity given by the
+  \code{specificity} argument, which must be a numeric of length 1. Bootstrap is employed as with \code{method="bootstrap"}
+  and \code{boot.n} and \code{boot.stratified} are available. This is
+  identical to the test proposed by Pepe \emph{et al.} (2009).
+  The \code{method="sensitivity"} is very similar, but assesses if the specificity of
+  the ROC curves are different at the level of sensitivity given by the
+  \code{sensitivity} argument.
 }
 
 \section{Warnings}{
@@ -201,13 +232,13 @@ na.rm=TRUE, method=NULL, ...)
 
   If \code{method="venkatraman"}, and \code{alternative} is
   \dQuote{less} or \dQuote{greater}, the warning \dQuote{Only two-sided
-    tests are available for Venkatraman.} is produced and a two tailed
-  test is performed instead.
+    tests are available for Venkatraman. Performing two-sided test instead.}
+  is produced and a two tailed test is performed.
 
   Both DeLong and Venkatraman's test ignores the direction of the ROC curve so that if two
   ROC curves have a different differ in the value of
   \code{direction}, the warning \dQuote{(DeLong|Venkatraman)'s test should not be
-    applied to ROC curves with a different direction.} is
+    applied to ROC curves with different directions.} is
   printed. However, the spurious test is enforced.
 
   If \code{boot.stratified=FALSE} and the sample has a large imbalance between
@@ -237,14 +268,22 @@ na.rm=TRUE, method=NULL, ...)
   If \code{density.cases} and \code{density.controls} were provided
   for smoothing, the error \dQuote{Cannot compute the statistic on ROC
     curves smoothed with density.controls and density.cases.} is
-  issued. 
+  issued.
 
-  With \code{method="venkatraman"}, the processing is done as described
-  in Venkatraman and Begg (1996) with \code{boot.n} permutation of
-  sample ranks (with ties breaking). For consistency reasons, the same argument \code{boot.n} as
-  in bootstrap defines the number of permutations to execute,
-  even though no bootstrap is performed.
+  If \code{method="venkatraman"} and one of the ROC curves is smoothed,
+  the error \dQuote{Using Venkatraman's test for smoothed ROCs is not
+    supported.} is produced.
 
+  If \code{method="venkatraman"} and an unpaired ROC test is requested,
+  the error \dQuote{Using Venkatraman's test for unpaired ROCs is not supported.}
+  is printed.
+
+  With \code{method="specificity"}, the error \dQuote{Argument
+    'specificity' must be numeric of length 1 for a specificity test.}
+  is given unless the specificity argument is specified as a numeric of
+  length 1. The \dQuote{Argument 'sensitivity' must be numeric of length
+    1 for a sensitivity test.} message is given for
+  \code{method="sensitivity"} under similar conditions.
 }
 
 \value{
@@ -282,6 +321,10 @@ na.rm=TRUE, method=NULL, ...)
   James A. Hanley and Barbara J. McNeil (1982) ``The meaning and use of
   the area under a receiver operating characteristic (ROC)
   curve''. \emph{Radiology} \bold{143}, 29--36.
+
+  Margaret Pepe, Gary Longton and Holly Janes (2009) ``Estimation and
+  Comparison of Receiver Operating Characteristic Curves''. \emph{The
+  Stata journal} \bold{9}, 1.
   
   Xavier Robin, Natacha Turck, Jean-Charles Sanchez and Markus Müller
   (2009) ``Combination of protein biomarkers''. \emph{useR! 2009}, Rennes.
@@ -344,6 +387,10 @@ roc.test(roc3, roc4, method="bootstrap")
 roc.test(roc1, roc2, reuse.auc=FALSE, partial.auc=c(1, 0.8), partial.auc.focus="se")
 }
 
+# Comparison on specificity and sensitivity
+roc.test(roc1, roc2, method="specificity", specificity=0.9)
+roc.test(roc1, roc2, method="sensitivity", sensitivity=0.9)
+
 # Spurious use of DeLong's test with different direction:
 roc5 <- roc(aSAH$outcome, aSAH$s100b, direction="<")
 roc6 <- roc(aSAH$outcome, aSAH$s100b, direction=">")
@@ -353,6 +400,11 @@ roc.test(roc5, roc6, method="delong")
 # Comparisons of the ROC curves
 roc.test(roc1, roc2, method="venkatraman")
 }
+
+# Unpaired tests
+roc7 <- roc(aSAH$outcome, aSAH$s100b)
+roc8 <- roc(aSAH$outcome[1:100], aSAH$s100b[1:100])
+roc.test(roc7, roc8, paired=FALSE)
 }
 
 \keyword{multivariate}

@@ -42,11 +42,14 @@ are.paired(...)
   Two ROC curves are paired if they are built on two variables observed
   on the same sample.
 
-  In practice, a good guess is to determine if the \code{response} vector
+  In practice, the paired status is granted if the \code{response} vector
   of both ROC curves are \link{identical}. If the \code{response}s are different, this can be
   due to missing values differing between the curves. In this case, the
   function will strip all \code{NA}s in both curves and check for
   identity again.
+
+  It can raise false positives if the responses are identical but correspond
+  to different patients.
 }
 
 \value{

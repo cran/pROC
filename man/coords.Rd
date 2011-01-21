@@ -15,9 +15,11 @@
 coords(...)
 \S3method{coords}{roc}(roc, x, input=c("threshold", "specificity",
 "sensitivity"), ret=c("threshold", "specificity", "sensitivity"),
-as.list=FALSE, ...)
+as.list=FALSE, best.method=c("youden", "closest.topleft"),
+best.weights=c(1, 0.5), ...)
 \S3method{coords}{smooth.roc}(smooth.roc, x, input=c("specificity",
-"sensitivity"), ret=c("specificity", "sensitivity"), as.list=FALSE, ...)
+"sensitivity"), ret=c("specificity", "sensitivity"), as.list=FALSE,
+best.method=c("youden", "closest.topleft"), best.weights=c(1, 0.5), ...)
 }
 		   
 \arguments{
@@ -51,6 +53,12 @@ as.list=FALSE, ...)
   }
   \item{as.list}{If the returned object must be a list. If \code{FALSE}
     (default), a named numeric vector is returned.}
+  \item{best.method}{if \code{x="best"}, the method to determine the
+    best threshold. See details in the \sQuote{Best thresholds} section.
+  }
+  \item{best.weights}{if \code{x="best"}, the weights to determine the
+    best threshold. See details in the \sQuote{Best thresholds} section.
+  }
   \item{\dots}{further arguments passed to or from other methods. Ignored.}
 }
 
@@ -88,6 +96,57 @@ as.list=FALSE, ...)
   \code{coords.smooth.roc} functions directly.
 }
 
+\section{Best thresholds}{
+  If \code{x="best"}, the \code{best.method} argument controls how the
+  optimal threshold is determined.
+  \describe{
+    \item{\dQuote{youden}}{
+      The Youden index is employed. The optimal cut-off is the threshold
+      that maximizes the distance to the identity (diagonal) line. Can
+      be shortened to \dQuote{y}.
+
+      The optimality criterion is:
+      \deqn{max(sensitivities + specificities)}{max(sensitivities + specificities)}
+    }
+    \item{\dQuote{closest.topleft}}{
+      The optimal threshold is the point closest to the top-left part of
+      the plot with perfect sensitivity or specificity. Can be shortened
+      to \dQuote{c} or \dQuote{t}.
+
+      The optimality criterion is:
+      \deqn{min((1 - sensitivities)^2 + (1- specificities)^2)}{min((1 - sensitivities)^2 + (1- specificities)^2)}
+    }
+  }
+
+  In addition, weights can be supplied if false positive and false
+  negative predictions are not equivalent: a numeric vector of length 2
+  to the \code{best.weights} argument. The indices define
+  \enumerate{
+    \item the cost of of a false negative classification
+    \item the prevalence, or the proportion of cases in the total
+      population (\eqn{\frac{n_{cases}}{n_{controls}+n_{cases}}}{n.cases/(n.controls+n.cases)}). 
+  }
+
+  The optimality criteria are modified as proposed by Perkins and Schisterman:
+  \describe{
+    \item{\dQuote{youden}}{
+      \deqn{max(sensitivities + r * specificities)}{max(sensitivities + r \times specificities)}
+    }
+    \item{\dQuote{closest.topleft}}{
+      \deqn{min((1 - sensitivities)^2 + r * (1- specificities)^2)}{min((1 - sensitivities)^2 + \times (1- specificities)^2)}
+    }
+  }
+
+  with
+
+  \deqn{r = \frac{1 - prevalence}{cost * prevalence}}{r = (1 - prevalence) / (cost * prevalence)}
+
+  By default, prevalence is 0.5 and cost is 1 so that no weight is
+  applied in effect.
+
+  Note that several thresholds might be equally optimal.
+}
+
 \value{
   Depending on the length of \code{x} and \code{as.list} argument.
 
@@ -117,6 +176,16 @@ as.list=FALSE, ...)
   of numeric or a list of lists (if \code{as.list=TRUE}). Even
   \dQuote{best} may return more than one value (for example if the ROC
   curve is below the identity line, both extreme points).
+
+  \code{coords} may also return \code{NULL} when there a partial area is
+  defined but no point of the ROC curve falls within the region.
+}
+
+\references{
+  Neil J. Perkins, Enrique F. Schisterman (2006) ``The Inconsistency of "Optimal" Cutpoints
+  Obtained using Two Criteria based on the Receiver Operating
+  Characteristic Curve''. \emph{American Journal of Epidemiology}
+  \bold{163}(7), 670--675. DOI: 10.1093/aje/kwj063
 }
 
 \seealso{
@@ -135,8 +204,7 @@ coords(rocobj, 0.5, "se", ret="se")
 coords(roc=rocobj, x=0.5, input="sensitivity", ret="sensitivity")
 
 # Same in percent
-rocobj <- roc(aSAH$outcome, aSAH$s100b,
-              percent=TRUE)
+rocobj <- roc(aSAH$outcome, aSAH$s100b, percent=TRUE)
 
 coords(rocobj, 0.55)
 coords(rocobj, 90, "specificity", as.list=TRUE)
@@ -152,6 +220,22 @@ stopifnot(all.equal(as.vector(rocobj$sensitivities), as.vector(sensitivities)))
 
 # Get the best threshold
 coords(rocobj, "b", ret="t")
+
+# Get the best threshold according to different methods
+rocobj <- roc(aSAH$outcome, aSAH$ndka, percent=TRUE)
+coords(rocobj, "b", ret="t", best.method="youden") # default
+coords(rocobj, "b", ret="t", best.method="closest.topleft")
+# and with different weights
+coords(rocobj, "b", ret="t", best.method="youden", best.weights=c(50, 0.2))
+coords(rocobj, "b", ret="t", best.method="closest.topleft", best.weights=c(5, 0.2))
+# and plot them
+plot(rocobj, print.thres="best", print.thres.best.method="youden")
+plot(rocobj, print.thres="best", print.thres.best.method="closest.topleft")
+plot(rocobj, print.thres="best", print.thres.best.method="youden",
+                                 print.thres.best.weights=c(50, 0.2)) 
+plot(rocobj, print.thres="best", print.thres.best.method="closest.topleft",
+                                 print.thres.best.weights=c(5, 0.2)) 
+
 }
 
 \keyword{univar}
