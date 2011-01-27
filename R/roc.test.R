@@ -236,8 +236,6 @@ roc.test.roc <- function(roc1, roc2,
         warning("Only two-sided tests are available for Venkatraman. Performing two-sided test instead.")
         alternative <- "two.sided"
       }
-      if (! paired)
-        stop("Using Venkatraman's test for unpaired ROCs is not supported.")
     }
   }
 
@@ -315,7 +313,14 @@ roc.test.roc <- function(roc1, roc2,
   else if (method == "venkatraman") {
     if(class(progress) != "list")
       progress <- roc.utils.get.progress.bar(progress, title="Venkatraman ROC test", label="Permutations in progress...", ...)
-    stats <- venkatraman.test(roc1, roc2, boot.n, ties.method, progress)
+    if (paired) {
+      stats <- venkatraman.paired.test(roc1, roc2, boot.n, ties.method, progress)
+      htest$method <- "Venkatraman's test for two paired ROC curves"
+    }
+    else {
+      stats <- venkatraman.unpaired.test(roc1, roc2, boot.n, ties.method, progress)
+      htest$method <- "Venkatraman's test for two unpaired ROC curves"
+    }
     stat <- stats[[1]]
     names(stat) <- "E"
     htest$statistic <- stat
@@ -324,9 +329,8 @@ roc.test.roc <- function(roc1, roc2,
     htest$parameter <- parameter
     pval <- sum(stats[[2]]>=stats[[1]])/boot.n
     htest$p.value <- pval
-    htest$method <- "Venkatraman's test for two paired ROC curves"
-    htest$estimate <- NULL # AUC not relevant in venkatraman
     names(null.value) <- "difference in ROC operating points"
+    htest$estimate <- NULL # AUC not relevant in venkatraman
   }
   else { # method == "bootstrap" or "sensitivity" or "specificity"
     # Check if called with density.cases or density.controls
@@ -389,32 +393,69 @@ roc.test.roc <- function(roc1, roc2,
   return(htest)
 }
 
-venkatraman.test <- function(roc1, roc2, boot.n, ties.method="first", progress) {
+venkatraman.paired.test <- function(roc1, roc2, boot.n, ties.method="first", progress) {
   X <- roc1$predictor
   Y <- roc2$predictor
   R <- rank(X, ties.method = ties.method)
   S <- rank(Y, ties.method = ties.method)
   D <- roc1$response # because roc1&roc2 are paired
 
-  E <- venkatraman.stat(R, S, D, roc1$levels)
-  EP <- raply(boot.n, venkatraman.permutation(R, S, D, roc1$levels, ties.method), .progress=progress)
+  E <- venkatraman.paired.stat(R, S, D, roc1$levels)
+  EP <- raply(boot.n, venkatraman.paired.permutation(R, S, D, roc1$levels, ties.method), .progress=progress)
   return(list(E, EP))
 }
 
-venkatraman.permutation <- function(R, S, D, levels, ties.method) {
+venkatraman.unpaired.test <- function(roc1, roc2, boot.n, ties.method="first", progress) {
+  X <- roc1$predictor
+  Y <- roc2$predictor
+  R <- rank(X, ties.method = ties.method)
+  S <- rank(Y, ties.method = ties.method)
+  D1<- roc1$response
+  D2 <- roc2$response
+  mp <- (sum(D1 == roc1$levels[2]) + sum(D2 == roc2$levels[2]))/(length(D1) + length(D1)) # mixing proportion, kappa
+
+  E <- venkatraman.unpaired.stat(R, S, D1, D2, roc1$levels, roc2$levels, mp)
+  EP <- raply(boot.n, venkatraman.unpaired.permutation(R, S, D1, D2, roc1$levels, roc2$levels, mp, ties.method), .progress=progress)
+  return(list(E, EP))
+}
+
+
+venkatraman.paired.permutation <- function(R, S, D, levels, ties.method) {
   # Break ties
-  R2 <- R + runif(length(D)) - 0.5#, ties.method = ties.method) # Add small amount of random but keep same mean
-  S2 <- S + runif(length(D)) - 0.5#, ties.method = ties.method)
+  R2 <- R + runif(length(D)) - 0.5 # Add small amount of random but keep same mean
+  S2 <- S + runif(length(D)) - 0.5
 
   # Permutation
   q <- 1 - round(runif(length(D)))
   R3 <- R2 * q + (1 - q) * S
   S3 <- S2 * q + (1 - q) * R
 
-  return(venkatraman.stat(rank(R3, ties.method=ties.method), rank(S3, ties.method=ties.method), D, levels))
+  return(venkatraman.paired.stat(rank(R3, ties.method=ties.method), rank(S3, ties.method=ties.method), D, levels))
 }
 
-venkatraman.stat <- function(R, S, D, levels) {
+
+venkatraman.unpaired.permutation <- function(R, S, D1, D2, levels1, levels2, mp, ties.method) {
+  # Break ties
+  R <- R + runif(length(D1)) - 0.5 # Add small amount of random but keep same mean
+  S <- S + runif(length(D2)) - 0.5
+
+  R.controls <- R[D1==levels1[1]]
+  R.cases <- R[D1==levels1[2]]
+  S.controls <- S[D2==levels2[1]]
+  S.cases <- S[D2==levels2[2]]
+
+  # Permutation
+  controls <- sample(c(R.controls, S.controls))
+  cases <- sample(c(R.cases, S.cases))
+  R[D1==levels1[1]] <- controls[1:length(R.controls)]
+  S[D2==levels2[1]] <- controls[(length(R.controls)+1):length(controls)]
+  R[D1==levels1[2]] <- cases[1:length(R.cases)]
+  S[D2==levels2[2]] <- cases[(length(R.cases)+1):length(cases)]
+
+  return(venkatraman.unpaired.stat(rank(R, ties.method=ties.method), rank(S, ties.method=ties.method), D1, D2, levels1, levels2, mp))
+}
+
+venkatraman.paired.stat <- function(R, S, D, levels) {
   R.controls <- R[D==levels[1]]
   R.cases <- R[D==levels[2]]
   S.controls <- S[D==levels[1]]
@@ -427,6 +468,83 @@ venkatraman.stat <- function(R, S, D, levels) {
   S.fp <- sapply(1:n, function(x) sum(S.controls > x))
 
   return(sum(abs((S.fn + S.fp) - (R.fn + R.fp))))
+}
+
+venkatraman.unpaired.stat <- function(R, S, D1, D2, levels1, levels2, mp) {
+  R.controls <- R[D1==levels1[1]]
+  R.cases <- R[D1==levels1[2]]
+  S.controls <- S[D2==levels2[1]]
+  S.cases <- S[D2==levels2[2]]
+  n <- length(D1)
+  m <- length(D2)
+
+  R.fx <- sapply(1:n, function(x) sum(R.cases <= x)) / length(R.cases)
+  R.gx <- sapply(1:n, function(x) sum(R.controls <= x)) / length(R.controls)
+  S.fx <- sapply(1:m, function(x) sum(S.cases <= x)) / length(S.cases)
+  S.gx <- sapply(1:m, function(x) sum(S.controls <= x)) / length(S.controls)
+  R.p <- mp*R.fx + (1 - mp)*R.gx
+  S.p <- mp*S.fx + (1 - mp)*S.gx
+  R.exp <- mp*R.fx + (1 - mp)*(1-R.gx)
+  S.exp <- mp*S.fx + (1 - mp)*(1-S.gx)
+
+  # Do the integration
+  x <- sort(c(R.p, S.p))
+  R.f <- approxfun(R.p, R.exp)
+  S.f <- approxfun(S.p, S.exp)
+  f  <- function(x) abs(R.f(x)-S.f(x))
+  y <- f(x)
+  #trapezoid integration:
+  idx <- 2:length(x)
+  integral <- sum(((y[idx] + y[idx-1]) * (x[idx] - x[idx-1])) / 2, na.rm=TRUE) # remove NA that can appear in the borders
+
+  # Integrate over R.p
+#  if (length(R.p) == length(S.p) && all(R.p == S.p)) { # this condition can probably happen in paired ROCs. Nothing to integrate
+#    last.idx <- length(R.exp)
+#    return(sum(abs(
+#                   1/2 * (R.exp[-1] + R.exp[-last.idx]) * (R.p[-1] - R.p[-last.idx])
+#                   -
+#                   1/2 * (S.exp[-1] + S.exp[-last.idx]) * (S.p[-1] - S.p[-last.idx])
+#                   )))
+#  }
+#  else {
+    ## #R.auc <- S.auc <- NULL
+    ## integral <- 0
+    ## # Interpolate S.exp over R.p
+    ## for (i in c(2:length(R.p))) {
+    ##   Ri.cur <- R.p[i]
+    ##   Ri.last <- R.p[i-1]
+    ##   Ri.auc <- (R.exp[i] + R.exp[i-1]) * 1/2 * (Ri.cur - Ri.last)
+    ##   # not compute auc for S.exp
+    ##   Si.exp.cur <- Si.exp.last <- NA
+    ##   if (Ri.last < min(S.p) || Ri.cur > max(S.p)) {
+    ##     Si.auc <- NA
+    ##   }
+    ##   else {
+    ##     if (any(Ri.cur == S.p)) { # needn't interpolate this point
+    ##       Si.exp.cur <- S.exp[which(Ri.cur == S.p)]
+    ##     }
+    ##     else {
+    ##       pivot <- which(Ri.cur < S.p)[1]
+    ##       prop <- (S.p[pivot] - Ri.cur) /  (S.p[pivot] - S.p[pivot-1])
+    ##       Si.exp.cur <- S.exp[pivot] * (1-prop) + S.exp[pivot-1] *  prop
+    ##     }
+    ##     if (any(Ri.last == S.p)) { # needn't interpolate this point
+    ##       Si.exp.last <- S.exp[which(Ri.last == S.p)]
+    ##     }
+    ##     else {
+    ##       pivot <- which(Ri.last < S.p)[1]
+    ##       prop <- (S.p[pivot] - Ri.last) /  (S.p[pivot] - S.p[pivot-1])
+    ##       Si.exp.last <- S.exp[pivot] * (1-prop) + S.exp[pivot-1] *  prop
+    ##     }
+    ##     Si.auc <- (Si.exp.last + Si.exp.cur) * 1/2 * (Ri.cur - Ri.last)
+    ##   }
+    ##   if (! is.na(Si.auc)) 
+    ##     integral <- integral + abs(Ri.auc - Si.auc)
+    ## }
+#  }
+    
+  
+  return(integral)
 }
 
 # Delong's test paired, used by roc.test.roc

@@ -779,11 +779,11 @@ roc.test(auc(roc1), roc2)
 ##D 
 ##D # Alternatively, we could re-use roc1 and roc2 to get the same result:
 ##D roc.test(roc1, roc2, reuse.auc=FALSE, partial.auc=c(1, 0.8), partial.auc.focus="se")
+##D 
+##D # Comparison on specificity and sensitivity
+##D roc.test(roc1, roc2, method="specificity", specificity=0.9)
+##D roc.test(roc1, roc2, method="sensitivity", sensitivity=0.9)
 ## End(Not run)
-
-# Comparison on specificity and sensitivity
-roc.test(roc1, roc2, method="specificity", specificity=0.9)
-roc.test(roc1, roc2, method="sensitivity", sensitivity=0.9)
 
 # Spurious use of DeLong's test with different direction:
 roc5 <- roc(aSAH$outcome, aSAH$s100b, direction="<")
@@ -797,8 +797,12 @@ roc.test(roc5, roc6, method="delong")
 
 # Unpaired tests
 roc7 <- roc(aSAH$outcome, aSAH$s100b)
+# artificially create an roc8 unpaired with roc7
 roc8 <- roc(aSAH$outcome[1:100], aSAH$s100b[1:100])
-roc.test(roc7, roc8, paired=FALSE)
+roc.test(roc7, roc8, paired=FALSE, method="delong")
+roc.test(roc7, roc8, paired=FALSE, method="bootstrap")
+roc.test(roc7, roc8, paired=FALSE, method="venkatraman")
+roc.test(roc7, roc8, paired=FALSE, method="specificity", specificity=0.9)
 
 
 

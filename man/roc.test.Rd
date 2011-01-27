@@ -191,11 +191,14 @@ na.rm=TRUE, method=NULL, ...)
   }
 
   With \code{method="delong"}, the processing is done as described in
-  DeLong \emph{et al.} (1988). Only comparison of two ROC curves is
-  implemented.
+  DeLong \emph{et al.} (1988) for paired ROC curves. Only comparison of
+  two ROC curves is implemented. The method has been extended for
+  unpaired ROC curves where the p-value is computed with an unpaired
+  t-test with unequal sample size and unequal variance.
 
   With \code{method="venkatraman"}, the processing is done as described
-  in Venkatraman and Begg (1996) with \code{boot.n} permutation of
+  in Venkatraman and Begg (1996) (for paired ROC curves) and Venkatraman
+  (2000) (for unpaired ROC curves) with \code{boot.n} permutation of
   sample ranks (with ties breaking). For consistency reasons, the same argument \code{boot.n} as
   in bootstrap defines the number of permutations to execute,
   even though no bootstrap is performed.
@@ -274,10 +277,6 @@ na.rm=TRUE, method=NULL, ...)
   the error \dQuote{Using Venkatraman's test for smoothed ROCs is not
     supported.} is produced.
 
-  If \code{method="venkatraman"} and an unpaired ROC test is requested,
-  the error \dQuote{Using Venkatraman's test for unpaired ROCs is not supported.}
-  is printed.
-
   With \code{method="specificity"}, the error \dQuote{Argument
     'specificity' must be numeric of length 1 for a specificity test.}
   is given unless the specificity argument is specified as a numeric of
@@ -334,6 +333,10 @@ na.rm=TRUE, method=NULL, ...)
   procedure for comparing receiver operating characteristic curves from
   a paired experiment''. \emph{Biometrika} \bold{83}, 835--848.
   DOI: 10.1093/biomet/83.4.835
+
+  E. S. Venkatraman (2000) ``A Permutation Test to Compare Receiver
+  Operating Characteristic Curves''. \emph{Biometrics} \bold{56},
+  1134--1138. DOI: 10.1111/j.0006-341X.2000.01134.x
 }
 
 \seealso{
@@ -385,11 +388,11 @@ roc.test(roc3, roc4, method="bootstrap")
 
 # Alternatively, we could re-use roc1 and roc2 to get the same result:
 roc.test(roc1, roc2, reuse.auc=FALSE, partial.auc=c(1, 0.8), partial.auc.focus="se")
-}
 
 # Comparison on specificity and sensitivity
 roc.test(roc1, roc2, method="specificity", specificity=0.9)
 roc.test(roc1, roc2, method="sensitivity", sensitivity=0.9)
+}
 
 # Spurious use of DeLong's test with different direction:
 roc5 <- roc(aSAH$outcome, aSAH$s100b, direction="<")
@@ -403,8 +406,12 @@ roc.test(roc1, roc2, method="venkatraman")
 
 # Unpaired tests
 roc7 <- roc(aSAH$outcome, aSAH$s100b)
+# artificially create an roc8 unpaired with roc7
 roc8 <- roc(aSAH$outcome[1:100], aSAH$s100b[1:100])
-roc.test(roc7, roc8, paired=FALSE)
+roc.test(roc7, roc8, paired=FALSE, method="delong")
+roc.test(roc7, roc8, paired=FALSE, method="bootstrap")
+roc.test(roc7, roc8, paired=FALSE, method="venkatraman")
+roc.test(roc7, roc8, paired=FALSE, method="specificity", specificity=0.9)
 }
 
 \keyword{multivariate}

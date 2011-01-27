@@ -1,3 +1,6 @@
+1.4.1 (2011-01-27)
+  * 'venkatraman''s test for unpaired ROC curves
+  
 1.4 (2011-01-21)
   * 'smooth' does not apply on 'ordered' factors anymore
   * Multi-class AUC support

@@ -54,7 +54,7 @@
     \code{\link{coords}} \tab Coordinates of a ROC curve \cr
     \code{\link{lines.roc}} \tab Add a ROC line to a ROC plot \cr
     \code{\link{plot.ci}} \tab Plot CIs \cr
-    \code{\link{plot.roc}} \tab Plot a ROC curve \cr
+    \code{\link[=plot.roc]{plot}} \tab Plot a ROC curve \cr
     \code{\link[=print.roc]{print}} \tab Print a ROC curve object \cr
     \code{\link{roc.test}} \tab Compare the AUC of two correlated ROC curves \cr
     \code{\link{smooth}} \tab Smooth a ROC curve
@@ -69,11 +69,15 @@
 \section{Installing and using}{
   To install this package, make sure you are connected to the internet and issue the following command in the R prompt:
   
-  \preformatted{packages.install("pROC")}
+  \preformatted{
+    install.packages("pROC")
+  }
   
   To load the package in R:
   
-  \preformatted{library(pROC)}
+  \preformatted{
+    library(pROC)
+  }
 }
 
 \section{Progress bars}{
