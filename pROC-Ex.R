@@ -799,10 +799,12 @@ roc.test(roc5, roc6, method="delong")
 roc7 <- roc(aSAH$outcome, aSAH$s100b)
 # artificially create an roc8 unpaired with roc7
 roc8 <- roc(aSAH$outcome[1:100], aSAH$s100b[1:100])
-roc.test(roc7, roc8, paired=FALSE, method="delong")
-roc.test(roc7, roc8, paired=FALSE, method="bootstrap")
-roc.test(roc7, roc8, paired=FALSE, method="venkatraman")
-roc.test(roc7, roc8, paired=FALSE, method="specificity", specificity=0.9)
+## Not run: 
+##D roc.test(roc7, roc8, paired=FALSE, method="delong")
+##D roc.test(roc7, roc8, paired=FALSE, method="bootstrap")
+##D roc.test(roc7, roc8, paired=FALSE, method="venkatraman")
+##D roc.test(roc7, roc8, paired=FALSE, method="specificity", specificity=0.9)
+## End(Not run)
 
 
 

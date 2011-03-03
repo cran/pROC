@@ -173,13 +173,28 @@ roc.test.roc <- function(roc1, roc2,
   if (is.null(roc1$auc) | !reuse.auc) {
     if (smoothing.args$roc1$smooth) {
       roc1$auc <- auc(smooth.roc=do.call("smooth.roc", c(list(roc=roc1), smoothing.args$roc1)), ...)
+      # remove partial.auc.* arguments that are now in roc1$auc and that will mess later processing
+      # (formal argument "partial.auc(.*)" matched by multiple actual arguments)
+      # This removal should be safe because we always use smoothing.args with roc1 in the following processing,
+      # however it is a potential source of bugs.
+      smoothing.args$roc1$partial.auc <- NULL
+      smoothing.args$roc1$partial.auc.correct <- NULL
+      smoothing.args$roc1$partial.auc.focus <- NULL
     }
     else
       roc1$auc <- auc(roc1, ...)
   }
   if (is.null(roc2$auc) | !reuse.auc) {
-    if (smoothing.args$roc2$smooth)
+    if (smoothing.args$roc2$smooth) {
       roc2$auc <- auc(smooth.roc=do.call("smooth.roc", c(list(roc=roc2), smoothing.args$roc2)), ...)
+      # remove partial.auc.* arguments that are now in roc1$auc and that will mess later processing
+      # (formal argument "partial.auc(.*)" matched by multiple actual arguments)
+      # This removal should be safe because we always use smoothing.args with roc2 in the following processing,
+      # however it is a potential source of bugs.
+      smoothing.args$roc2$partial.auc <- NULL
+      smoothing.args$roc2$partial.auc.correct <- NULL
+      smoothing.args$roc2$partial.auc.focus <- NULL
+    }
     else
       roc2$auc <- auc(roc2, ...)
   }
@@ -496,54 +511,6 @@ venkatraman.unpaired.stat <- function(R, S, D1, D2, levels1, levels2, mp) {
   #trapezoid integration:
   idx <- 2:length(x)
   integral <- sum(((y[idx] + y[idx-1]) * (x[idx] - x[idx-1])) / 2, na.rm=TRUE) # remove NA that can appear in the borders
-
-  # Integrate over R.p
-#  if (length(R.p) == length(S.p) && all(R.p == S.p)) { # this condition can probably happen in paired ROCs. Nothing to integrate
-#    last.idx <- length(R.exp)
-#    return(sum(abs(
-#                   1/2 * (R.exp[-1] + R.exp[-last.idx]) * (R.p[-1] - R.p[-last.idx])
-#                   -
-#                   1/2 * (S.exp[-1] + S.exp[-last.idx]) * (S.p[-1] - S.p[-last.idx])
-#                   )))
-#  }
-#  else {
-    ## #R.auc <- S.auc <- NULL
-    ## integral <- 0
-    ## # Interpolate S.exp over R.p
-    ## for (i in c(2:length(R.p))) {
-    ##   Ri.cur <- R.p[i]
-    ##   Ri.last <- R.p[i-1]
-    ##   Ri.auc <- (R.exp[i] + R.exp[i-1]) * 1/2 * (Ri.cur - Ri.last)
-    ##   # not compute auc for S.exp
-    ##   Si.exp.cur <- Si.exp.last <- NA
-    ##   if (Ri.last < min(S.p) || Ri.cur > max(S.p)) {
-    ##     Si.auc <- NA
-    ##   }
-    ##   else {
-    ##     if (any(Ri.cur == S.p)) { # needn't interpolate this point
-    ##       Si.exp.cur <- S.exp[which(Ri.cur == S.p)]
-    ##     }
-    ##     else {
-    ##       pivot <- which(Ri.cur < S.p)[1]
-    ##       prop <- (S.p[pivot] - Ri.cur) /  (S.p[pivot] - S.p[pivot-1])
-    ##       Si.exp.cur <- S.exp[pivot] * (1-prop) + S.exp[pivot-1] *  prop
-    ##     }
-    ##     if (any(Ri.last == S.p)) { # needn't interpolate this point
-    ##       Si.exp.last <- S.exp[which(Ri.last == S.p)]
-    ##     }
-    ##     else {
-    ##       pivot <- which(Ri.last < S.p)[1]
-    ##       prop <- (S.p[pivot] - Ri.last) /  (S.p[pivot] - S.p[pivot-1])
-    ##       Si.exp.last <- S.exp[pivot] * (1-prop) + S.exp[pivot-1] *  prop
-    ##     }
-    ##     Si.auc <- (Si.exp.last + Si.exp.cur) * 1/2 * (Ri.cur - Ri.last)
-    ##   }
-    ##   if (! is.na(Si.auc)) 
-    ##     integral <- integral + abs(Ri.auc - Si.auc)
-    ## }
-#  }
-    
-  
   return(integral)
 }
 
@@ -664,6 +631,34 @@ bootstrap.test <- function(roc1, roc2, test, x, paired, boot.n, boot.stratified,
   auc2skeleton$direction <- roc2$direction
   auc2skeleton$class <- NULL
   auc2skeleton <- c(auc2skeleton, smoothing.args$roc2)
+
+  # Some attributes may be duplicated in AUC skeletons and will mess the boostrap later on when we do.call().
+  # If this condition happen, it probably means we have a bug elsewhere.
+  # Rather than making a complicated processing to remove the duplicates,
+  # just throw an error and let us solve the bug when a user reports it.
+  duplicated.auc1skeleton <- duplicated(names(auc1skeleton))
+  duplicated.auc2skeleton <- duplicated(names(auc2skeleton))
+  if (any(duplicated.auc1skeleton))
+    stop(sprintf("duplicated argument(s) in AUC1 skeleton: \"%s\". Please report this bug to the package maintainer %s", paste(names(auc1skeleton)[duplicated(names(auc1skeleton))], collapse=", "), packageDescription("pROC")$Maintainer))
+  if (any(duplicated.auc2skeleton))
+    stop(sprintf("duplicated argument(s) in AUC2 skeleton: \"%s\". Please report this bug to the package maintainer %s", paste(names(auc2skeleton)[duplicated(names(auc2skeleton))], collapse=", "), packageDescription("pROC")$Maintainer))
+#  # This was an attempt to remove duplicated arguments and check their equality. Now we die just above if it happens
+#  if (any(duplicated.auc1skeleton)) {
+#    #store and remove duplicates
+#    auc1skeleton.removed <- auc1skeleton[names(auc1skeleton)[duplicated.auc1skeleton]] # store
+#    auc1skeleton[names(auc1skeleton)[duplicated.auc1skeleton]] <- NULL # remove
+#    auc1skeleton.kept <- auc1skeleton[names(auc1skeleton.removed)] # check what is left
+#    if (!all.equal(auc1skeleton.kept, auc1skeleton.removed))
+#      stop("conflicting arguments in AUC1 skeleton")
+#  }
+#  if (any(duplicated.auc2skeleton)) {
+#    #store and remove duplicates
+#    auc2skeleton.removed <- auc2skeleton[names(auc2skeleton)[duplicated.auc2skeleton]] # store
+#    auc2skeleton[names(auc2skeleton)[duplicated.auc2skeleton]] <- NULL # remove
+#    auc2skeleton.kept <- auc2skeleton[names(auc2skeleton.removed)] # check what is left
+#    if (!all.equal(auc2skeleton.kept, auc2skeleton.removed))
+#      stop("conflicting arguments in AUC2 skeleton")
+#  }
 
   if (boot.stratified) { # precompute sorted responses if stratified
     response.roc1 <- factor(c(rep(roc1$levels[1], length(roc1$controls)), rep(roc1$levels[2], length(roc1$cases))), levels=roc1$levels)

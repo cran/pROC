@@ -219,6 +219,15 @@ na.rm=TRUE, method=NULL, ...)
     curves. Enforcing the inconsistency, but unexpected results may be
     produced.} is issued. Unexpected results may be produced.
 
+  If one or both ROC curves are \dQuote{smooth.roc} objects with
+  different smoothing specifications, the warning 
+  \dQuote{Different smoothing parameters in the ROC curves. Enforcing
+    the inconsistency, but unexpected results may be produced.} is issued.
+  This warning can be benign, especially if ROC curves were generated
+  with \code{roc(\ldots, smooth=TRUE)} with different arguments to other
+  functions (such as plot), or if you really want to compare two ROC
+  curves smoothed differently.
+
   If \code{method="delong"} and the AUC specification specifies a
   partial AUC, the warning \dQuote{Using DeLong's test for partial AUC is
     not supported. Using bootstrap test instead.} is issued. The
@@ -408,10 +417,12 @@ roc.test(roc1, roc2, method="venkatraman")
 roc7 <- roc(aSAH$outcome, aSAH$s100b)
 # artificially create an roc8 unpaired with roc7
 roc8 <- roc(aSAH$outcome[1:100], aSAH$s100b[1:100])
+\dontrun{
 roc.test(roc7, roc8, paired=FALSE, method="delong")
 roc.test(roc7, roc8, paired=FALSE, method="bootstrap")
 roc.test(roc7, roc8, paired=FALSE, method="venkatraman")
 roc.test(roc7, roc8, paired=FALSE, method="specificity", specificity=0.9)
+}
 }
 
 \keyword{multivariate}

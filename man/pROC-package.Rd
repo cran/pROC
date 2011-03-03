@@ -30,6 +30,21 @@
   \code{response}) can be compared with the \code{\link{roc.test}} function.
 }
 
+\section{Citation}{
+  If you use pROC in published research, please cite the following paper:
+
+  Xavier Robin, Natacha Turck, Alexandre Hainard, Natalia Tiberti,
+  Frédérique Lisacek, Jean-Charles Sanchez and Markus Müller (2011).
+  pROC: an open-source package for R and S+ to analyze and compare ROC
+  curves. BMC Bioinformatics, accepted.
+
+  Type \code{citation("pROC")} for a BibTeX entry.
+
+  The authors would be glad to hear how pROC is employed. You are
+  encouraged to notify the package maintainer about any work you publish.
+  Send an email to Xavier Robin <Xavier.Robin@unige.ch>.
+}
+
 \section{Abbreviations}{
   The following abbreviations are employed extensively in this package:
   \itemize{

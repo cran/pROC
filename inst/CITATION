@@ -1,16 +1,12 @@
-citHeader("To cite package 'pROC' in publications use:")
-     
-desc <- packageDescription("pROC")
-title <- paste(desc$Title, ": ", desc$Description, sep="")
-year <- substr(desc$Date, 1, 4)
-version <- desc$Version
+citHeader("If you use pROC in published research, please cite the following paper:")
 
-
-citEntry(entry="Manual",
-         title = title,
+citEntry(entry="Article",
+         title = "pROC: an open-source package for R and S+ to analyze and compare ROC curves",
          author = personList(as.person("Xavier Robin"), as.person("Natacha Turck") , as.person("Alexandre Hainard") , as.person("Natalia Tiberti") , as.person("Frédérique Lisacek") , as.person("Jean-Charles Sanchez"), as.person("Markus Müller")),
-         year = year,
-         note = paste("R package version", desc$Version),
-         textVersion = paste("Xavier Robin, Natacha Turck, Jean-Charles Sanchez and Markus Müller (", year, "). ", title, " R package version ", version, ".", sep="")
+         year = 2011,
+         journal = "BMC Bioinformatics",
+         volume = "accepted",
+         textVersion = "Xavier Robin, Natacha Turck, Alexandre Hainard, Natalia Tiberti, Frédérique Lisacek, Jean-Charles Sanchez and Markus Müller (2011). pROC: an open-source package for R and S+ to analyze and compare ROC curves. BMC Bioinformatics, accepted."
          )
 
+citFooter(sprintf("The authors would be glad to hear how pROC is employed. You are encouraged to notify the package maintainer about any work you publish. Send an email to %s.", packageDescription("pROC")$Maintainer))
