@@ -185,7 +185,12 @@ best.method=c("youden", "closest.topleft"), best.weights=c(1, 0.5), ...)
   Neil J. Perkins, Enrique F. Schisterman (2006) ``The Inconsistency of "Optimal" Cutpoints
   Obtained using Two Criteria based on the Receiver Operating
   Characteristic Curve''. \emph{American Journal of Epidemiology}
-  \bold{163}(7), 670--675. DOI: 10.1093/aje/kwj063
+  \bold{163}(7), 670--675. DOI: \href{http://dx.doi.org/10.1093/aje/kwj063}{10.1093/aje/kwj063}.
+  
+  Xavier Robin, Natacha Turck, Alexandre Hainard, \emph{et al.}
+  (2011) ``pROC: an open-source package for R and S+ to analyze and
+  compare ROC curves''. \emph{BMC Bioinformatics}, \bold{7}, 77.
+  DOI: \href{http://dx.doi.org/10.1186/1471-2105-12-77}{10.1186/1471-2105-12-77}.
 }
 
 \seealso{

@@ -269,6 +269,13 @@ ci.col=ifelse(ci.type=="bars", par("fg"), "gainsboro"),
 This function returns a list of class \dQuote{roc} invisibly. See \link{roc} for more details.
 }
 
+\references{
+  Xavier Robin, Natacha Turck, Alexandre Hainard, \emph{et al.}
+  (2011) ``pROC: an open-source package for R and S+ to analyze and
+  compare ROC curves''. \emph{BMC Bioinformatics}, \bold{7}, 77.
+  DOI: \href{http://dx.doi.org/10.1186/1471-2105-12-77}{10.1186/1471-2105-12-77}.
+}
+
 \seealso{
 \code{\link{roc}}, \code{\link{auc}}, \code{\link{ci}}
 }

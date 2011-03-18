@@ -87,7 +87,7 @@ intervals and comparison tests are not implemented yet.
   David J. Hand and Robert J. Till (2001). A Simple Generalisation of
   the Area Under the ROC Curve for Multiple Class Classification
   Problems. \emph{Machine Learning} \bold{45}(2), p. 171--186. DOI:
-  10.1023/A:1010920819831
+  \href{http://dx.doi.org/10.1023/A:1010920819831}{10.1023/A:1010920819831}.
 }
 
 \seealso{

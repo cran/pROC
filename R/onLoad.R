@@ -20,6 +20,7 @@
 .onLoad <- function(lib, pkg) {
   if (is.null(getOption("pROCProgress"))) {
     if (interactive()) {
+      print("Type 'citation(\"pROC\")' for a citation.")
       library(utils)
       # Generate progressbar option with smart default values
       if (!is.null(getOption("STERM")) && getOption("STERM") == "iESS")

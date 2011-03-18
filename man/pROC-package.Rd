@@ -35,14 +35,15 @@
 
   Xavier Robin, Natacha Turck, Alexandre Hainard, Natalia Tiberti,
   Frédérique Lisacek, Jean-Charles Sanchez and Markus Müller (2011).
-  pROC: an open-source package for R and S+ to analyze and compare ROC
-  curves. BMC Bioinformatics, accepted.
+  ``pROC: an open-source package for R and S+ to analyze and compare ROC
+  curves''. \emph{BMC Bioinformatics}, \bold{12}, p. 77. DOI: 
+  \href{http://dx.doi.org/10.1186/1471-2105-12-77}{10.1186/1471-2105-12-77}
 
   Type \code{citation("pROC")} for a BibTeX entry.
 
-  The authors would be glad to hear how pROC is employed. You are
-  encouraged to notify the package maintainer about any work you publish.
-  Send an email to Xavier Robin <Xavier.Robin@unige.ch>.
+  The authors would be glad to hear how pROC is employed. You are kindly
+  encouraged to notify Xavier Robin <Xavier.Robin@unige.ch>
+  about any work you publish.
 }
 
 \section{Abbreviations}{
@@ -134,7 +135,12 @@ Maintainer: Xavier Robin <Xavier.Robin@unige.ch>
 \references{
   Tom Fawcett (2006) ``An introduction to ROC analysis''. \emph{Pattern
     Recognition Letters} \bold{27}, 861--874. DOI:
-  10.1016/j.patrec.2005.10.010.
+  \href{http://dx.doi.org/10.1016/j.patrec.2005.10.010}{10.1016/j.patrec.2005.10.010}.
+  
+  Xavier Robin, Natacha Turck, Alexandre Hainard, \emph{et al.}
+  (2011) ``pROC: an open-source package for R and S+ to analyze and
+  compare ROC curves''. \emph{BMC Bioinformatics}, \bold{7}, 77.
+  DOI: \href{http://dx.doi.org/10.1186/1471-2105-12-77}{10.1186/1471-2105-12-77}.
 }
 
 \seealso{

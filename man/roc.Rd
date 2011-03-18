@@ -219,6 +219,18 @@ plot=FALSE, smooth.method="binormal", ci.method=NULL, density=NULL, ...)
   \code{cases} are not valid and will trigger this error.
 }
 
+\references{
+  Tom Fawcett (2006) ``An introduction to ROC analysis''. \emph{Pattern
+    Recognition Letters} \bold{27}, 861--874. DOI:
+  \href{http://dx.doi.org/10.1016/j.patrec.2005.10.010}{10.1016/j.patrec.2005.10.010}.
+  
+  Xavier Robin, Natacha Turck, Alexandre Hainard, \emph{et al.}
+  (2011) ``pROC: an open-source package for R and S+ to analyze and
+  compare ROC curves''. \emph{BMC Bioinformatics}, \bold{7}, 77.
+  DOI: \href{http://dx.doi.org/10.1186/1471-2105-12-77}{10.1186/1471-2105-12-77}.
+
+}
+
 \seealso{
  \code{\link{auc}}, \code{\link{ci}}, \code{\link{plot.roc}}, \code{\link{print.roc}}, \code{\link{roc.test}}
 }

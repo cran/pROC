@@ -337,15 +337,20 @@ na.rm=TRUE, method=NULL, ...)
   Xavier Robin, Natacha Turck, Jean-Charles Sanchez and Markus Müller
   (2009) ``Combination of protein biomarkers''. \emph{useR! 2009}, Rennes.
   \url{http://www.agrocampus-ouest.fr/math/useR-2009/abstracts/user_author.html}
+  
+  Xavier Robin, Natacha Turck, Alexandre Hainard, \emph{et al.}
+  (2011) ``pROC: an open-source package for R and S+ to analyze and
+  compare ROC curves''. \emph{BMC Bioinformatics}, \bold{7}, 77.
+  DOI: \href{http://dx.doi.org/10.1186/1471-2105-12-77}{10.1186/1471-2105-12-77}.
 
   E. S. Venkatraman and Colin B. Begg (1996) ``A distribution-free
   procedure for comparing receiver operating characteristic curves from
   a paired experiment''. \emph{Biometrika} \bold{83}, 835--848.
-  DOI: 10.1093/biomet/83.4.835
+  DOI: \href{http://dx.doi.org/10.1093/biomet/83.4.835}{10.1093/biomet/83.4.835}.
 
   E. S. Venkatraman (2000) ``A Permutation Test to Compare Receiver
   Operating Characteristic Curves''. \emph{Biometrics} \bold{56},
-  1134--1138. DOI: 10.1111/j.0006-341X.2000.01134.x
+  1134--1138. DOI: \href{http://dx.doi.org/10.1111/j.0006-341X.2000.01134.x}{10.1111/j.0006-341X.2000.01134.x}.
 }
 
 \seealso{
