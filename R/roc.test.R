@@ -302,7 +302,7 @@ roc.test.roc <- function(roc1, roc2,
       
       if (alternative == "two.sided")
         pval <- 2*pnorm(-abs(stat))
-      else if (alternative == "less")
+      else if (alternative == "greater")
         pval <- pnorm(-stat)
       else
         pval <- pnorm(stat)
@@ -318,7 +318,7 @@ roc.test.roc <- function(roc1, roc2,
 
       if (alternative == "two.sided")
         pval <- 2*pt(-abs(stat), df=df)
-      else if (alternative == "less")
+      else if (alternative == "greater")
         pval <- pt(-stat, df=df)
       else
         pval <- pt(stat, df=df)
@@ -391,7 +391,7 @@ roc.test.roc <- function(roc1, roc2,
     
     if (alternative == "two.sided")
       pval <- 2*pnorm(-abs(stat))
-    else if (alternative == "less")
+    else if (alternative == "greater")
       pval <- pnorm(-stat)
     else
       pval <- pnorm(stat)
