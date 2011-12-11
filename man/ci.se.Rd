@@ -17,7 +17,7 @@
 }
 
 \usage{
-ci.se(...)
+# ci.se(...)
 \S3method{ci.se}{roc}(roc, specificities = seq(0, 1, .1) * ifelse(roc$percent,
 100, 1), conf.level=0.95, boot.n=2000, boot.stratified=TRUE,
 progress=getOption("pROCProgress")$name, ...) 
@@ -74,14 +74,8 @@ boot.stratified=TRUE, progress=getOption("pROCProgress")$name, ...)
   given by the \code{specificities} argument. Then it computes the
   confidence interval as the percentiles given by \code{conf.level}.
 
-  Stratification of bootstrap can be controlled
-  with \code{boot.stratified}. In stratified bootstrap, each replicate
-  contains the same number of cases and controls than the original
-  sample. Stratification is especially useful if one group has only
-  little observations, or if groups are not balanced.
-  Higher numbers of \code{boot.n} will give a more precise estimate of the CI,
-  but take more time to compute. 2000 is recommanded by Carpenter and
-  Bithell.
+  For more details about the bootstrap, see the Bootstrap section in
+  \link[=pROC-package]{this package's documentation}.
 
   For \link[=smooth.roc]{smoothed ROC curves}, smoothing is performed again at each
   bootstrap replicate with the parameters originally provided.

@@ -17,7 +17,7 @@
 }
 
 \usage{
-ci.thresholds(...)
+# ci.thresholds(...)
 \S3method{ci.thresholds}{roc}(roc, conf.level=0.95, boot.n=2000,
 boot.stratified=TRUE, thresholds = "local maximas",
 progress=getOption("pROCProgress")$name, ...) 
@@ -76,14 +76,8 @@ progress=getOption("pROCProgress")$name, ...)
   given by the \code{thresholds} argument. Then it computes the
   confidence interval as the percentiles given by \code{conf.level}.
 
-  Stratification of bootstrap can be controlled
-  with \code{boot.stratified}. In stratified bootstrap, each replicate
-  contains the same number of cases and controls than the original
-  sample. Stratification is especially useful if one group has only
-  little observations, or if groups are not balanced.
-  Higher numbers of \code{boot.n} will give a more precise estimate of the CI,
-  but take more time to compute. 2000 is recommanded by Carpenter and
-  Bithell.
+  For more details about the bootstrap, see the Bootstrap section in
+  \link[=pROC-package]{this package's documentation}.
 }
 
 \section{Warnings}{

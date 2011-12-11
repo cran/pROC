@@ -1,6 +1,6 @@
 # pROC: Tools Receiver operating characteristic (ROC curves) with
 # (partial) area under the curve, confidence intervals and comparison. 
-# Copyright (C) 2010 Xavier Robin, Alexandre Hainard, Natacha Turck,
+# Copyright (C) 2010, 2011 Xavier Robin, Alexandre Hainard, Natacha Turck,
 # Natalia Tiberti, Frédérique Lisacek, Jean-Charles Sanchez
 # and Markus Müller
 #
@@ -117,8 +117,15 @@ roc.utils.get.progress.bar <- function(name = getOption("pROCProgress")$name, ti
   }
   if (name == "none")
     progress_none()
-  else if (name == "text")
+  else if (name == "text") {
+    # Put some default values if user only passed a name
+    if (missing(style) && missing(char) && missing(width) && getOption("pROCProgress")$name != "text") {
+      style <- 3
+      char <- "="
+      width <- NA
+    }
     progress_text(char=char, style=style, width=width)
+  }
   else if (name == "tk" || name == "win")
     match.fun(paste("progress", name, sep = "_"))(title=title, label=label, width=width)
   else # in the special case someone made a progress_other function
@@ -142,13 +149,4 @@ sort.smooth.roc <- function(roc) {
     roc$specificities <- rev(roc$specificities)
   }
   return(roc)
-}
-
-# Mann-Whitney Kernel used by delong.test and ci.auc.delong
-MW.kernel <- function(x, y) {
-  # x, y: numeric vectors of length 1
-  # returns: numeric vectors of length 1
-  if (y < x) return(1)
-  if (y == x) return(.5)
-  if (y > x) return(0)
 }

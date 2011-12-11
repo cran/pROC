@@ -11,6 +11,8 @@
   be compared with statistical tests based on U-statistics or
   bootstrap. Confidence intervals can be computed for (p)AUC or ROC
   curves.
+
+  In S+, the package comes with a  graphical user interface.
 }
 
 \details{
@@ -26,8 +28,9 @@
   individual functions for the arguments that can be passed to them
   through \code{\link{roc}}. These function can be called separately.
 
-  Two paired ROC curves (that is \code{\link{roc}} objects with the same
-  \code{response}) can be compared with the \code{\link{roc.test}} function.
+  Two paired (that is \code{\link{roc}} objects with the same
+  \code{response}) or unpaired (with different \code{response}) ROC
+  curves can be compared with the \code{\link{roc.test}} function.
 }
 
 \section{Citation}{
@@ -61,6 +64,7 @@
 \section{Functions}{
   \tabular{ll}{
     \code{\link{roc}} \tab Build a ROC curve\cr
+    \code{\link{are.paired}} \tab Dertermine if two ROC curves are paired \cr
     \code{\link{auc}} \tab Compute the area under the ROC curve \cr
     \code{\link{ci}} \tab Compute confidence intervals of a ROC curve \cr
     \code{\link{ci.auc}} \tab Compute the CI of the AUC \cr
@@ -68,12 +72,15 @@
     \code{\link{ci.sp}} \tab Compute the CI of specificities at given sensitivities \cr
     \code{\link{ci.thresholds}} \tab Compute the CI of specificity and sensitivity of thresholds \cr
     \code{\link{coords}} \tab Coordinates of a ROC curve \cr
+    \code{\link[=cov.roc]{cov}} \tab Covariance between two AUCs\cr
+    \code{\link{has.partial.auc}} \tab Determine if the ROC curve have a partial AUC\cr
     \code{\link{lines.roc}} \tab Add a ROC line to a ROC plot \cr
     \code{\link{plot.ci}} \tab Plot CIs \cr
     \code{\link[=plot.roc]{plot}} \tab Plot a ROC curve \cr
     \code{\link[=print.roc]{print}} \tab Print a ROC curve object \cr
-    \code{\link{roc.test}} \tab Compare the AUC of two correlated ROC curves \cr
-    \code{\link{smooth}} \tab Smooth a ROC curve
+    \code{\link{roc.test}} \tab Compare the AUC of two ROC curves \cr
+    \code{\link{smooth}} \tab Smooth a ROC curve \cr
+    \code{\link[=var.roc]{var}} \tab Variance of the AUC
   }
 }
 
@@ -90,40 +97,55 @@
   }
   
   To load the package in R:
-  
+ 
   \preformatted{
     library(pROC)
   }
 }
 
-\section{Progress bars}{
-  A progressbar shows the progress of bootstrap operations. It is handled by the \pkg{plyr} package,
-  and is created by the \code{progress_*} family of functions.
-  Sensible defaults are guessed during the package loading:
-  \itemize{
-    \item In non-\link{interactive} mode, no progressbar is displayed.
-	\item In embedded GNU Emacs \dQuote{ESS}, a \code{\link{txtProgressBar}}
+\section{Bootstrap}{
+
+  All the bootstrap operations for \link[=roc.test]{significance testing}  and \link[=ci]{confidence interval} computation are performed with non-parametric stratified or non-stratified resampling (according to the \code{stratified} argument) and with the percentile method, as described in Carpenter and Bithell (2000) sections 2.1 and 3.3.
+
+  Stratification of bootstrap can be controlled
+  with \code{boot.stratified}. In stratified bootstrap (the default), each replicate
+  contains the same number of cases and controls than the original
+  sample. Stratification is especially useful if one group has only
+  little observations, or if groups are not balanced.
+
+  The number of bootstrap replicates is controlled by \code{boot.n}. Higher numbers will give a more precise estimate of the significance tests and confidence intervals
+  but take more time to compute. 2000 is recommanded by Carpenter and Bithell for confidence intervals. In our experience this is sufficient for a good estimation of the 
+  first significant digit only, so we recommend the use of 10000 bootstrap replicates to obtain a good estimate of the second significant digit whenever possible.
+
+	\subsection{Progress bars}{
+	  A progressbar shows the progress of bootstrap operations. It is handled by the \pkg{plyr} package,
+	  and is created by the \code{progress_*} family of functions.
+	  Sensible defaults are guessed during the package loading:
+	  \itemize{
+	    \item In non-\link{interactive} mode, no progressbar is displayed.
+	    \item In embedded GNU Emacs \dQuote{ESS}, a \code{\link{txtProgressBar}}
 #ifdef windows
-    \item In Windows, a \code{\link{winProgressBar}} bar.
+	    \item In Windows, a \code{\link{winProgressBar}} bar.
 #endif
 #ifdef unix 
-    \item In Windows, a \code{winProgressBar} bar.
+	    \item In Windows, a \code{winProgressBar} bar.
 #endif
-    \item In other systems with a graphical display, a \code{\link{tkProgressBar}}.
-    \item In systems without a graphical display, a \code{\link{txtProgressBar}}.
-  }
+	    \item In other systems with a graphical display, a \code{\link{tkProgressBar}}.
+	    \item In systems without a graphical display, a \code{\link{txtProgressBar}}.
+	  }
 
-  The default can be changed with the option \dQuote{pROCProgress}. The option must be a list with
-  a \code{name} item setting the type of progress bar (\dQuote{none}, \dQuote{win}, \dQuote{tk}
-  or \dQuote{text}). Optional items of the list are \dQuote{width}, \dQuote{char} and \dQuote{style},
-  corresponding to the arguments to the underlying progressbar functions.
-  For example, to force a text progress bar:
-  
-  \preformatted{options(pROCProgress = list(name = "text", width = NA, char = "=", style = 3)}
+	  The default can be changed with the option \dQuote{pROCProgress}. The option must be a list with
+	  a \code{name} item setting the type of progress bar (\dQuote{none}, \dQuote{win}, \dQuote{tk}
+	  or \dQuote{text}). Optional items of the list are \dQuote{width}, \dQuote{char} and \dQuote{style},
+	  corresponding to the arguments to the underlying progressbar functions.
+	  For example, to force a text progress bar:
+	  
+	  \preformatted{options(pROCProgress = list(name = "text", width = NA, char = "=", style = 3)}
 
-  To inhibit the progress bars completely:
-  
-  \preformatted{options(pROCProgress = list(name = "none"))}
+	  To inhibit the progress bars completely:
+	  
+	  \preformatted{options(pROCProgress = list(name = "none"))}
+	}
 }
 
 \author{
@@ -147,7 +169,7 @@ Maintainer: Xavier Robin <Xavier.Robin@unige.ch>
 CRAN packages \pkg{ROCR}, \pkg{verification} or Bioconductor's \pkg{roc}
 for ROC curves.
 
-CRAN packages \pkg{plyr} and \pkg{MASS} employed in this package.
+CRAN packages \pkg{plyr}, \pkg{MASS} and \pkg{logcondens} employed in this package.
 }
 \examples{
 data(aSAH)
@@ -174,6 +196,10 @@ roc1 <- roc(aSAH$outcome,
 # Add to an existing plot. Beware of 'percent' specification!
 roc2 <- roc(aSAH$outcome, aSAH$wfns,
             plot=TRUE, add=TRUE, percent=roc1$percent)
+
+## Coordinates of the curve ##
+coords(roc1, "best", ret=c("threshold", "specificity", "1-npv"))
+coords(roc2, "local maximas", ret=c("threshold", "sens", "spec", "ppv", "npv"))
 
 ## Confidence intervals ##
 

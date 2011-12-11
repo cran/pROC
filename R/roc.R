@@ -1,6 +1,6 @@
 # pROC: Tools Receiver operating characteristic (ROC curves) with
 # (partial) area under the curve, confidence intervals and comparison. 
-# Copyright (C) 2010 Xavier Robin, Alexandre Hainard, Natacha Turck,
+# Copyright (C) 2010, 2011 Xavier Robin, Alexandre Hainard, Natacha Turck,
 # Natalia Tiberti, Frédérique Lisacek, Jean-Charles Sanchez
 # and Markus Müller
 #
@@ -187,7 +187,7 @@ roc.default <- function(response, predictor,
   thresholds <- roc.utils.thresholds(c(controls, cases))
   perfs <- sapply(thresholds, roc.utils.perfs, controls=controls, cases=cases, direction=direction)
   se <- perfs[2,]
-  sp <- perfs[1,]
+  sp <- perfs[1,]
   if (percent) {
     se <- se*100
     sp <- sp*100

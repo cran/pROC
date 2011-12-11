@@ -1,6 +1,6 @@
 # pROC: Tools Receiver operating characteristic (ROC curves) with
 # (partial) area under the curve, confidence intervals and comparison. 
-# Copyright (C) 2010 Xavier Robin, Alexandre Hainard, Natacha Turck,
+# Copyright (C) 2010, 2011 Xavier Robin, Alexandre Hainard, Natacha Turck,
 # Natalia Tiberti, Frédérique Lisacek, Jean-Charles Sanchez
 # and Markus Müller
 #
@@ -114,25 +114,23 @@ roc.test.roc <- function(roc1, roc2,
                          ...) {
   alternative <- match.arg(alternative)
   data.names <- paste(deparse(substitute(roc1)), "and", deparse(substitute(roc2)))
-  if (class(roc2) == "auc")
+  if ("auc" %in% class(roc2))
     roc2 <- attr(roc2, "roc")
 
   # store which objects are smoothed, and how
   smoothing.args <- list()
-  if (class(roc1) == "smooth.roc") {
+  if ("smooth.roc" %in% class(roc1)) {
     smoothing.args$roc1 <- roc1$smoothing.args
     smoothing.args$roc1$smooth <- TRUE
     roc1 <- attr(roc1, "roc")
-    #oroc1$auc <- roc1$auc
   }
   else {
     smoothing.args$roc1 <- list(smooth=FALSE)
   }
-  if (class(roc2) == "smooth.roc") {
+  if ("smooth.roc" %in% class(roc2)) {
     smoothing.args$roc2 <- roc2$smoothing.args
     smoothing.args$roc2$smooth <- TRUE
     roc2 <- attr(roc2, "roc")
-    #oroc2$auc <- roc2$auc
   }
   else {
     smoothing.args$roc2 <- list(smooth=FALSE)
@@ -199,17 +197,17 @@ roc.test.roc <- function(roc1, roc2,
       roc2$auc <- auc(roc2, ...)
   }
     
-  # check that the full AUC was requested in auc. Otherwise, issue a warning
+  # check that the same region was requested in auc. Otherwise, issue a warning
   if (!identical(attributes(roc1$auc)[names(attributes(roc1$auc))!="roc"], attributes(roc2$auc)[names(attributes(roc2$auc))!="roc"]))
     warning("Different AUC specifications in the ROC curves. Enforcing the inconsistency, but unexpected results may be produced.")
-  # check that the full AUC was requested in auc. Otherwise, issue a warning
+  # check that the same smoothing params were requested in auc. Otherwise, issue a warning
   if (!identical(smoothing.args$roc1, smoothing.args$roc2))
     warning("Different smoothing parameters in the ROC curves. Enforcing the inconsistency, but unexpected results may be produced.")
 
   # Check the method
   if (missing(method) | is.null(method)) {
     # determine method if missing
-    if (is.numeric(attr(roc1$auc, "partial.auc")) && length(attr(roc1$auc, "partial.auc") == 2)) {
+    if (has.partial.auc(roc1)) {
       # partial auc: go for bootstrap
       method <- "bootstrap"
     }
@@ -229,7 +227,7 @@ roc.test.roc <- function(roc1, roc2,
     method <- match.arg(method)
     if (method == "delong") {
       # delong NA to pAUC: warn + change
-      if ((is.numeric(attr(roc1$auc, "partial.auc")) && length(attr(roc1$auc, "partial.auc") == 2)) || (is.numeric(attr(roc2$auc, "partial.auc")) && length(attr(roc2$auc, "partial.auc") == 2))) {
+      if (has.partial.auc(roc1) || has.partial.auc(roc2)) {
         warning("Using DeLong's test for partial AUC is not supported. Using bootstrap test instead.")
         method <- "bootstrap"
       }
@@ -241,7 +239,7 @@ roc.test.roc <- function(roc1, roc2,
         warning("DeLong's test should not be applied to ROC curves with a different direction.")
     }
     else if (method == "venkatraman") {
-      if (is.numeric(attr(roc1$auc, "partial.auc")) && length(attr(roc1$auc, "partial.auc") == 2))
+      if (has.partial.auc(roc1))
         warning("Partial AUC is ignored in Venkatraman's test.")
       if (smoothing.args$roc1$smooth || smoothing.args$roc2$smooth)
         stop("Using Venkatraman's test for smoothed ROCs is not supported.")
@@ -292,7 +290,7 @@ roc.test.roc <- function(roc1, roc2,
                 null.value = null.value
                 )
   class(htest) <- "htest"
-  
+
   if (method == "delong") {
     if (paired) {
       stat <- delong.paired.test(roc1, roc2)
@@ -406,384 +404,4 @@ roc.test.roc <- function(roc1, roc2,
   if (smoothing.args$roc2$smooth)
     htest$roc2 <- do.call("smooth.roc", c(list(roc=roc2), smoothing.args$roc2))
   return(htest)
-}
-
-venkatraman.paired.test <- function(roc1, roc2, boot.n, ties.method="first", progress) {
-  X <- roc1$predictor
-  Y <- roc2$predictor
-  R <- rank(X, ties.method = ties.method)
-  S <- rank(Y, ties.method = ties.method)
-  D <- roc1$response # because roc1&roc2 are paired
-
-  E <- venkatraman.paired.stat(R, S, D, roc1$levels)
-  EP <- raply(boot.n, venkatraman.paired.permutation(R, S, D, roc1$levels, ties.method), .progress=progress)
-  return(list(E, EP))
-}
-
-venkatraman.unpaired.test <- function(roc1, roc2, boot.n, ties.method="first", progress) {
-  X <- roc1$predictor
-  Y <- roc2$predictor
-  R <- rank(X, ties.method = ties.method)
-  S <- rank(Y, ties.method = ties.method)
-  D1<- roc1$response
-  D2 <- roc2$response
-  mp <- (sum(D1 == roc1$levels[2]) + sum(D2 == roc2$levels[2]))/(length(D1) + length(D1)) # mixing proportion, kappa
-
-  E <- venkatraman.unpaired.stat(R, S, D1, D2, roc1$levels, roc2$levels, mp)
-  EP <- raply(boot.n, venkatraman.unpaired.permutation(R, S, D1, D2, roc1$levels, roc2$levels, mp, ties.method), .progress=progress)
-  return(list(E, EP))
-}
-
-
-venkatraman.paired.permutation <- function(R, S, D, levels, ties.method) {
-  # Break ties
-  R2 <- R + runif(length(D)) - 0.5 # Add small amount of random but keep same mean
-  S2 <- S + runif(length(D)) - 0.5
-
-  # Permutation
-  q <- 1 - round(runif(length(D)))
-  R3 <- R2 * q + (1 - q) * S
-  S3 <- S2 * q + (1 - q) * R
-
-  return(venkatraman.paired.stat(rank(R3, ties.method=ties.method), rank(S3, ties.method=ties.method), D, levels))
-}
-
-
-venkatraman.unpaired.permutation <- function(R, S, D1, D2, levels1, levels2, mp, ties.method) {
-  # Break ties
-  R <- R + runif(length(D1)) - 0.5 # Add small amount of random but keep same mean
-  S <- S + runif(length(D2)) - 0.5
-
-  R.controls <- R[D1==levels1[1]]
-  R.cases <- R[D1==levels1[2]]
-  S.controls <- S[D2==levels2[1]]
-  S.cases <- S[D2==levels2[2]]
-
-  # Permutation
-  controls <- sample(c(R.controls, S.controls))
-  cases <- sample(c(R.cases, S.cases))
-  R[D1==levels1[1]] <- controls[1:length(R.controls)]
-  S[D2==levels2[1]] <- controls[(length(R.controls)+1):length(controls)]
-  R[D1==levels1[2]] <- cases[1:length(R.cases)]
-  S[D2==levels2[2]] <- cases[(length(R.cases)+1):length(cases)]
-
-  return(venkatraman.unpaired.stat(rank(R, ties.method=ties.method), rank(S, ties.method=ties.method), D1, D2, levels1, levels2, mp))
-}
-
-venkatraman.paired.stat <- function(R, S, D, levels) {
-  R.controls <- R[D==levels[1]]
-  R.cases <- R[D==levels[2]]
-  S.controls <- S[D==levels[1]]
-  S.cases <- S[D==levels[2]]
-  n <- length(D)
-
-  R.fn <- sapply(1:n, function(x) sum(R.cases <= x))
-  R.fp <- sapply(1:n, function(x) sum(R.controls > x))
-  S.fn <- sapply(1:n, function(x) sum(S.cases <= x))
-  S.fp <- sapply(1:n, function(x) sum(S.controls > x))
-
-  return(sum(abs((S.fn + S.fp) - (R.fn + R.fp))))
-}
-
-venkatraman.unpaired.stat <- function(R, S, D1, D2, levels1, levels2, mp) {
-  R.controls <- R[D1==levels1[1]]
-  R.cases <- R[D1==levels1[2]]
-  S.controls <- S[D2==levels2[1]]
-  S.cases <- S[D2==levels2[2]]
-  n <- length(D1)
-  m <- length(D2)
-
-  R.fx <- sapply(1:n, function(x) sum(R.cases <= x)) / length(R.cases)
-  R.gx <- sapply(1:n, function(x) sum(R.controls <= x)) / length(R.controls)
-  S.fx <- sapply(1:m, function(x) sum(S.cases <= x)) / length(S.cases)
-  S.gx <- sapply(1:m, function(x) sum(S.controls <= x)) / length(S.controls)
-  R.p <- mp*R.fx + (1 - mp)*R.gx
-  S.p <- mp*S.fx + (1 - mp)*S.gx
-  R.exp <- mp*R.fx + (1 - mp)*(1-R.gx)
-  S.exp <- mp*S.fx + (1 - mp)*(1-S.gx)
-
-  # Do the integration
-  x <- sort(c(R.p, S.p))
-  R.f <- approxfun(R.p, R.exp)
-  S.f <- approxfun(S.p, S.exp)
-  f  <- function(x) abs(R.f(x)-S.f(x))
-  y <- f(x)
-  #trapezoid integration:
-  idx <- 2:length(x)
-  integral <- sum(((y[idx] + y[idx-1]) * (x[idx] - x[idx-1])) / 2, na.rm=TRUE) # remove NA that can appear in the borders
-  return(integral)
-}
-
-# Delong's test paired, used by roc.test.roc
-delong.paired.test <- function(roc1, roc2) {
-
-  # Get data from roc1 and roc2
-  YR <- roc1$controls # = C2, n, YRj
-  XR <- roc1$cases # = C1, m, XRi
-  YS <- roc2$controls # = C2, n, YSj
-  XS <- roc2$cases # = C1, m, XSi
-
-  n <- length(YR)
-  m <- length(XR)
-  mn <- m*n
-
-  # Compute Mann-Whitney statistics and deduce thetaR and thetaS
-  MWR <- sapply(1:n, function(j) sapply(1:m, function(i, j) MW.kernel(XR[i], YR[j]), j=j))
-  MWS <- sapply(1:n, function(j) sapply(1:m, function(i, j) MW.kernel(XS[i], YS[j]), j=j))
-
-  thetaR <- sum(MWR)/mn
-  thetaS <- sum(MWS)/mn
-
-  # Delong-specific computations
-  VR10 <- sapply(1:m, function(i) {sum(MWR[i,])})/n
-  VR01 <- sapply(1:n, function(j) {sum(MWR[,j])})/m
-  VS10 <- sapply(1:m, function(i) {sum(MWS[i,])})/n
-  VS01 <- sapply(1:n, function(j) {sum(MWS[,j])})/m
-
-  S10 <- matrix(NA, ncol=2, nrow=2)
-  S10[1,1] <- sum((VR10 - thetaR) * (VR10 - thetaR))/(m-1)
-  S10[1,2] <- sum((VR10 - thetaR) * (VS10 - thetaS))/(m-1)
-  S10[2,1] <- sum((VS10 - thetaS) * (VR10 - thetaR))/(m-1)
-  S10[2,2] <- sum((VS10 - thetaS) * (VS10 - thetaS))/(m-1)
-
-  
-  S01 <- matrix(NA, ncol=2, nrow=2)
-  S01[1,1] <- sum((VR01 - thetaR) * (VR01 - thetaR))/(n-1)
-  S01[1,2] <- sum((VR01 - thetaR) * (VS01 - thetaS))/(n-1)
-  S01[2,1] <- sum((VS01 - thetaS) * (VR01 - thetaR))/(n-1)
-  S01[2,2] <- sum((VS01 - thetaS) * (VS01 - thetaS))/(n-1)
-
-  S <- S10/m + S01/n
-  L <- c(1,-1)
-  sig <- sqrt(L%*%S%*%L)
-  zscore <- (thetaR-thetaS)/sig[1]
-  if (is.nan(zscore) && thetaR == thetaS && sig[1] == 0)
-    zscore <- 0 # special case: no difference between theta's produces a NaN
-  return(zscore)
-}
-
-# Delong's test unpaired, used by roc.test.roc
-delong.unpaired.test <- function(roc1, roc2) {
-
-  # Get data from roc1 and roc2
-  YR <- roc1$controls # = C2, n, YRj
-  XR <- roc1$cases # = C1, m, XRi
-  YS <- roc2$controls # = C2, n, YSj
-  XS <- roc2$cases # = C1, m, XSi
-
-  nr <- length(YR)
-  mr <- length(XR)
-  mnr <- mr*nr
-
-  ns <- length(YS)
-  ms <- length(XS)
-  mns <- ms*ns
-
-  # Compute Mann-Whitney statistics and deduce thetaR and thetaS
-  MWR <- sapply(1:nr, function(j) sapply(1:mr, function(i, j) MW.kernel(XR[i], YR[j]), j=j))
-  MWS <- sapply(1:ns, function(j) sapply(1:ms, function(i, j) MW.kernel(XS[i], YS[j]), j=j))
-
-  thetaR <- sum(MWR)/mnr
-  thetaS <- sum(MWS)/mns
-
-  # Delong-specific computations
-  VR10 <- sapply(1:mr, function(i) {sum(MWR[i,])})/nr
-  VR01 <- sapply(1:nr, function(j) {sum(MWR[,j])})/mr
-  VS10 <- sapply(1:ms, function(i) {sum(MWS[i,])})/ns
-  VS01 <- sapply(1:ns, function(j) {sum(MWS[,j])})/ms
-
-  SR10 <- sum((VR10 - thetaR) * (VR10 - thetaR))/(mr-1)
-  SS10 <- sum((VS10 - thetaS) * (VS10 - thetaS))/(ms-1)
-
-  SR01 <- sum((VR01 - thetaR) * (VR01 - thetaR))/(nr-1)
-  SS01 <- sum((VS01 - thetaS) * (VS01 - thetaS))/(ns-1)
-
-  SR <- SR10/mr + SR01/nr
-  SS <- SS10/ms + SS01/ns
-
-  ntotR <- nr + mr
-  ntotS <- ns + ms
-  SSR <- sqrt((SR) + (SS))
-  t <- (thetaR - thetaS) / SSR
-  df <- ((SR) + (SS))^2 /
-    (((SR)^2 / (ntotR-1)) + ((SS)^2 / (ntotS -1 )))
-
-  return(c(t, df))
-}
-
-# Paired bootstrap test, used by roc.test.roc
-bootstrap.test <- function(roc1, roc2, test, x, paired, boot.n, boot.stratified, smoothing.args, progress) {
-
-  # rename method into smooth.method for roc
-  smoothing.args$roc1$smooth.method <- smoothing.args$roc1$method
-  smoothing.args$roc1$method <- NULL
-  smoothing.args$roc2$smooth.method <- smoothing.args$roc2$method
-  smoothing.args$roc2$method <- NULL
-
-  # Prepare arguments for later calls to roc
-  auc1skeleton <- attributes(roc1$auc)
-  auc1skeleton$roc <- NULL
-  auc1skeleton$direction <- roc1$direction
-  auc1skeleton$class <- NULL
-  auc1skeleton <- c(auc1skeleton, smoothing.args$roc1)
-  auc2skeleton <- attributes(roc2$auc)
-  auc2skeleton$roc <- NULL
-  auc2skeleton$direction <- roc2$direction
-  auc2skeleton$class <- NULL
-  auc2skeleton <- c(auc2skeleton, smoothing.args$roc2)
-
-  # Some attributes may be duplicated in AUC skeletons and will mess the boostrap later on when we do.call().
-  # If this condition happen, it probably means we have a bug elsewhere.
-  # Rather than making a complicated processing to remove the duplicates,
-  # just throw an error and let us solve the bug when a user reports it.
-  duplicated.auc1skeleton <- duplicated(names(auc1skeleton))
-  duplicated.auc2skeleton <- duplicated(names(auc2skeleton))
-  if (any(duplicated.auc1skeleton))
-    stop(sprintf("duplicated argument(s) in AUC1 skeleton: \"%s\". Please report this bug to the package maintainer %s", paste(names(auc1skeleton)[duplicated(names(auc1skeleton))], collapse=", "), packageDescription("pROC")$Maintainer))
-  if (any(duplicated.auc2skeleton))
-    stop(sprintf("duplicated argument(s) in AUC2 skeleton: \"%s\". Please report this bug to the package maintainer %s", paste(names(auc2skeleton)[duplicated(names(auc2skeleton))], collapse=", "), packageDescription("pROC")$Maintainer))
-#  # This was an attempt to remove duplicated arguments and check their equality. Now we die just above if it happens
-#  if (any(duplicated.auc1skeleton)) {
-#    #store and remove duplicates
-#    auc1skeleton.removed <- auc1skeleton[names(auc1skeleton)[duplicated.auc1skeleton]] # store
-#    auc1skeleton[names(auc1skeleton)[duplicated.auc1skeleton]] <- NULL # remove
-#    auc1skeleton.kept <- auc1skeleton[names(auc1skeleton.removed)] # check what is left
-#    if (!all.equal(auc1skeleton.kept, auc1skeleton.removed))
-#      stop("conflicting arguments in AUC1 skeleton")
-#  }
-#  if (any(duplicated.auc2skeleton)) {
-#    #store and remove duplicates
-#    auc2skeleton.removed <- auc2skeleton[names(auc2skeleton)[duplicated.auc2skeleton]] # store
-#    auc2skeleton[names(auc2skeleton)[duplicated.auc2skeleton]] <- NULL # remove
-#    auc2skeleton.kept <- auc2skeleton[names(auc2skeleton.removed)] # check what is left
-#    if (!all.equal(auc2skeleton.kept, auc2skeleton.removed))
-#      stop("conflicting arguments in AUC2 skeleton")
-#  }
-
-  if (boot.stratified) { # precompute sorted responses if stratified
-    response.roc1 <- factor(c(rep(roc1$levels[1], length(roc1$controls)), rep(roc1$levels[2], length(roc1$cases))), levels=roc1$levels)
-    response.roc2 <- factor(c(rep(roc2$levels[1], length(roc2$controls)), rep(roc2$levels[2], length(roc2$cases))), levels=roc2$levels)
-    auc1skeleton$response <- response.roc1
-    auc2skeleton$response <- response.roc2
-    resampled.values <- raply(boot.n, stratified.bootstrap.test(roc1, roc2, test, x, paired, auc1skeleton, auc2skeleton), .progress=progress)
-  }
-  else {
-    resampled.values <- raply(boot.n, nonstratified.bootstrap.test(roc1, roc2, test, x, paired, auc1skeleton, auc2skeleton), .progress=progress)
-  }
-
-  # compute the statistics
-  diffs <- resampled.values[,1] - resampled.values[,2]
-
-  # are there NA values?
-  if ((num.NAs <- sum(is.na(diffs))) > 0) {
-    warning(sprintf("%i NA value(s) produced during bootstrap were ignored.", num.NAs))
-    diffs <- diffs[!is.na(diffs)]
-  }
-
-  # Restore smoothing if necessary
-  if (smoothing.args$roc1$smooth) {
-    smoothing.args$roc1$method <- smoothing.args$roc1$smooth.method
-    roc1 <- do.call("smooth.roc", c(list(roc=roc1), smoothing.args$roc1))
-  }
-  if (smoothing.args$roc2$smooth) {
-    smoothing.args$roc2$method <- smoothing.args$roc2$smooth.method
-    roc2 <- do.call("smooth.roc", c(list(roc=roc2), smoothing.args$roc2))
-  }
-
-  if (test == "sp") {
-    coord1 <- coords(roc1, x=x, input=c("specificity"), ret=c("sensitivity"), as.list=FALSE)
-    coord2 <- coords(roc2, x=x, input=c("specificity"), ret=c("sensitivity"), as.list=FALSE)
-    D <- (coord1 - coord2) / sd(diffs)
-  }
-  else if (test == "se") {
-    coord1 <- coords(roc1, x=x, input=c("sensitivity"), ret=c("specificity"), as.list=FALSE)
-    coord2 <- coords(roc2, x=x, input=c("sensitivity"), ret=c("specificity"), as.list=FALSE)
-    D <- (coord1 - coord2) / sd(diffs)
-  }
-  else {
-    D <- (roc1$auc - roc2$auc) / sd(diffs)
-  }
-  if (is.nan(D) && all(diffs == 0) && roc1$auc == roc2$auc)
-    D <- 0 # special case: no difference between AUCs produces a NaN
-
-  return(D)
-}
-
-stratified.bootstrap.test <- function(roc1, roc2, test, x, paired, auc1skeleton, auc2skeleton) {
-  # sample control and cases separately for a stratified bootstrap
-  idx.controls.roc1 <- sample(1:length(roc1$controls), replace=TRUE)
-  idx.cases.roc1 <- sample(1:length(roc1$cases), replace=TRUE)
-  # finish roc skeletons
-  auc1skeleton$predictor <- c(roc1$controls[idx.controls.roc1], roc1$cases[idx.cases.roc1])
-  if (paired) {
-    auc2skeleton$predictor <- c(roc2$controls[idx.controls.roc1], roc2$cases[idx.cases.roc1])
-  }
-  else { # for unpaired, resample roc2 separately
-    idx.controls.roc2 <- sample(1:length(roc2$controls), replace=TRUE)
-    idx.cases.roc2 <- sample(1:length(roc2$cases), replace=TRUE)
-    auc2skeleton$predictor <- c(roc2$controls[idx.controls.roc2], roc2$cases[idx.cases.roc2])
-  }
-
-  # re-compute the resampled ROC curves
-  roc1 <- try(do.call("roc.default", auc1skeleton), silent=TRUE)
-  roc2 <- try(do.call("roc.default", auc2skeleton), silent=TRUE)
-  # resampled ROCs might not be smoothable: return NA
-  if (class(roc1) == "try-error" || class(roc2) == "try-error") {
-    return(c(NA, NA))
-  }
-  else {
-    if (test == "sp") {
-      coord1 <- coords(roc1, x=x, input=c("specificity"), ret=c("sensitivity"), as.list=FALSE)
-      coord2 <- coords(roc1, x=x, input=c("specificity"), ret=c("sensitivity"), as.list=FALSE)
-      return(c(coord1, coord2))
-    }
-    else if (test == "se") {
-      coord1 <- coords(roc1, x=x, input=c("sensitivity"), ret=c("specificity"), as.list=FALSE)
-      coord2 <- coords(roc1, x=x, input=c("sensitivity"), ret=c("specificity"), as.list=FALSE)
-      return(c(coord1, coord2))
-    }
-    else {
-      return(c(roc1$auc, roc2$auc))
-    }
-  }
-}
-
-nonstratified.bootstrap.test <- function(roc1, roc2, test, x, paired, auc1skeleton, auc2skeleton) {
-  # sample all patients
-  idx.all.roc1 <- sample(1:length(roc1$response), replace=TRUE)
-  # finish roc skeletons
-  auc1skeleton$response <- roc1$response[idx.all.roc1]
-  auc1skeleton$predictor <- roc1$predictor[idx.all.roc1]
-  if (paired) { # if paired, resample roc2 as roc1
-    auc2skeleton$response <- roc2$response[idx.all.roc1]
-    auc2skeleton$predictor <- roc2$predictor[idx.all.roc1]
-  }
-  else { # if unpaired, resample roc2 separately
-    idx.all.roc2 <- sample(1:length(roc2$response), replace=TRUE)
-    auc2skeleton$response <- roc2$response[idx.all.roc2]
-    auc2skeleton$predictor <- roc2$predictor[idx.all.roc2]
-  }
-
-  # re-compute the resampled ROC curves
-  roc1 <- try(do.call("roc.default", auc1skeleton), silent=TRUE)
-  roc2 <- try(do.call("roc.default", auc2skeleton), silent=TRUE)
-  # resampled ROCs might not be smoothable: return NA
-  if (class(roc1) == "try-error" || class(roc2) == "try-error") {
-    return(c(NA, NA))
-  }
-  else {
-    if (test == "sp") {
-      coord1 <- coords(roc1, x=x, input=c("specificity"), ret=c("sensitivity"), as.list=FALSE)
-      coord2 <- coords(roc1, x=x, input=c("specificity"), ret=c("sensitivity"), as.list=FALSE)
-      return(c(coord1, coord2))
-    }
-    else if (test == "se") {
-      coord1 <- coords(roc1, x=x, input=c("sensitivity"), ret=c("specificity"), as.list=FALSE)
-      coord2 <- coords(roc1, x=x, input=c("sensitivity"), ret=c("specificity"), as.list=FALSE)
-      return(c(coord1, coord2))
-    }
-    else {
-      return(c(roc1$auc, roc2$auc))
-    }
-  }
 }

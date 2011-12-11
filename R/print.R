@@ -1,6 +1,6 @@
 # pROC: Tools Receiver operating characteristic (ROC curves) with
 # (partial) area under the curve, confidence intervals and comparison. 
-# Copyright (C) 2010 Xavier Robin, Alexandre Hainard, Natacha Turck,
+# Copyright (C) 2010, 2011 Xavier Robin, Alexandre Hainard, Natacha Turck,
 # Natalia Tiberti, Frédérique Lisacek, Jean-Charles Sanchez
 # and Markus Müller
 #
@@ -188,9 +188,10 @@ print.dataline <- function(x) {
       formula.attrs <- attributes(terms(as.formula(x$call$formula)))
       response.name <- rownames(formula.attrs$factors)[formula.attrs$response]
     }
+    else if ("x" %in% names(x$call))
+      response.name <- as.character(x$call[match("x", names(x$call))])
     else
       return()
     cat("Data: ", predictor.name, " in ", length(x$controls), " controls (", response.name, " ", x$levels[1], ") ", x$direction, " ", length(x$cases), " cases (", response.name, " ", x$levels[2], ").\n", sep="")
   }
 }
-

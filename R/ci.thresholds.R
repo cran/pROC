@@ -1,6 +1,6 @@
 # pROC: Tools Receiver operating characteristic (ROC curves) with
 # (partial) area under the curve, confidence intervals and comparison. 
-# Copyright (C) 2010 Xavier Robin, Alexandre Hainard, Natacha Turck,
+# Copyright (C) 2010, 2011 Xavier Robin, Alexandre Hainard, Natacha Turck,
 # Natalia Tiberti, Frédérique Lisacek, Jean-Charles Sanchez
 # and Markus Müller
 #
@@ -108,22 +108,3 @@ ci.thresholds.roc <- function(roc,
   return(ci)
 }
 
-
-stratified.ci.thresholds <- function(roc, thresholds) {
-  controls <- sample(roc$controls, replace=TRUE)
-  cases <- sample(roc$cases, replace=TRUE)
-  
-  return(sapply(thresholds, roc.utils.perfs, controls=controls, cases=cases, direction=roc$direction))
-}
-
-# Returns an auc in a non stratified manner
-nonstratified.ci.thresholds <- function(roc, thresholds) {
-  tmp.idx <- sample(1:length(roc$predictor), replace=TRUE)
-  predictor <- roc$predictor[tmp.idx]
-  response <- roc$response[tmp.idx]
-  splitted <- split(predictor, response)
-  controls <- splitted[[as.character(roc$levels[1])]]
-  cases <- splitted[[as.character(roc$levels[2])]]
-
-  return(sapply(thresholds, roc.utils.perfs, controls=controls, cases=cases, direction=roc$direction))
-}

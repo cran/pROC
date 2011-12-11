@@ -1,6 +1,6 @@
 # pROC: Tools Receiver operating characteristic (ROC curves) with
 # (partial) area under the curve, confidence intervals and comparison. 
-# Copyright (C) 2010 Xavier Robin, Alexandre Hainard, Natacha Turck,
+# Copyright (C) 2010, 2011 Xavier Robin, Alexandre Hainard, Natacha Turck,
 # Natalia Tiberti, Frédérique Lisacek, Jean-Charles Sanchez
 # and Markus Müller
 #
@@ -40,9 +40,11 @@ plot.roc.smooth.roc <- plot.smooth.roc <- function(x, ...) {
 plot.roc.roc <- function(x,
                          add=FALSE,
                          reuse.auc=TRUE,
+                         axes=TRUE,
+                         legacy.axes=FALSE,
                          xlim=if(x$percent){c(100, 0)} else{c(1, 0)},
                          ylim=if(x$percent){c(0, 100)} else{c(0, 1)},
-                         xlab=ifelse(x$percent, "Specificity (%)", "Specificity"),
+                         xlab=ifelse(x$percent, ifelse(legacy.axes, "100 - Specificity (%)", "Specificity (%)"), ifelse(legacy.axes, "1 - Specificity", "Specificity")),
                          ylab=ifelse(x$percent, "Sensitivity (%)", "Sensitivity"),
                          asp=1,
                          mar=c(4, 4, 2, 2)+.1,
@@ -135,8 +137,21 @@ plot.roc.roc <- function(x,
   if (!add) {
     opar <- par(mar=mar, mgp=mgp)
     on.exit(par(opar))
-    # type="n" to plot background lines and polygon shapes first. We will add the line later
-    suppressWarnings(plot(x$sp, x$se, xlab=xlab, ylab=ylab, type="n", xlim=xlim, ylim=ylim, lwd=lwd, asp=asp, ...))
+    # type="n" to plot background lines and polygon shapes first. We will add the line later. axes=FALSE, we'll add them later according to legacy.axis
+    suppressWarnings(plot(x$sp, x$se, xlab=xlab, ylab=ylab, type="n", axes=FALSE, xlim=xlim, ylim=ylim, lwd=lwd, asp=asp, ...))
+
+    # As we had axes=FALSE we need to add them again unless axes=FALSE
+    if (axes) {
+      box()
+      axis(side=2, ...)
+      lab.at <- seq(1, 0, -.2)
+      if (x$percent)
+        lab.at <- lab.at * 100
+      lab.labels <- lab.at
+      if (legacy.axes)
+        lab.labels <- rev(lab.labels)
+      axis(side=1, at=lab.at, labels=as.graphicsAnnot(sprintf(ifelse(x$percent, "%.0f", "%.1f"), lab.labels)), ...)
+    }
   }
 
   # Plot the grid
@@ -283,5 +298,5 @@ plot.roc.roc <- function(x,
     suppressWarnings(text(print.auc.x, print.auc.y, labels, adj=print.auc.adj, cex=print.auc.cex, col=print.auc.col, ...))
   }
   
-  invisible(x)
+  return(x)
 }

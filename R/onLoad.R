@@ -1,6 +1,6 @@
 # pROC: Tools Receiver operating characteristic (ROC curves) with
 # (partial) area under the curve, confidence intervals and comparison. 
-# Copyright (C) 2010 Xavier Robin, Alexandre Hainard, Natacha Turck,
+# Copyright (C) 2010, 2011 Xavier Robin, Alexandre Hainard, Natacha Turck,
 # Natalia Tiberti, Frédérique Lisacek, Jean-Charles Sanchez
 # and Markus Müller
 #
@@ -18,11 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 .onLoad <- function(lib, pkg) {
+  # Generate progressbar option with smart default values
   if (is.null(getOption("pROCProgress"))) {
     if (interactive()) {
-      print("Type 'citation(\"pROC\")' for a citation.")
-      library(utils)
-      # Generate progressbar option with smart default values
       if (!is.null(getOption("STERM")) && getOption("STERM") == "iESS")
         options("pROCProgress" = list(name = "text", width = NA, char = "=", style = 1))
       else if (.Platform$OS.type == "windows")
@@ -37,3 +35,8 @@
     }
   }
 }
+
+.onAttach <- function(lib, pkg) {
+  packageStartupMessage("Type 'citation(\"pROC\")' for a citation.")
+}
+

@@ -15,11 +15,12 @@
 coords(...)
 \S3method{coords}{roc}(roc, x, input=c("threshold", "specificity",
 "sensitivity"), ret=c("threshold", "specificity", "sensitivity"),
-as.list=FALSE, best.method=c("youden", "closest.topleft"),
+as.list=FALSE, drop=TRUE, best.method=c("youden", "closest.topleft"),
 best.weights=c(1, 0.5), ...)
 \S3method{coords}{smooth.roc}(smooth.roc, x, input=c("specificity",
 "sensitivity"), ret=c("specificity", "sensitivity"), as.list=FALSE,
-best.method=c("youden", "closest.topleft"), best.weights=c(1, 0.5), ...)
+drop=TRUE, best.method=c("youden", "closest.topleft"), 
+best.weights=c(1, 0.5), ...)
 }
 		   
 \arguments{
@@ -45,14 +46,24 @@ best.method=c("youden", "closest.topleft"), best.weights=c(1, 0.5), ...)
 		\code{x} is a character.
   }
   \item{ret}{The coordinates to return. One or more of
-    \dQuote{threshold}, \dQuote{specificity} or
-    \dQuote{sensitivity}. Can be shortenend (for example to
-    \dQuote{thr}, \dQuote{sens} and \dQuote{spec}, or even to
-    \dQuote{t}, \dQuote{se} and \dQuote{sp}). Note that
-		\dQuote{threshold} is not allowed in \code{coords.smooth.roc}.
+    \dQuote{threshold}, \dQuote{specificity}, \dQuote{sensitivity}, \dQuote{accuracy},
+    \dQuote{tn} (true negative count), \dQuote{tp} (true positive count),
+    \dQuote{fn} (false negativge count), \dQuote{fp} (false positive count), 
+    \dQuote{npv} (negative predictive value), \dQuote{ppv} (positive predictive value).
+    \dQuote{1-specificity}, \dQuote{1-sensitivity}, \dQuote{1-npv} and \dQuote{1-ppv} are recognized
+    as well, and must be used verbatim in ROC curves with \code{percent=TRUE} (for instance \dQuote{100-ppv} is never accepted).
+    Values can be shortenend (for example to \dQuote{thr}, \dQuote{sens} and \dQuote{spec}, or even to
+    \dQuote{se}, \dQuote{sp} or \dQuote{1-np}). Note that \dQuote{threshold} is not allowed in
+    \code{coords.smooth.roc}.
+    In addition, \dQuote{npe} is replaced by \dQuote{1-npv} and \dQuote{ppe} by \dQuote{1-ppv}
+    (but they cannot be shortened).
   }
   \item{as.list}{If the returned object must be a list. If \code{FALSE}
     (default), a named numeric vector is returned.}
+  \item{drop}{If \code{TRUE} the result is coerced to the lowest
+    possible dimension, as per \link{Extract}. With \code{FALSE} if \code{x} is
+    of length 1, the object returned will have the same format than if
+    \code{x} was of length > 1.}
   \item{best.method}{if \code{x="best"}, the method to determine the
     best threshold. See details in the \sQuote{Best thresholds} section.
   }
@@ -101,7 +112,7 @@ best.method=c("youden", "closest.topleft"), best.weights=c(1, 0.5), ...)
   optimal threshold is determined.
   \describe{
     \item{\dQuote{youden}}{
-      The Youden index is employed. The optimal cut-off is the threshold
+      Youden's J statistic (Youden, 1950) is employed. The optimal cut-off is the threshold
       that maximizes the distance to the identity (diagonal) line. Can
       be shortened to \dQuote{y}.
 
@@ -133,7 +144,7 @@ best.method=c("youden", "closest.topleft"), best.weights=c(1, 0.5), ...)
       \deqn{max(sensitivities + r * specificities)}{max(sensitivities + r \times specificities)}
     }
     \item{\dQuote{closest.topleft}}{
-      \deqn{min((1 - sensitivities)^2 + r * (1- specificities)^2)}{min((1 - sensitivities)^2 + \times (1- specificities)^2)}
+      \deqn{min((1 - sensitivities)^2 + r * (1- specificities)^2)}{min((1 - sensitivities)^2 + r \times (1- specificities)^2)}
     }
   }
 
@@ -154,7 +165,7 @@ best.method=c("youden", "closest.topleft"), best.weights=c(1, 0.5), ...)
   \tabular{lll}{
 	\tab
 	length(x) == 1 \tab
-	length(x) > 1
+	length(x) > 1 or drop == FALSE
 	\cr
 	
     \code{as.list=TRUE} \tab
@@ -171,11 +182,9 @@ best.method=c("youden", "closest.topleft"), best.weights=c(1, 0.5), ...)
 
   Note that if giving a character as \code{x} (\dQuote{all},
   \dQuote{local maximas} or \dQuote{best}), you cannot predict the
-  dimension of the return value, so be prepared to receive either a
-  numeric vector or a matrix (if \code{as.list=FALSE}) or either a list
-  of numeric or a list of lists (if \code{as.list=TRUE}). Even
+  dimension of the return value unless \code{drop=FALSE}. Even
   \dQuote{best} may return more than one value (for example if the ROC
-  curve is below the identity line, both extreme points).
+  curve is below the identity line, both extreme points). 
 
   \code{coords} may also return \code{NULL} when there a partial area is
   defined but no point of the ROC curve falls within the region.
@@ -191,6 +200,10 @@ best.method=c("youden", "closest.topleft"), best.weights=c(1, 0.5), ...)
   (2011) ``pROC: an open-source package for R and S+ to analyze and
   compare ROC curves''. \emph{BMC Bioinformatics}, \bold{7}, 77.
   DOI: \href{http://dx.doi.org/10.1186/1471-2105-12-77}{10.1186/1471-2105-12-77}.
+
+  W. J. Youden (1950) ``Index for rating diagnostic tests''. \emph{Cancer}, 
+  \bold{3}, 32--35. DOI: 
+  \href{http://dx.doi.org/10.1002/1097-0142(1950)3:1<32::AID-CNCR2820030106>3.0.CO;2-3}{10.1002/1097-0142(1950)3:1<32::AID-CNCR2820030106>3.0.CO;2-3}.
 }
 
 \seealso{
@@ -208,12 +221,22 @@ coords(rocobj, 0.5, "se", ret="se")
 # fully qualified but identical:
 coords(roc=rocobj, x=0.5, input="sensitivity", ret="sensitivity")
 
+# Compare with drop=FALSE
+coords(rocobj, 0.55, drop=FALSE)
+coords(rocobj, 0.9, "specificity", as.list=TRUE, drop=FALSE)
+
 # Same in percent
 rocobj <- roc(aSAH$outcome, aSAH$s100b, percent=TRUE)
 
 coords(rocobj, 0.55)
 coords(rocobj, 90, "specificity", as.list=TRUE)
 coords(rocobj, x=50, input="sensitivity", ret=c("sen", "spec"))
+
+# And with a smoothed ROC curve
+coords(smooth(rocobj), 90, "specificity")
+coords(smooth(rocobj), 90, "specificity", drop=FALSE)
+coords(smooth(rocobj), 90, "specificity", as.list=TRUE)
+coords(smooth(rocobj), 90, "specificity", as.list=TRUE, drop=FALSE)
 
 # Get the sensitivities for all thresholds
 sensitivities <- coords(rocobj, rocobj$thresholds, "thr", "se")
@@ -241,6 +264,16 @@ plot(rocobj, print.thres="best", print.thres.best.method="youden",
 plot(rocobj, print.thres="best", print.thres.best.method="closest.topleft",
                                  print.thres.best.weights=c(5, 0.2)) 
 
+# Return more values:
+coords(rocobj, "best", ret=c("threshold", "specificity", "sensitivity", "accuracy",
+                           "tn", "tp", "fn", "fp", "npv", "ppv", "1-specificity",
+                           "1-sensitivity", "1-npv", "1-ppv"))
+coords(smooth(rocobj), "best", ret=c("threshold", "specificity", "sensitivity", "accuracy",
+                           "tn", "tp", "fn", "fp", "npv", "ppv", "1-specificity",
+                           "1-sensitivity", "1-npv", "1-ppv"))
+coords(smooth(rocobj), 0.5, ret=c("threshold", "specificity", "sensitivity", "accuracy",
+                           "tn", "tp", "fn", "fp", "npv", "ppv", "1-specificity",
+                           "1-sensitivity", "1-npv", "1-ppv"))
 }
 
 \keyword{univar}

@@ -8,17 +8,18 @@
 \alias{roc.test.smooth.roc}
 
 \title{
-  Compare the AUC of two correlated ROC curves
+  Compare the AUC of two ROC curves
 }
 \description{
-  This function compares the AUC or partial AUC of two correlated (or paired) ROC
-  curves. Several syntaxes are available: two object of class roc (which must
-  have the same response data, but can be AUC or smoothed ROC), or either three vectors (response,
-  predictor1, predictor2) or a response vector and a matrix or
-  data.frame with two columns (predictors).
+  This function compares the AUC or partial AUC of two correlated (or
+  paired) or uncorrelated (unpaired) ROC curves. Several syntaxes are
+  available: two object of class roc (which can be AUC or smoothed ROC),
+  or either three vectors (response, predictor1, predictor2) or a
+  response vector and a matrix or data.frame with two columns
+  (predictors).
 }
 \usage{
-roc.test(...)
+# roc.test(...)
 \S3method{roc.test}{roc}(roc1, roc2, method=c("delong", "bootstrap",
 "venkatraman", "sensitivity", "specificity"), sensitivity = NULL,
 specificity = NULL, alternative = c("two.sided", "less", "greater"),
@@ -34,8 +35,7 @@ na.rm=TRUE, method=NULL, ...)
 \arguments{
   \item{roc1, roc2}{the two ROC curves to compare. Either
 	\dQuote{\link{roc}}, \dQuote{\link{auc}} or
-	\dQuote{\link{smooth.roc}} objects (types can be mixed as long as
-	the original ROC curve are paired).
+	\dQuote{\link{smooth.roc}} objects (types can be mixed).
   }
   \item{response}{a vector or factor, as for the \link{roc} function.}
   \item{predictor1}{a numeric or ordered vector as for the \link{roc} function, or
@@ -68,7 +68,8 @@ na.rm=TRUE, method=NULL, ...)
   }
   \item{reuse.auc}{if \code{TRUE} (default) and the \dQuote{roc} objects
     contain an \dQuote{auc} field, re-use these specifications for the
-    test. See details.
+    test. See the \emph{AUC specification} section for more details.
+
   }
   \item{boot.n}{for \code{method="bootstrap"} and \code{method="venkatraman"} only: the number of
     bootstrap replicates or permutations. Default: \var{2000}.
@@ -107,8 +108,7 @@ na.rm=TRUE, method=NULL, ...)
   Three methods are available: \dQuote{delong}, \dQuote{bootstrap} and \dQuote{venkatraman} (see
   \dQuote{Computational details} section below). \dQuote{delong} and
   \dQuote{bootstrap} are tests over the AUC whereas \dQuote{venkatraman}
-  compares the the ROC curves themselves. \dQuote{delong} and \dQuote{bootstrap} are available
-  as both paired and unpaired tests, whereas \dQuote{venkatraman} is only paired yet.
+  compares the the ROC curves themselves.
 
   Default is to use \dQuote{delong} method except for comparison of partial AUC, smoothed
   curves and curves with different \code{direction}, where \code{bootstrap}
@@ -190,6 +190,9 @@ na.rm=TRUE, method=NULL, ...)
     according to the value of \code{alternative}.
   }
 
+  See also the Bootstrap section in
+  \link[=pROC-package]{this package's documentation}.
+
   With \code{method="delong"}, the processing is done as described in
   DeLong \emph{et al.} (1988) for paired ROC curves. Only comparison of
   two ROC curves is implemented. The method has been extended for
@@ -264,13 +267,6 @@ na.rm=TRUE, method=NULL, ...)
 }
 
 \section{Errors}{
-  Both Delong and Bootstrap tests work only on paired data. This
-  assumption is enforced by the verification that the \code{response}s
-  of \code{roc1} and \code{roc2} are \link{identical}. If they are found
-  different, and the difference cannot be explained by missing values,
-  the error \dQuote{The ROC test is defined only on paired ROC curves}
-  is produced.
-
   An error will also occur if you give a \code{predictor2} when
   \code{predictor1} is a \code{\link{matrix}} or a
   \code{\link{data.frame}}, if \code{predictor1} has more than two
@@ -386,8 +382,7 @@ roc.test(roc1, roc2, alternative="less")
 # Smoothing is re-done at each iteration, and execution is slow
 roc.test(smooth(roc1), smooth(roc2))
 # or:
-roc.test(aSAH$outcome, aSAH$s100b, aSAH$wfns, smooth=TRUE,
-smooth.method="density", boot.n=100)
+roc.test(aSAH$outcome, aSAH$s100b, aSAH$wfns, smooth=TRUE, boot.n=100)
 }
 # or from an AUC (no smoothing)
 roc.test(auc(roc1), roc2)

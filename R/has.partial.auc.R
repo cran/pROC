@@ -1,6 +1,6 @@
 # pROC: Tools Receiver operating characteristic (ROC curves) with
 # (partial) area under the curve, confidence intervals and comparison. 
-# Copyright (C) 2010, 2011 Xavier Robin, Alexandre Hainard, Natacha Turck,
+# Copyright (C) 2011 Xavier Robin, Alexandre Hainard, Natacha Turck,
 # Natalia Tiberti, Frédérique Lisacek, Jean-Charles Sanchez
 # and Markus Müller
 #
@@ -17,29 +17,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-lines.roc <- function(x, ...) {
-  UseMethod("lines.roc")
+has.partial.auc <- function(roc) {
+  UseMethod("has.partial.auc")
 }
 
-lines.roc.formula <- function(x, data, ...) {
-  roc <- roc(x, data, ...)
-  lines.roc.roc(roc, ...)
-  roc$call <- match.call()
-  invisible(roc)
+has.partial.auc.auc <- function(roc) {
+  if (is.null(roc)) {
+    return(NULL)
+  }
+
+  is.numeric(attr(roc, "partial.auc")) && length(attr(roc, "partial.auc") == 2)
 }
 
-lines.roc.default <- function(x, predictor, ...) {
-  roc <- roc(x, predictor, ...)
-  lines.roc.roc(roc, ...)
-  roc$call <- match.call()
-  invisible(roc)
+has.partial.auc.smooth.roc <- function(roc) {
+  return(has.partial.auc.roc(roc))
 }
 
-lines.roc.smooth.roc <- lines.smooth.roc <- function(x, ...) {
-  lines.roc.roc(x, ...) # force usage of lines.roc.roc
-}
-
-lines.roc.roc <- function(x, lwd=2, ...) {
-  suppressWarnings(lines(x$sp, x$se, lwd=lwd, ...))
-  invisible(x)
+has.partial.auc.roc <- function(roc) {
+  return(has.partial.auc.auc(roc$auc))
 }

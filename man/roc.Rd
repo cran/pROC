@@ -65,7 +65,9 @@ plot=FALSE, smooth.method="binormal", ci.method=NULL, density=NULL, ...)
     \dQuote{auto} (default): automatically define in which group the
     median is higher and take the direction accordingly.
     \dQuote{>}: if the predictor values for the control group are
-    higher than the values of the case group. \dQuote{>}: contrary.
+    higher than the values of the case group. \dQuote{<}: if the predictor
+    values for the control group are higher or equal than the values of
+    the case group.
   }
   \item{smooth}{if TRUE, the ROC curve is passed to \code{\link{smooth}}
     to be smoothed.

@@ -66,28 +66,33 @@ auc(...)
   arguments, the \code{\link{roc}} function is called and only the AUC is
   returned.
 
-  By default, the total area under the curve is computed, but you can
-  specify a partial AUC with the \code{partial.auc} argument. It specifies the bounds of
+  By default the total area under the curve is computed, but a partial AUC (pAUC)
+  can be
+  specified with the \code{partial.auc} argument. It specifies the bounds of
   specificity or sensitivity (depending on \code{partial.auc.focus}) between
   which the AUC will be computed. As it specifies specificities or
-  sensitivities, you must adapt it accordingly to the 'percent'
+  sensitivities, you must adapt it in relation to the 'percent'
   specification (see details in \code{\link{roc}}).
   
   \code{partial.auc.focus} is ignored if
   \code{partial.auc=FALSE} (default). If a partial AUC is computed,
   \code{partial.auc.focus} specifies if the bounds specified in
   \code{partial.auc} must be interpreted as sensitivity or
-  specificity. Any other value will produce an error.
+  specificity. Any other value will produce an error. It is recommended to
+  \code{\link[=plot.roc]{plot}} the ROC curve with \code{auc.polygon=TRUE} in order to 
+  make sure the specification is correct.
   
-  \code{partial.auc.correct} is ignored if \code{partial.auc=FALSE} (default). If \code{TRUE},
+  If a pAUC is defined, it can be standardized (corrected). This correction is 
+  controled by the \code{partial.auc.correct} argument. If \code{partial.auc.correct=TRUE},
   the correction by McClish will be applied:
   
   \deqn{\frac{1+\frac{auc-min}{max-min}}{2}}{(1+(auc-min)/(max-min))/2}
   
-  where min is the value of the non-discriminant AUC in the region and max
-  is the maximum possible AUC in the region. With this correction, the AUC
+  where auc is the uncorrected pAUC computed in the region defined by \code{partial.auc},
+  min is the value of the non-discriminant AUC (with an AUC of 0.5 or 50%)
+  in the region and max is the maximum possible AUC in the region. With this correction, the AUC
   will be 0.5 if non discriminant and 1.0 if maximal, whatever the region
-  defined. Fully compatible with \code{percent}.
+  defined. This correction is fully compatible with \code{percent}.
 
   There is no difference in the computation of the area under a smoothed
   ROC curve.
@@ -104,8 +109,8 @@ auc(...)
 }
 
 \value{
-  The numeric AUC value, of class \dQuote{auc} (or
-  \dQuote{multiclass.auc} if a \dQuote{multiclass.roc} was supplied), in
+  The numeric AUC value, of class \code{c("auc", "numeric")} (or
+  \code{c("multiclass.auc", "numeric")} if a \dQuote{multiclass.roc} was supplied), in
   fraction of the area or in percent if \code{percent=TRUE}, with the
   following attributes:
   \item{partial.auc}{if the AUC is full (FALSE) or partial (and in this

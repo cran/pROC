@@ -18,7 +18,7 @@
 }
 
 \usage{
-ci.auc(...)
+# ci.auc(...)
 \S3method{ci.auc}{roc}(roc, conf.level=0.95, method=c("delong",
 "bootstrap"), boot.n = 2000, boot.stratified = TRUE, reuse.auc=TRUE,
 progress = getOption("pROCProgress")$name, ...)
@@ -88,16 +88,8 @@ progress=getOption("pROCProgress")$name, ...)
   produced and \dQuote{bootstrap} is employed instead).
 
   With \code{method="bootstrap"}, the function calls \code{\link{auc}}
-  \code{boot.n} times, according to the
-  method described by Carpenter and Bithell (2000). \code{boot.n} bootstrap
-  replicates are drawn. Stratification of bootstrap can be controlled
-  with \code{boot.stratified}. In stratified bootstrap, each replicate
-  contains the same number of cases and controls than the original
-  sample. Stratification is especially useful if one group has only
-  little observations, or if groups are not balanced.
-  Higher numbers of \code{boot.n} will give a more precise estimate of the CI,
-  but take more time to compute. 2000 is recommanded by Carpenter and
-  Bithell.
+  \code{boot.n} times. For more details about the bootstrap, see the Bootstrap section in
+  \link[=pROC-package]{this package's documentation}.
 
   For \link[=smooth.roc]{smoothed ROC curves}, smoothing is performed again at each
   bootstrap replicate with the parameters originally provided.

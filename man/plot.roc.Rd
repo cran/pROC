@@ -20,10 +20,11 @@
 \S3method{plot}{roc}(x, ...)
 \S3method{plot}{smooth.roc}(x, ...)
 \S3method{plot.roc}{roc}(x, add=FALSE, reuse.auc=TRUE,
+axes=TRUE, legacy.axes=FALSE,
 # Generic arguments for par:
 xlim=if(x$percent){c(100, 0)} else{c(1, 0)},
 ylim=if(x$percent){c(0, 100)} else{c(0, 1)},
-xlab=ifelse(x$percent, "Specificity (\%)", "Specificity"),
+xlab=ifelse(x$percent, ifelse(legacy.axes, "100 - Specificity (\%)", "Specificity (\%)"), ifelse(legacy.axes, "1 - Specificity", "Specificity")),
 ylab=ifelse(x$percent, "Sensitivity (\%)", "Sensitivity"),
 asp=1,
 mar=c(4, 4, 2, 2)+.1,
@@ -99,8 +100,15 @@ ci.col=ifelse(ci.type=="bars", par("fg"), "gainsboro"),
   }
   \item{reuse.auc}{if \code{TRUE} (default) and the \dQuote{roc} object
     contains an \dQuote{auc} field, re-use these specifications for the
-    test. See details.
+    plot (specifically \code{print.auc}, \code{auc.polygon} and
+    \code{max.auc.polygon} arguments). See details.
   }
+  \item{axes}{a logical indicating if the plot axes must be drawn.}
+  \item{legacy.axes}{a logical indicating if the specificity axis (x
+    axis) must be plotted as as decreasing \dQuote{specificity}
+    (\code{FALSE}, the default) or increasing \dQuote{1 - specificity}
+    (\code{TRUE}) as in most legacy software. This affects only the
+    axis, not the plot coordinates.}
   \item{xlim, ylim, xlab, ylab, asp, mar, mgp}{Generic arguments for the
 	plot. See \link{plot} and \link{plot.window} for more details. Only
 	used if \code{add=FALSE}.

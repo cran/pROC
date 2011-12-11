@@ -1,6 +1,6 @@
 # pROC: Tools Receiver operating characteristic (ROC curves) with
 # (partial) area under the curve, confidence intervals and comparison. 
-# Copyright (C) 2010 Xavier Robin, Alexandre Hainard, Natacha Turck,
+# Copyright (C) 2010, 2011 Xavier Robin, Alexandre Hainard, Natacha Turck,
 # Natalia Tiberti, Frédérique Lisacek, Jean-Charles Sanchez
 # and Markus Müller
 #
@@ -37,15 +37,15 @@ are.paired.roc <- function(roc1, roc2,
   if (! is.logical(return.paired.rocs) || length(return.paired.rocs) != 1)
     stop("'return.paired.rocs' must be either TRUE or FALSE.")
   # Recover base ROC curves (not auc or smoothed)
-  if (class(roc1) == "auc")
+  if ("auc" %in% class(roc1))
     roc1 <- attr(roc1, "roc")
-  if (class(roc2) == "auc")
+  if ("auc" %in% class(roc2))
     roc2 <- attr(roc2, "roc")
-  if (class(roc1) == "smooth.roc") {
+  if ("smooth.roc" %in% class(roc1)) {
     oroc1 <- roc1
     roc1 <- attr(roc1, "roc")
   }
-  if (class(roc2) == "smooth.roc") {
+  if ("smooth.roc" %in% class(roc2)) {
     oroc2 <- roc2
     roc2 <- attr(roc2, "roc")
   }
@@ -120,7 +120,6 @@ are.paired.roc <- function(roc1, roc2,
 
         # Re-use auc/ci/smooth for roc1
         if (exists("oroc1") && reuse.smooth) {
-          print("Smoothing ROC1")
           args <- oroc1$smoothing.args
           args$roc <- roc1.without.nas
           roc1.without.nas <- do.call("smooth.roc", args)
