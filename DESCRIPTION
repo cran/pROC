@@ -1,15 +1,15 @@
 Package: pROC
 Type: Package
 Title: display and analyze ROC curves
-Version: 1.5.1
-Date: 2012-03-09
+Version: 1.5.4
+Date: 2012-08-31
 Encoding: UTF-8
 Depends: plyr, R (>= 2.10), utils
 Suggests: tcltk, MASS, logcondens
 Author: Xavier Robin, Natacha Turck, Alexandre Hainard, Natalia
         Tiberti, Frédérique Lisacek, Jean-Charles Sanchez and Markus
         Müller
-Maintainer: Xavier Robin <Xavier.Robin@unige.ch>
+Maintainer: ORPHANED
 Description: Tools for visualizing, smoothing and comparing receiver
         operating characteristic (ROC curves). (Partial) area under the
         curve (AUC) can be compared with statistical tests based on
@@ -21,6 +21,10 @@ Acknowledgements: The authors would like to thank E. S. Venkatraman and
 License: GPL (>= 3)
 URL: http://expasy.org/tools/pROC/
 LazyLoad: yes
-Packaged: 2012-03-09 09:38:48 UTC; xrobin
+Packaged: 2012-08-31 13:38:37 UTC; xrobin
 Repository: CRAN
-Date/Publication: 2012-03-09 10:22:55
+Date/Publication: 2012-09-10 11:35:00
+NeedsCompilation: no
+X-CRAN-Original-Maintainer: Xavier Robin <Xavier.Robin@unige.ch>
+X-CRAN-Comment: Orphaned on 2013-12-21 as maintainer address
+        <xavier.robin@unige.ch> bounced.

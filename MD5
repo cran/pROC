@@ -1,6 +1,6 @@
-f2ae8e59b68701a7e4429b219e5bc4bb *DESCRIPTION
+495e221da6e69366a6bdc18350e3c116 *DESCRIPTION
 67d4866009e3a455ce26f272bceea4be *NAMESPACE
-d924da4db7d758c282df24abd35d6ebb *NEWS
+2c670893c73dea8fd7d21a871edfd691 *NEWS
 c04e8357bb994c7b3370b940beabaad7 *R/are.paired.R
 506f53ccab2791ed4b6578a6a6065636 *R/auc.R
 af8b72033cd075d80415c111709bafc6 *R/bootstrap.R
@@ -10,9 +10,10 @@ f58b010898bf82940e3a6ca824c6c40a *R/ci.R
 ed12a65adf6d449daa3b7dc0543bdea6 *R/ci.se.R
 db8709653adcbc2c5629d24f897d9249 *R/ci.sp.R
 a123a78470a9b03c68b954b34aa320a8 *R/ci.thresholds.R
-a0befbe408a972eb66e1aed77f1f0aba *R/coords.R
-63ea577f1d4924a111ecc439dbc481a8 *R/cov.R
+6e8eae347266966138d2d2f7bb5ae11c *R/coords.R
+3d201a7e1ebc6cc3846b50d19910fe2e *R/cov.R
 77ee2f4ffd9fc7a649912903c8c1ef64 *R/delong.R
+ec31d325a62b6ddaa73a969e82abf520 *R/graphics.R
 47d62138967756e59d0eda6e5da5184e *R/has.partial.auc.R
 93d1caca825846603c40100d609872a0 *R/lines.roc.R
 b0217db738ef891a997af9187ad27364 *R/multiclass.R
@@ -22,11 +23,12 @@ b629ce54c974102433f2e452e6274043 *R/plot.ci.R
 22ea36a1b1f362298d5b3244795049cc *R/plot.roc.R
 d125c00f6d8dc38a37476c5309ba2958 *R/print.R
 6c55593a2687226dded2c007692c56f6 *R/roc.R
-289f52ff5669944570ac57a681b90f47 *R/roc.test.R
+be505dc4b780c89203227d90d4eadbf6 *R/roc.test.R
 1099e2316f8ac24c8d8e15e28bcd75a8 *R/roc.utils.R
 54f79af1f55d39248ac452a1ca8cfe59 *R/smooth.R
-dc96637194a7bed1b05c31d1a618bb03 *R/var.R
+a666a1a8013660f69df0f76fd6da48ce *R/var.R
 e83e7c066cf7d84114dcb718d062a553 *R/venkatraman.R
+3ea5a0f37e9c3c296417e0afcd8ef4c8 *README.md
 e33e5e7b38d7ed92fcc33e9b0bea30ff *data/aSAH.RData
 752511c204c9d6ae3d9da6119fc7b529 *inst/CITATION
 afca6a7c612d0fd48c242fcbe4569aaa *man/aSAH.Rd
@@ -48,5 +50,6 @@ dcba35ab90379725efeb6da0222c1d9e *man/plot.ci.Rd
 bbbcbf43f6fbc7b941e60adc6b41e186 *man/print.Rd
 2fd905421a1f8988e4d061541838a24e *man/roc.Rd
 331089bd8d51ddc4c9d3bf7bff577a82 *man/roc.test.Rd
-a68e49bc3339d4d66b27a9083353561e *man/smooth.roc.Rd
+4a1408dade2c4d0b9671a7789f361735 *man/smooth.roc.Rd
 c627d9123c63984a946dfd3c5f0295f9 *man/var.Rd
+db34c8ec50585baa29e6b38df5e4fc3a *pROC-Ex.R
