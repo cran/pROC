@@ -53,6 +53,7 @@ roc.default <- function(response, predictor,
                         percent=FALSE, # Must sensitivities, specificities and AUC be reported in percent? Note that if TRUE, and you want a partial area, you must pass it in percent also (partial.area=c(100, 80))
                         na.rm=TRUE,
                         direction=c("auto", "<", ">"), # direction of the comparison. Auto: automatically define in which group the median is higher and take the good direction to have an AUC >= 0.5
+                        algorithm=1,
 
                         # what computation must be done
                         smooth=FALSE, # call smooth.roc on the current object
@@ -74,13 +75,24 @@ roc.default <- function(response, predictor,
   direction <- match.arg(direction)
   # Response / Predictor
   if (!missing(response) && !is.null(response) && !missing(predictor) && !is.null(predictor)) {
-    original.predictor <- predictor # store a copy of the original predictor (before converting ordered to numeric)
+    original.predictor <- predictor # store a copy of the original predictor (before converting ordered to numeric and removing NA)
+    original.response <- response # store a copy of the original predictor (before converting ordered to numeric)
     # ensure predictor is numeric
     if (!is.numeric(predictor)) {
       if (is.ordered(predictor))
         predictor <- as.numeric(predictor)
       else
         stop("Predictor must be numeric or ordered.")
+    }
+    # also make sure response and predictor are vectors of the same length
+    if (! (is.vector(response) || is.factor(response))) {
+      stop("Response must  be a vector or factor.")
+    }
+    if (! is.vector(predictor)) {
+      stop("Predictor must  be a vector.")
+    }
+    if (length(predictor) != length(response)) {
+      stop("Response and predictor must  be vectors of the same length.")
     }
     # remove NAs if requested
     if (na.rm) {
@@ -103,6 +115,13 @@ roc.default <- function(response, predictor,
     cases <- splitted[[as.character(levels[2])]]
     if (length(cases) == 0)
       stop("No case observation.")
+
+    # Remove patients not in levels
+    patients.in.levels <- response %in% levels
+    if (!all(patients.in.levels)) {
+      response <- response[patients.in.levels]
+      predictor <- predictor[patients.in.levels]
+    }
   }
 
   # Cases / Controls
@@ -119,7 +138,8 @@ roc.default <- function(response, predictor,
     # build response/predictor
     response <- c(rep(0, length(controls)), rep(1, length(cases)))
     predictor <- c(controls, cases)
-    original.predictor <- c(controls, cases)
+    original.predictor <- predictor
+    original.response <- response
     # remove nas
     if (na.rm) {
       if (any(is.na(controls)))
@@ -154,7 +174,7 @@ roc.default <- function(response, predictor,
     smooth.roc$call <- match.call()
     if (auc) {
       smooth.roc$auc <- auc(smooth.roc, ...)
-      if (direction == "auto" && smooth.roc$auc < 0.5) {
+      if (direction == "auto" && smooth.roc$auc < roc.utils.min.partial.auc.auc(smooth.roc$auc)) {
         smooth.roc <- roc.default(density.controls=density.controls, density.cases=density.cases, levels=levels,
                                   percent=percent, direction=">", auc=auc, ci=ci, plot=plot, ...)
         smooth.roc$call <- match.call()
@@ -176,6 +196,7 @@ roc.default <- function(response, predictor,
   class(roc) <- "roc"
   roc$levels <- levels
   roc$percent <- percent
+
   roc$call <- match.call()
 
   if (direction == "auto" && median(controls) <= median(cases))
@@ -185,9 +206,51 @@ roc.default <- function(response, predictor,
 
   # compute SE / SP
   thresholds <- roc.utils.thresholds(c(controls, cases))
-  perfs <- sapply(thresholds, roc.utils.perfs, controls=controls, cases=cases, direction=direction)
-  se <- perfs[2,]
-  sp <- perfs[1,]
+  
+  if (identical(algorithm, 0)) {
+    if (!require(microbenchmark))
+      stop("Package microbenchmark not available, required with algorithm=0'. Please install it with 'install.packages(\"microbenchmark\")'.")
+    cat("Starting benchmark of algorithms 2 and 3, 10 iterations...\n")
+    benchmark <- microbenchmark(
+      "2" = roc.utils.perfs.all.fast(thresholds=thresholds, controls=controls, cases=cases, direction=direction),
+      "3" = rocUtilsPerfsAllC(thresholds=thresholds, controls=controls, cases=cases, direction=direction),
+      times = 10
+      )
+    print(summary(benchmark))
+    roc$fun.sesp <- if (which.min(tapply(benchmark$time, benchmark$expr, sum)) == 1) {
+      cat("Selecting algorithm 2.\n")
+      roc.utils.perfs.all.fast
+    }
+    else {
+      cat("Selecting algorithm 3.\n")
+      rocUtilsPerfsAllC
+    }
+    perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=direction)
+  }
+  else if (identical(algorithm, 1)) {
+    roc$fun.sesp <- roc.utils.perfs.all.safe
+    perfs <- roc.utils.perfs.all.safe(thresholds=thresholds, controls=controls, cases=cases, direction=direction)
+    
+  }
+  else if (identical(algorithm, 2)) {
+    roc$fun.sesp <- roc.utils.perfs.all.fast
+    perfs <- roc.utils.perfs.all.fast(thresholds=thresholds, controls=controls, cases=cases, direction=direction)
+  }
+  else if (identical(algorithm, 3)) {
+    roc$fun.sesp <- rocUtilsPerfsAllC
+    perfs <- rocUtilsPerfsAllC(thresholds=thresholds, controls=controls, cases=cases, direction=direction)
+  }
+  else if (identical(algorithm, 4)) {
+  	roc$fun.sesp <- roc.utils.perfs.all.test
+  	perfs <- roc.utils.perfs.all.test(thresholds=thresholds, controls=controls, cases=cases, direction=direction)
+  }
+  else {
+    stop("Unknown algorithm (must be 1, 2, 3 or 4).")
+  }
+
+  se <- perfs$se
+  sp <- perfs$sp
+
   if (percent) {
     se <- se*100
     sp <- sp*100
@@ -201,6 +264,7 @@ roc.default <- function(response, predictor,
   roc$cases <- cases
   roc$controls <- controls
   roc$original.predictor <- original.predictor
+  roc$original.response <- original.response
   roc$predictor <- predictor
   roc$response <- response
 

@@ -1,5 +1,19 @@
+1.6 (2013-12-26)
+  * New 'power.roc.test' function for sample size and power computations
+  * New 'cov' and 'var' functions supports new "obuchowski" method
+  * New 'ci.coords' function to compute CI of arbitrary coords
+  * 'coords' accepts new 'ret' value "1-accuracy"
+  * Introducing various algorithms to compute sensitivities and specificites, with a more vectorized code or Rcpp. See 'algorithm' in ?roc for more details on the trade-offs of the different methods.
+  * Faster algorithm for DeLong 'roc.test', 'ci', 'var' and 'cov' function (thanks Kazuki Yoshida).
+  * 'are.paired' now also checks for identical 'levels'
+  * Fixed a warning generated in the examples
+  * Fixed several bugs related with 'smooth.roc' curves
+  * Additional input data sanity checks
+  * Now requires R >= 2.13 (in fact, since 1.5.1, thanks Emmanuel Curis for the report)
+  * Progress bars now defaults to text on Macs where 'tcltk' seems broken (thanks Gerard Smits for the report)
+
 1.5.4 (2012-08-31)
-  * Not running smooth.roc examples with logcondens because they take too much time (requested by Uwe Ligges)
+  * Running less smooth.roc examples with logcondens because they take too much time (requested by Uwe Ligges)
 
 1.5.3 (2012-08-31)
   * AUC specification was lost when roc.test, cov or var was passed an 'auc' object.
@@ -10,7 +24,7 @@
 
 1.5 (2011-12-11)
   * New 'cov' and 'var' functions
-  * New 'coords' accepts new 'ret' values: "accuracy", "tn", "tp", "fn", "fp", "npv", "ppv", "1-specificity", "1-sensitivity", "1-npv", "1-ppv", "npe" and "ppe"
+  * 'coords' accepts new 'ret' values: "accuracy", "tn", "tp", "fn", "fp", "npv", "ppv", "1-specificity", "1-sensitivity", "1-npv", "1-ppv", "npe" and "ppe"
   * New 'legacy.axes' argument to 'plot' 1-specificity rather than specificity
   * New 'axes' argument to turn off the plotting of the axis
   * New 'logcondens' and 'logcondens.smooth' (Univariate Log-Concave Density Estimation) smoothing methods
@@ -23,7 +37,7 @@
   * Minor improvements in documentation
 
 1.4.4 (2011-08-09)
-  * Fixed alternative for one-tailed tests (thanks to Lisa Koch for the report)
+  * Fixed alternative for one-tailed tests
   * Removed COPYING file to fix a warning in r-devel.
 
 1.4.3 (2011-03-17)

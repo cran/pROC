@@ -19,6 +19,67 @@
 
 # Helper functions for the ROC curves. These functions should not be called directly as they peform very specific tasks and do nearly no argument validity checks. Not documented in RD and not exported.
 
+# returns a list of sensitivities (se) and specificities (sp) for the given data. Robust algorithm
+roc.utils.perfs.all.safe <- function(thresholds, controls, cases, direction) {
+  perf.matrix <- sapply(thresholds, roc.utils.perfs, controls=controls, cases=cases, direction=direction)
+  #stopifnot(identical(roc.utils.perfs.all.fast(thresholds, controls, cases, direction), list(se=perf.matrix[2,], sp=perf.matrix[1,])))
+  return(list(se=perf.matrix[2,], sp=perf.matrix[1,]))
+}
+
+
+roc.utils.perfs.all.test <- function(thresholds, controls, cases, direction) {
+	perfs.safe <- roc.utils.perfs.all.safe(thresholds=thresholds, controls=controls, cases=cases, direction=direction)
+	perfs.fast <- roc.utils.perfs.all.fast(thresholds=thresholds, controls=controls, cases=cases, direction=direction)
+	perfs.C <- rocUtilsPerfsAllC(thresholds=thresholds, controls=controls, cases=cases, direction=direction)
+	if (! (identical(perfs.safe, perfs.fast) && identical(perfs.safe, perfs.C))) {
+		pROCpackageDescription <- packageDescription("pROC")
+		save(thresholds, controls, cases, direction, pROCpackageDescription, file="pROC_bug.RData")
+		stop(sprintf("Bug in pROC: algorithms returned different values. Diagnostic data saved in pROC_bug.RData. Please report this bug to the package maintainer %s", packageDescription("pROC")$Maintainer))
+	}
+	return(perfs.safe)
+}
+
+
+# returns a list of sensitivities (se) and specificities (sp) for the given data. Fast algorithm
+roc.utils.perfs.all.fast <- function(thresholds, controls, cases, direction) {
+  ncontrols <- length(controls)
+  ncases <- length(cases)
+  predictor <- c(controls, cases)
+  response <- c(rep(0, length(controls)), rep(1, length(cases)))
+  decr <- direction=="<"
+  predictor.order <- order(predictor, decreasing=decr)
+  predictor.sorted <- predictor[predictor.order]
+  response.sorted <- response[predictor.order]
+  
+  tp <- cumsum(response.sorted==1)
+  fp <- cumsum(response.sorted==0)
+  se <- tp / ncases
+  sp <- (ncontrols - fp) / ncontrols
+  # filter duplicate thresholds
+  dups.pred <- rev(duplicated(rev(predictor.sorted)))
+  dups.sesp <- duplicated(matrix(c(se, sp), ncol=2), MARGIN=1)
+  dups <- dups.pred | dups.sesp
+  # Make sure we have the right length
+  if (sum(!dups) != length(thresholds) - 1) {
+    stop(sprintf("Bug in pROC: fast algorithm computed an incorrect number of sensitivities and specificities. Please report this bug to the package maintainer %s", packageDescription("pROC")$Maintainer))
+  }
+  if (direction == "<") {
+    se <- rev(c(0, se[!dups]))
+    sp <- rev(c(1, sp[!dups]))
+  }
+  else {
+    se <- c(0, se[!dups])
+    sp <- c(1, sp[!dups])
+  }
+  return(list(se=se, sp=sp))
+}
+
+# As roc.utils.perfs.all but returns an "old-style" matrix (pre-fast-algo-compatible)
+#roc.utils.perfs.all.matrix <- function(...) {
+#  perfs <- roc.utils.perfs.all(...)
+#  return(matrix(c(perfs$sp, perfs$se), nrow=2, byrow=TRUE))
+#}
+
 # returns a vector with two elements, sensitivity and specificity, given the threshold at which to evaluate the performance, the values of controls and cases and the direction of the comparison, a character '>' or '<' as controls CMP cases
 # sp <- roc.utils.perfs(...)[1,]
 # se <- roc.utils.perfs(...)[2,]
@@ -156,3 +217,45 @@ sort.smooth.roc <- function(roc) {
   }
   return(roc)
 }
+
+# Arguments which can be returned by coords
+roc.utils.match.coords.ret.args <- function(x) {
+
+  valid.ret.args <- c("threshold", "specificity", "sensitivity", "accuracy", "tn", "tp", "fn", "fp", "npv", "ppv", "1-specificity", "1-sensitivity", "1-accuracy", "1-npv", "1-ppv")
+  x <- replace(x, x=="t", "threshold")
+  x <- replace(x, x=="npe", "1-npv")
+  x <- replace(x, x=="ppe", "1-ppv")
+  match.arg(x, valid.ret.args, several.ok=TRUE)
+}
+
+# Compute the min/max for partial AUC
+# ... with an auc
+roc.utils.min.partial.auc.auc <- function(auc) {
+  roc.utils.min.partial.auc(attr(auc, "partial.auc"), attr(auc, "percent"))
+}
+
+roc.utils.max.partial.auc.auc <- function(roc) {
+  roc.utils.max.partial.auc(attr(auc, "partial.auc"), attr(auc, "percent"))
+}
+
+# ... with partial.auc/percent
+roc.utils.min.partial.auc <- function(partial.auc, percent) {
+  if (!identical(partial.auc, FALSE)) {
+    min <- sum(ifelse(percent, 100, 1)-partial.auc)*abs(diff(partial.auc))/2/ifelse(percent, 100, 1)
+  }
+  else {
+    min <- 0.5 * ifelse(percent, 100, 1)
+  }
+  return(min)
+}
+
+roc.utils.max.partial.auc <- function(partial.auc, percent) {
+  if (!identical(partial.auc, FALSE)) {
+    max <- abs(diff(partial.auc))
+  }
+  else {
+    max <- 1 * ifelse(percent, 100, 1)
+  }
+  return(max)
+}
+
