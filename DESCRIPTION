@@ -1,8 +1,8 @@
 Package: pROC
 Type: Package
 Title: display and analyze ROC curves
-Version: 1.6
-Date: 2013-12-26
+Version: 1.6.0.1
+Date: 2013-12-28
 Encoding: UTF-8
 Depends: R (>= 2.13)
 Imports: plyr, utils, methods, Rcpp
@@ -14,7 +14,7 @@ Description: Tools for visualizing, smoothing and comparing receiver operating c
 License: GPL (>= 3)
 URL: http://expasy.org/tools/pROC/
 LazyLoad: yes
-Packaged: 2013-12-26 14:36:48 UTC; xavier
+Packaged: 2013-12-28 16:50:15 UTC; xavier
 NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2013-12-26 16:22:14
+Date/Publication: 2013-12-28 18:32:28

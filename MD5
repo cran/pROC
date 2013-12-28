@@ -1,6 +1,6 @@
-070634723c78ddd8a39a718db604816b *DESCRIPTION
+2aa111e82409f3e57762518f8ee48b2e *DESCRIPTION
 5d10a52ddfda2e8d2f2bb85ff01146af *NAMESPACE
-3a9ca62e123df33ee5e29f1a1164e5b9 *NEWS
+f85dccdfc4998447f361cbb8ab58de16 *NEWS
 7eba6f503543c2c116a4194c00cbf84e *R/RcppExports.R
 2235330e3cdfc1647426effa0bb01df5 *R/are.paired.R
 e18f125d653edfeb936d983ef4a8d367 *R/auc.R
@@ -25,7 +25,7 @@ b629ce54c974102433f2e452e6274043 *R/plot.ci.R
 85efcab203951987d788430bbc7bbccd *R/plot.roc.R
 9d5cbd4bdb15c81f4fd09f4bdb96f11e *R/power.roc.test.R
 3abb548cd11d14ffc645a3d9745354fb *R/print.R
-01c0ca9cf7f0f5ed11ea159df6cc19be *R/roc.R
+2a5aaa7ba4acef0bf989d0fa1653526d *R/roc.R
 be505dc4b780c89203227d90d4eadbf6 *R/roc.test.R
 8b74378542b39f5295d82cfbbebc9caa *R/roc.utils.R
 7a2c257072a38a3bc532cb348d0f6513 *R/smooth.R
