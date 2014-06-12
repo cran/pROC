@@ -1,9 +1,9 @@
-869dea2a8cec65abb63f8d10a432bad4 *DESCRIPTION
+87780d4d60ab34efd0e56e59c4a51fe9 *DESCRIPTION
 b97a1fc35ea253ef049a639b5bf2bf1b *NAMESPACE
-05c2f8192b673391dc2799d42502f6fe *NEWS
+c513ec10dfa9729f8bf342f25a63c8ed *NEWS
 310f1c7d2a97b174e2f990a5b739d0d2 *R/RcppExports.R
 15158032eb13152090181eb3fa1d91a6 *R/are.paired.R
-37a41d6532f64244a8c876565cf9c5d3 *R/auc.R
+a30186f365b3763f54bb06c472a29ba7 *R/auc.R
 5aee61dee936d61dfa54f86f0b420d2a *R/bootstrap.R
 d3d95c017818ab869e27a77928e23ab1 *R/ci.R
 7bc1c0a569a012e13c6cf3f71c5cb85d *R/ci.auc.R
@@ -25,7 +25,7 @@ a6a4c156381c820f6a282ec7b00c4dfa *R/onLoad.R
 3ce288bf6474bec2eb0f99a67d4f88bc *R/plot.ci.R
 d78a9cc3a5ec0d1a0734a8f65dfacacf *R/plot.roc.R
 97775f9d7025911b1af929b82fb0ff17 *R/power.roc.test.R
-f9e4d1c96f8b58618460a72c99b855ff *R/print.R
+b63b3670109edf3f96471b7010a152bb *R/print.R
 e947488caa63d4b0ecf787d85fbb53ed *R/roc.R
 956c5ca8c5871114e64887d2e1cd5914 *R/roc.test.R
 2226bcfcc13609656daf71abb9143c53 *R/roc.utils.R
