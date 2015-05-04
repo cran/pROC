@@ -38,12 +38,12 @@ plot=FALSE, smooth.method="binormal", ci.method=NULL, density=NULL, ...)
     observation. An ordered factor is coerced to a numeric.
   }
   \item{controls, cases}{instead of \code{response}, \code{predictor},
-    the data can be supplied as two vectors containing the predictor
+    the data can be supplied as two numeric or ordered vectors containing the predictor
     values for control and case observations.
   }
   \item{density.controls, density.cases}{a smoothed ROC curve can be
     built directly from two densities on identical \code{x} points, as in
-    \code{\link{smooth.roc}}.
+    \code{\link[=smooth.roc]{smooth}}.
   }
   \item{formula}{a formula of the type \code{response~predictor}. If mulitple predictors 
     are passed, a named list of \code{roc} objects will be returned.}
@@ -99,11 +99,11 @@ plot=FALSE, smooth.method="binormal", ci.method=NULL, density=NULL, ...)
   }
   \item{smooth.method, ci.method}{in \code{roc.formula} and
 	\code{roc.default}, the \code{method} arguments to
-	\code{\link{smooth.roc}} (if \code{smooth=TRUE}) and
+	\code{\link[=smooth.roc]{smooth}} (if \code{smooth=TRUE}) and
 	\code{of="auc"}) must be passed as
 	\code{smooth.method} and \code{ci.method} to avoid confusions.
   }
-  \item{density}{\code{density} argument passed to \code{\link{smooth.roc}}.}
+  \item{density}{\code{density} argument passed to \code{\link[=smooth.roc]{smooth}}.}
   \item{\dots}{further arguments passed to or from other methods, and
     especially:
     \itemize{
@@ -124,7 +124,7 @@ plot=FALSE, smooth.method="binormal", ci.method=NULL, density=NULL, ...)
 \details{
   This function's main job is to build a ROC object. See the
   \dQuote{Value} section to this page for more details. Before
-  returning, it will call (in this order) the \code{\link{smooth.roc}},
+  returning, it will call (in this order) the \code{\link[=smooth.roc]{smooth}},
   \code{\link{auc}}, \code{\link{ci}} and \code{\link{plot.roc}}
   functions if \code{smooth} \code{auc}, \code{ci} and \code{plot.roc}
   (respectively) arguments are set to TRUE. By default, only \code{auc}
@@ -275,8 +275,10 @@ with(aSAH, roc(outcome ~ s100b))
 # With a formula:
 roc(outcome ~ s100b, data=aSAH)
 
-# With controls/cases
+# With numeric controls/cases
 roc(controls=aSAH$s100b[aSAH$outcome=="Good"], cases=aSAH$s100b[aSAH$outcome=="Poor"])
+# With ordered controls/cases
+roc(controls=aSAH$wfns[aSAH$outcome=="Good"], cases=aSAH$wfns[aSAH$outcome=="Poor"])
 
 # Inverted the levels: "Poor" are now controls and "Good" cases:
 roc(aSAH$outcome, aSAH$s100b,

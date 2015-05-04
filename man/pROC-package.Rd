@@ -20,7 +20,7 @@
   requested (if \code{ci=TRUE}) and plot the curve if requested (if
   \code{plot=TRUE}). 
 
-  The \code{\link{roc}} function will call \code{\link{smooth.roc}},
+  The \code{\link{roc}} function will call \code{\link[=smooth.roc]{smooth}},
   \code{\link{auc}},
   \code{\link{ci}} and \code{\link{plot}} as necessary. See these
   individual functions for the arguments that can be passed to them
@@ -79,7 +79,7 @@
     \code{\link[=plot.roc]{plot}} \tab Plot a ROC curve \cr
     \code{\link[=print.roc]{print}} \tab Print a ROC curve object \cr
     \code{\link{roc.test}} \tab Compare the AUC of two ROC curves \cr
-    \code{\link{smooth}} \tab Smooth a ROC curve \cr
+    \code{\link[=smooth.roc]{smooth}} \tab Smooth a ROC curve \cr
     \code{\link[=var.roc]{var}} \tab Variance of the AUC
   }
 }
@@ -205,15 +205,10 @@ system.time(ci(rocobj, progress = "none"))
   		To enable parallell processing, you first need to load an adaptor for the \pkg{foreach} package (\pkg{doMC}, \pkg{doMPI}, \pkg{doParallel}, \pkg{doRedis}, \pkg{doRNG} or \pkg{doSNOW})), register the backend, and set \code{parallel=TRUE}. 
   
   		\preformatted{
-#ifdef windows
-library(doSNOW)
-registerDoSNOW(makeCluster(4, type = "SOCK"))
-#endif
-#ifdef unix 
-library(doMC)
-registerDoMC(4)
-#endif
+library(doParallel)
+registerDoParallel(cl <- makeCluster(getOption("mc.cores", 2)))
 ci(rocobj, method="bootstrap", parallel=TRUE)
+stopCluster(cl)
   		}
     
     Progress bars are not available when parallel processing is enabled.
@@ -320,22 +315,12 @@ plot(ci.thresholds(roc2))
 }
 
 # In parallel
-#ifdef windows
-if (require(doSNOW)) {
-    registerDoSNOW(cl <- makeCluster(2, type = "SOCK"))
-    ci(roc2, method="bootstrap", parallel=TRUE)
+if (require(doParallel)) {
+    registerDoParallel(cl <- makeCluster(getOption("mc.cores", 2L)))
     \dontrun{ci(roc2, method="bootstrap", parallel=TRUE)}
     \dontshow{ci(roc2, method="bootstrap", parallel=TRUE, boot.n=20)}
     stopCluster(cl)
 }
-#endif
-#ifdef unix 
-if (require(doMC)) {
-    registerDoMC(2)
-    \dontrun{ci(roc2, method="bootstrap", parallel=TRUE)}
-    \dontshow{ci(roc2, method="bootstrap", parallel=TRUE, boot.n=20)}
-}
-#endif
 
 ## Comparisons ##
 
