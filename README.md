@@ -1,3 +1,8 @@
+[![Build Status](https://travis-ci.org/xrobin/pROC.svg?branch=master)](https://travis-ci.org/xrobin/pROC)
+[![Codecov coverage](https://codecov.io/github/xrobin/pROC/branch/master/graphs/badge.svg)](https://codecov.io/github/xrobin/pROC) 
+[![CRAN Version](http://www.r-pkg.org/badges/version/pROC)](https://cran.r-project.org/package=pROC)
+[![Downloads](http://cranlogs.r-pkg.org/badges/pROC)](https://cran.r-project.org/package=pROC)
+
 pROC
 =============
 

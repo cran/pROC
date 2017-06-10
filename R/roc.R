@@ -47,7 +47,7 @@ roc.formula <- function (formula, data, ...){
 
   if (length(predictors) == 1) {
     roc <- roc.default(response, m[[predictors]], ...)
-    roc$call <- match.call()
+    roc$call <- Call
     if (!is.null(roc$smooth))
       attr(roc, "roc")$call <- roc$call
     return(roc)
@@ -175,7 +175,7 @@ roc.default <- function(response, predictor,
   		if (any(is.na(controls)))
   			controls <- na.omit(controls)
   		if (any(is.na(cases)))
-  			controls <- na.omit(cases)
+  			cases <- na.omit(cases)
   	}
   	else if (any(is.na(c(controls, cases)))) # Unable to compute anything if there is any NA in the data we want to consider !
   		return(NA)
@@ -275,7 +275,7 @@ roc.default <- function(response, predictor,
   }
   
   # Choose algorithm
-  if (identical(algorithm, 0)) {
+  if (isTRUE(algorithm == 0)) {
     if (!requireNamespace("microbenchmark"))
       stop("Package microbenchmark not available, required with algorithm=0'. Please install it with 'install.packages(\"microbenchmark\")'.")
     cat("Starting benchmark of algorithms 2 and 3, 10 iterations...\n")
@@ -305,16 +305,16 @@ roc.default <- function(response, predictor,
       }
     }
   }
-  if (identical(algorithm, 1)) {
+  if (isTRUE(algorithm ==  1)) {
     fun.sesp <- roc.utils.perfs.all.safe
   }
-  else if (identical(algorithm, 2)) {
+  else if (isTRUE(algorithm == 2)) {
     fun.sesp <- roc.utils.perfs.all.fast
   }
-  else if (identical(algorithm, 3)) {
+  else if (isTRUE(algorithm  == 3)) {
     fun.sesp <- rocUtilsPerfsAllC
   }
-  else if (identical(algorithm, 4)) {
+  else if (isTRUE(algorithm == 4)) {
     fun.sesp <- roc.utils.perfs.all.test
   }
   else {
@@ -342,6 +342,10 @@ roc.default <- function(response, predictor,
   roc$predictor <- predictor
   roc$response <- response
   roc$levels <- levels
+  
+  if (auc) {
+  	attr(roc$auc, "roc") <- roc
+  }
   
   # compute CI
   if (ci)
