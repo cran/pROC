@@ -1,15 +1,16 @@
 Package: pROC
 Type: Package
 Title: Display and Analyze ROC Curves
-Version: 1.10.0
-Date: 2017-06-10
+Version: 1.11.0
+Date: 2018-03-24
 Encoding: UTF-8
 Depends: R (>= 2.14)
 Imports: plyr, utils, methods, Rcpp (>= 0.11.1), ggplot2,
-Suggests: microbenchmark, tcltk, MASS, logcondens, doParallel, testthat
+Suggests: microbenchmark, tcltk, MASS, logcondens, doParallel,
+        testthat, vdiffr
 LinkingTo: Rcpp
 Authors@R: c(person("Xavier", "Robin", role = c("cre", "aut"), 
-                    email = "robin@lindinglab.org"),
+                    email = "pROC-cran@xavier.robin.name"),
              person("Natacha", "Turck", role = "aut"),
              person("Alexandre", "Hainard", role = "aut"),
              person("Natalia", "Tiberti", role = "aut"),
@@ -24,7 +25,7 @@ License: GPL (>= 3)
 URL: http://expasy.org/tools/pROC/
 LazyLoad: yes
 NeedsCompilation: yes
-Packaged: 2017-06-10 14:21:52 UTC; xavier
+Packaged: 2018-03-24 17:49:48 UTC; xavier
 Author: Xavier Robin [cre, aut],
   Natacha Turck [aut],
   Alexandre Hainard [aut],
@@ -33,6 +34,6 @@ Author: Xavier Robin [cre, aut],
   Jean-Charles Sanchez [aut],
   Markus Müller [aut],
   Stefan Siegert [ctb] (Fast DeLong code)
-Maintainer: Xavier Robin <robin@lindinglab.org>
+Maintainer: Xavier Robin <pROC-cran@xavier.robin.name>
 Repository: CRAN
-Date/Publication: 2017-06-10 21:17:21 UTC
+Date/Publication: 2018-03-25 14:53:33 UTC
