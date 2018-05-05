@@ -1,8 +1,8 @@
 Package: pROC
 Type: Package
 Title: Display and Analyze ROC Curves
-Version: 1.11.0
-Date: 2018-03-24
+Version: 1.12.0
+Date: 2018-05-05
 Encoding: UTF-8
 Depends: R (>= 2.14)
 Imports: plyr, utils, methods, Rcpp (>= 0.11.1), ggplot2,
@@ -10,7 +10,8 @@ Suggests: microbenchmark, tcltk, MASS, logcondens, doParallel,
         testthat, vdiffr
 LinkingTo: Rcpp
 Authors@R: c(person("Xavier", "Robin", role = c("cre", "aut"), 
-                    email = "pROC-cran@xavier.robin.name"),
+                    email = "pROC-cran@xavier.robin.name",
+                    comment = c(ORCID = "0000-0002-6813-3200")),
              person("Natacha", "Turck", role = "aut"),
              person("Alexandre", "Hainard", role = "aut"),
              person("Natalia", "Tiberti", role = "aut"),
@@ -23,10 +24,11 @@ Authors@R: c(person("Xavier", "Robin", role = c("cre", "aut"),
 Description: Tools for visualizing, smoothing and comparing receiver operating characteristic (ROC curves). (Partial) area under the curve (AUC) can be compared with statistical tests based on U-statistics or bootstrap. Confidence intervals can be computed for (p)AUC or ROC curves.
 License: GPL (>= 3)
 URL: http://expasy.org/tools/pROC/
+BugReports: https://github.com/xrobin/pROC/issues
 LazyLoad: yes
 NeedsCompilation: yes
-Packaged: 2018-03-24 17:49:48 UTC; xavier
-Author: Xavier Robin [cre, aut],
+Packaged: 2018-05-05 13:30:11 UTC; xavier
+Author: Xavier Robin [cre, aut] (<https://orcid.org/0000-0002-6813-3200>),
   Natacha Turck [aut],
   Alexandre Hainard [aut],
   Natalia Tiberti [aut],
@@ -36,4 +38,4 @@ Author: Xavier Robin [cre, aut],
   Stefan Siegert [ctb] (Fast DeLong code)
 Maintainer: Xavier Robin <pROC-cran@xavier.robin.name>
 Repository: CRAN
-Date/Publication: 2018-03-25 14:53:33 UTC
+Date/Publication: 2018-05-05 14:03:04 UTC

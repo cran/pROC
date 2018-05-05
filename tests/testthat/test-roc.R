@@ -1,9 +1,6 @@
 library(pROC)
 data(aSAH)
 
-# Get static, correct output of the function
-source(system.file("extdata", "test-roc-expected.R", package="pROC"))
-
 level.values <- list(
 	forward = c("Good", "Poor"),
 	reversed = c("Poor", "Good")
@@ -13,14 +10,15 @@ expected.algorithm <- list(
 	pROC:::roc.utils.perfs.all.safe,
 	pROC:::roc.utils.perfs.all.fast,
 	pROC:::rocUtilsPerfsAllC,
-	pROC:::roc.utils.perfs.all.test
+	pROC:::roc.utils.perfs.all.test,
+	pROC:::rocUtilsPerfsAllC
 )
 
 for (marker in c("ndka", "wfns", "s100b")) {
 	for (levels.direction in names(level.values)) {
 		for (percent in c(FALSE, TRUE)) {
 			for (direction in c("auto", "<", ">")) {
-				for (algorithm in 1:4) {
+				for (algorithm in 1:5) {
 					context(sprintf("'roc' function works with percent = %s, marker = %s, levels.direction = %s, direction = %s and algorithm = %s", percent, marker, levels.direction, direction, algorithm))
 					r <- roc(aSAH$outcome, aSAH[[marker]], levels = level.values[[levels.direction]], direction = direction, percent = percent, algorithm = algorithm, quiet = TRUE)
 					

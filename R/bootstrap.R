@@ -50,11 +50,17 @@ bootstrap.cov <- function(roc1, roc2, boot.n, boot.stratified, boot.return, smoo
   # just throw an error and let us solve the bug when a user reports it.
   duplicated.auc1skeleton <- duplicated(names(auc1skeleton))
   duplicated.auc2skeleton <- duplicated(names(auc2skeleton))
-  if (any(duplicated.auc1skeleton))
-    stop(sprintf("duplicated argument(s) in AUC1 skeleton: \"%s\". Please report this bug to the package maintainer %s", paste(names(auc1skeleton)[duplicated(names(auc1skeleton))], collapse=", "), packageDescription("pROC")$Maintainer))
-  if (any(duplicated.auc2skeleton))
-    stop(sprintf("duplicated argument(s) in AUC2 skeleton: \"%s\". Please report this bug to the package maintainer %s", paste(names(auc2skeleton)[duplicated(names(auc2skeleton))], collapse=", "), packageDescription("pROC")$Maintainer))
-
+  if (any(duplicated.auc1skeleton)) {
+  	sessionInfo <- sessionInfo()
+  	save(roc1, roc2, boot.n, boot.stratified, boot.return, smoothing.args, progress, parallel, sessionInfo, file="pROC_bug.RData")
+  	stop(sprintf("pROC: duplicated argument(s) in AUC1 skeleton: \"%s\". Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", paste(names(auc1skeleton)[duplicated(names(auc1skeleton))], collapse=", "), packageDescription("pROC")$BugReports))
+  	
+  }
+  if (any(duplicated.auc2skeleton)) {
+  	sessionInfo <- sessionInfo()
+  	save(roc1, roc2, boot.n, boot.stratified, boot.return, smoothing.args, progress, parallel, sessionInfo, file="pROC_bug.RData")
+  	stop(sprintf("duplicated argument(s) in AUC2 skeleton: \"%s\". Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", paste(names(auc2skeleton)[duplicated(names(auc2skeleton))], collapse=", "), packageDescription("pROC")$BugReports))
+  }
   if (boot.stratified) { # precompute sorted responses if stratified
     #response.roc1 <- factor(c(rep(roc1$levels[1], length(roc1$controls)), rep(roc1$levels[2], length(roc1$cases))), levels=roc1$levels)
     #response.roc2 <- factor(c(rep(roc2$levels[1], length(roc2$controls)), rep(roc2$levels[2], length(roc2$cases))), levels=roc2$levels)
@@ -115,10 +121,17 @@ bootstrap.test <- function(roc1, roc2, test, x, paired, boot.n, boot.stratified,
   # just throw an error and let us solve the bug when a user reports it.
   duplicated.auc1skeleton <- duplicated(names(auc1skeleton))
   duplicated.auc2skeleton <- duplicated(names(auc2skeleton))
-  if (any(duplicated.auc1skeleton))
-    stop(sprintf("duplicated argument(s) in AUC1 skeleton: \"%s\". Please report this bug to the package maintainer %s", paste(names(auc1skeleton)[duplicated(names(auc1skeleton))], collapse=", "), packageDescription("pROC")$Maintainer))
-  if (any(duplicated.auc2skeleton))
-    stop(sprintf("duplicated argument(s) in AUC2 skeleton: \"%s\". Please report this bug to the package maintainer %s", paste(names(auc2skeleton)[duplicated(names(auc2skeleton))], collapse=", "), packageDescription("pROC")$Maintainer))
+  if (any(duplicated.auc1skeleton)) {
+  	sessionInfo <- sessionInfo()
+  	save(roc1, roc2, test, x, paired, boot.n, boot.stratified, smoothing.args, progress, parallel, sessionInfo, file="pROC_bug.RData")
+  	stop(sprintf("pROC: duplicated argument(s) in AUC1 skeleton: \"%s\". Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", paste(names(auc1skeleton)[duplicated(names(auc1skeleton))], collapse=", "), packageDescription("pROC")$BugReports))
+  	
+  }
+  if (any(duplicated.auc2skeleton)) {
+  	sessionInfo <- sessionInfo()
+  	save(roc1, roc2, test, x, paired, boot.n, boot.stratified, smoothing.args, progress, parallel, sessionInfo, file="pROC_bug.RData")
+  	stop(sprintf("duplicated argument(s) in AUC2 skeleton: \"%s\". Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", paste(names(auc2skeleton)[duplicated(names(auc2skeleton))], collapse=", "), packageDescription("pROC")$BugReports))
+  }
 
   if (boot.stratified) { # precompute sorted responses if stratified
     #response.roc1 <- factor(c(rep(roc1$levels[1], length(roc1$controls)), rep(roc1$levels[2], length(roc1$cases))), levels=roc1$levels)
@@ -282,7 +295,7 @@ ci.auc.bootstrap <- function(roc, conf.level, boot.n, boot.stratified, progress,
 stratified.ci.auc <- function(n, roc) {
   controls <- sample(roc$controls, replace=TRUE)
   cases <- sample(roc$cases, replace=TRUE)
-  thresholds <- roc.utils.thresholds(c(cases, controls))
+  thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
   
   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
   roc$sensitivities <- perfs$se
@@ -298,7 +311,7 @@ nonstratified.ci.auc <- function(n, roc) {
   splitted <- split(predictor, response)
   controls <- splitted[[as.character(roc$levels[1])]]
   cases <- splitted[[as.character(roc$levels[2])]]
-  thresholds <- roc.utils.thresholds(c(controls, cases))
+  thresholds <- roc.utils.thresholds(c(controls, cases), roc$direction)
 
   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
   roc$sensitivities <- perfs$se
@@ -314,7 +327,7 @@ stratified.ci.smooth.auc <- function(n, roc, smooth.roc.call, auc.call) {
   controls <- sample(roc$controls, replace=TRUE)
   cases <- sample(roc$cases, replace=TRUE)
   # need to rebuild a ROC and smooth it
-  thresholds <- roc.utils.thresholds(c(cases, controls))
+  thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
   
   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
 
@@ -344,7 +357,7 @@ nonstratified.ci.smooth.auc <- function(n, roc, smooth.roc.call, auc.call) {
   splitted <- split(predictor, response)
   controls <- splitted[[as.character(roc$levels[1])]]
   cases <- splitted[[as.character(roc$levels[2])]]
-  thresholds <- roc.utils.thresholds(c(controls, cases))
+  thresholds <- roc.utils.thresholds(c(controls, cases), roc$direction)
 
   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
 
@@ -393,7 +406,7 @@ ci.multiclass.auc.bootstrap <- function(roc, conf.level, boot.n, boot.stratified
 stratified.ci.multiclass.auc <- function(n, roc) {
   controls <- sample(roc$controls, replace=TRUE)
   cases <- sample(roc$cases, replace=TRUE)
-  thresholds <- roc.utils.thresholds(c(cases, controls))
+  thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
   
   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
   roc$sensitivities <- perfs$se
@@ -411,7 +424,7 @@ nonstratified.ci.multiclass.auc <- function(n, roc) {
   splitted <- split(predictor, response)
   controls <- splitted[[as.character(roc$levels[1])]]
   cases <- splitted[[as.character(roc$levels[2])]]
-  thresholds <- roc.utils.thresholds(c(controls, cases))
+  thresholds <- roc.utils.thresholds(c(controls, cases), roc$direction)
 
   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
   roc$sensitivities <- perfs$se
@@ -425,7 +438,7 @@ nonstratified.ci.multiclass.auc <- function(n, roc) {
 stratified.ci.se <- function(n, roc, sp) {
   controls <- sample(roc$controls, replace=TRUE)
   cases <- sample(roc$cases, replace=TRUE)
-  thresholds <- roc.utils.thresholds(c(cases, controls))
+  thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
   
   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
   roc$sensitivities <- perfs$se * ifelse(roc$percent, 100, 1)
@@ -442,7 +455,7 @@ nonstratified.ci.se <- function(n, roc, sp) {
   splitted <- split(predictor, response)
   controls <- splitted[[as.character(roc$levels[1])]]
   cases <- splitted[[as.character(roc$levels[2])]]
-  thresholds <- roc.utils.thresholds(c(cases, controls))
+  thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
   
   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
   roc$sensitivities <- perfs$se * ifelse(roc$percent, 100, 1)
@@ -457,7 +470,7 @@ nonstratified.ci.se <- function(n, roc, sp) {
 stratified.ci.smooth.se <- function(n, roc, sp, smooth.roc.call) {
   controls <- sample(roc$controls, replace=TRUE)
   cases <- sample(roc$cases, replace=TRUE)
-  thresholds <- roc.utils.thresholds(c(cases, controls))
+  thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
   
     perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
 
@@ -485,7 +498,7 @@ nonstratified.ci.smooth.se <- function(n, roc, sp, smooth.roc.call) {
   splitted <- split(predictor, response)
   controls <- splitted[[as.character(roc$levels[1])]]
   cases <- splitted[[as.character(roc$levels[2])]]
-  thresholds <- roc.utils.thresholds(c(cases, controls))
+  thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
   
     perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
 
@@ -511,7 +524,7 @@ nonstratified.ci.smooth.se <- function(n, roc, sp, smooth.roc.call) {
 stratified.ci.sp <- function(n, roc, se) {
   controls <- sample(roc$controls, replace=TRUE)
   cases <- sample(roc$cases, replace=TRUE)
-  thresholds <- roc.utils.thresholds(c(cases, controls))
+  thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
   
   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
   roc$sensitivities <- perfs$se * ifelse(roc$percent, 100, 1)
@@ -528,7 +541,7 @@ nonstratified.ci.sp <- function(n, roc, se) {
   splitted <- split(predictor, response)
   controls <- splitted[[as.character(roc$levels[1])]]
   cases <- splitted[[as.character(roc$levels[2])]]
-  thresholds <- roc.utils.thresholds(c(cases, controls))
+  thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
   
   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
   roc$sensitivities <- perfs$se * ifelse(roc$percent, 100, 1)
@@ -543,7 +556,7 @@ nonstratified.ci.sp <- function(n, roc, se) {
 stratified.ci.smooth.sp <- function(n, roc, se, smooth.roc.call) {
   controls <- sample(roc$controls, replace=TRUE)
   cases <- sample(roc$cases, replace=TRUE)
-  thresholds <- roc.utils.thresholds(c(cases, controls))
+  thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
   
     perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
 
@@ -571,7 +584,7 @@ nonstratified.ci.smooth.sp <- function(n, roc, se, smooth.roc.call) {
   splitted <- split(predictor, response)
   controls <- splitted[[as.character(roc$levels[1])]]
   cases <- splitted[[as.character(roc$levels[2])]]
-  thresholds <- roc.utils.thresholds(c(cases, controls))
+  thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
   
     perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
 
@@ -618,7 +631,7 @@ nonstratified.ci.thresholds <- function(n, roc, thresholds) {
 stratified.ci.coords <- function(roc, x, input, ret, best.method, best.weights, best.policy) {
   controls <- sample(roc$controls, replace=TRUE)
   cases <- sample(roc$cases, replace=TRUE)
-  thresholds <- roc.utils.thresholds(c(cases, controls))
+  thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
   
   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
 
@@ -648,7 +661,7 @@ nonstratified.ci.coords <- function(roc, x, input, ret, best.method, best.weight
   splitted <- split(predictor, response)
   controls <- splitted[[as.character(roc$levels[1])]]
   cases <- splitted[[as.character(roc$levels[2])]]
-  thresholds <- roc.utils.thresholds(c(controls, cases))
+  thresholds <- roc.utils.thresholds(c(controls, cases), roc$direction)
 
 
   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
@@ -677,7 +690,7 @@ nonstratified.ci.coords <- function(roc, x, input, ret, best.method, best.weight
 stratified.ci.smooth.coords <- function(roc, x, input, ret, best.method, best.weights, smooth.roc.call, best.policy) {
   controls <- sample(roc$controls, replace=TRUE)
   cases <- sample(roc$cases, replace=TRUE)
-  thresholds <- roc.utils.thresholds(c(cases, controls))
+  thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
   
 
   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
@@ -713,7 +726,7 @@ nonstratified.ci.smooth.coords <- function(roc, x, input, ret, best.method, best
   splitted <- split(predictor, response)
   controls <- splitted[[as.character(roc$levels[1])]]
   cases <- splitted[[as.character(roc$levels[2])]]
-  thresholds <- roc.utils.thresholds(c(cases, controls))
+  thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
   
   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
 

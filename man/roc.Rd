@@ -20,7 +20,7 @@ roc(...)
 \S3method{roc}{default}(response, predictor, controls, cases,
 density.controls, density.cases,
 levels=base::levels(as.factor(response)), percent=FALSE, na.rm=TRUE,
-direction=c("auto", "<", ">"), algorithm = 1, quiet = TRUE, 
+direction=c("auto", "<", ">"), algorithm = 5, quiet = TRUE, 
 smooth=FALSE, auc=TRUE, ci=FALSE, plot=FALSE, smooth.method="binormal",
 ci.method=NULL, density=NULL, ...)
 
@@ -84,9 +84,11 @@ ci.method=NULL, density=NULL, ...)
     the ROC curve is above 1000. Less tested than \code{1}.
     \code{3}: a C++ 
     implementation of \code{1}, about 3-5x faster. Typically the fastest with
-    ROC curves with less than 3000-5000 thresholds. 
+    ROC curves with less than 1500 thresholds, but has a very bad worst-case
+    when that number increases.
     \code{4} (debug only, slow):
     runs all 3 algorithms and makes sure they return the same values.
+    \code{5}: quickly select 2 or 3 based on the number of thresholds.
     \code{0}: use \pkg{microbenchmark} to choose between \code{2} and \code{3}.
   }
   \item{quiet}{set to \code{FALSE} to turn on \code{\link{message}}s

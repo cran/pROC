@@ -32,9 +32,9 @@ roc.utils.perfs.all.test <- function(thresholds, controls, cases, direction) {
 	perfs.fast <- roc.utils.perfs.all.fast(thresholds=thresholds, controls=controls, cases=cases, direction=direction)
 	perfs.C <- rocUtilsPerfsAllC(thresholds=thresholds, controls=controls, cases=cases, direction=direction)
 	if (! (identical(perfs.safe, perfs.fast) && identical(perfs.safe, perfs.C))) {
-		pROCpackageDescription <- packageDescription("pROC")
-		save(thresholds, controls, cases, direction, pROCpackageDescription, file="pROC_bug.RData")
-		stop(sprintf("Bug in pROC: algorithms returned different values. Diagnostic data saved in pROC_bug.RData. Please report this bug to the package maintainer %s", packageDescription("pROC")$Maintainer))
+		sessionInfo <- sessionInfo()
+		save(thresholds, controls, cases, direction, sessionInfo, file="pROC_bug.RData")
+		stop(sprintf("pROC: algorithms returned different values. Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", packageDescription("pROC")$BugReports))
 	}
 	return(perfs.safe)
 }
@@ -61,7 +61,9 @@ roc.utils.perfs.all.fast <- function(thresholds, controls, cases, direction) {
   dups <- dups.pred | dups.sesp
   # Make sure we have the right length
   if (sum(!dups) != length(thresholds) - 1) {
-    stop(sprintf("Bug in pROC: fast algorithm computed an incorrect number of sensitivities and specificities. Please report this bug to the package maintainer %s", packageDescription("pROC")$Maintainer))
+  	sessionInfo <- sessionInfo()
+  	save(thresholds, controls, cases, direction, sessionInfo, file="pROC_bug.RData")
+    stop(sprintf("pROC: fast algorithm computed an incorrect number of sensitivities and specificities. Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", packageDescription("pROC")$BugReports))
   }
   if (direction == "<") {
     se <- rev(c(0, se[!dups]))
@@ -111,9 +113,60 @@ roc.utils.perfs.dens <- function(threshold, x, dens.controls, dens.cases, direct
 }
 
 # return the thresholds to evaluate in the ROC curve, given the 'predictor' values. Returns all unique values of 'predictor' plus 2 extreme values
-roc.utils.thresholds <- function(predictor) {
-  thresholds <- sort(unique(predictor))
-  return((c(-Inf, thresholds) + c(thresholds, +Inf))/2)
+roc.utils.thresholds <- function(predictor, direction) {
+  unique.candidates <- sort(unique(predictor))
+  thresholds <- (c(-Inf, unique.candidates) + c(unique.candidates, +Inf))/2
+  if (any(o <- outer(thresholds, predictor, `==`))) {
+  	# If we get here, some thresholds are identical to the predictor
+  	# This is caused by near numeric ties that caused the mean to equal
+  	# one of the candidate
+  	# We need to make sure we select the right threshold more carefully
+  	if (direction == '>') {
+  		# We have:
+  		# tp <- sum(cases <= threshold)
+  		# tn <- sum(controls > threshold)
+  		# We need to make sure the selected threshold
+  		# Corresponds to the lowest observation of the predictor
+  		# Identify problematic thresholds
+  		# rows <- which(apply(o, 1, any))
+  		for (row in which(apply(o, 1, any))) {
+  			if (thresholds[row] == unique.candidates[row - 1]) {
+  				# We're already good, nothing to do
+  			}
+  			else if (thresholds[row] == unique.candidates[row]) {
+  				thresholds[row] <- unique.candidates[row - 1]
+  			}
+  			else {
+  				sessionInfo <- sessionInfo()
+  				save(predictor, direction, sessionInfo, file="pROC_bug.RData")
+  				stop(sprintf("Couldn't fix near ties in thresholds: %s, %s, %s, %s. Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", thresholds[row], unique.candidates[row - 1], unique.candidates[row], direction, packageDescription("pROC")$BugReports))
+  			}
+  		}
+  	}
+  	else if (direction == '<') {
+  		# We have:
+  		# tp <- sum(cases >= threshold)
+  		# tn <- sum(controls < threshold)
+  		# We need to make sure the selected threshold
+  		# Corresponds to the highest observation of the predictor
+  		# Identify the problematic thresholds:
+  		# rows <- which(apply(o, 1, any))
+  		for (row in which(apply(o, 1, any))) {
+  			if (thresholds[row] == unique.candidates[row - 1]) {
+  				# Easy to fix: should be unique.candidates[row]
+  				thresholds[row] <- unique.candidates[row]
+  			} else if (thresholds[row] == unique.candidates[row]) {
+  				# We're already good, nothing to do
+  			}
+  			else {
+  				sessionInfo <- sessionInfo()
+  				save(predictor, direction, sessionInfo, file="pROC_bug.RData")
+  				stop(sprintf("Couldn't fix near ties in thresholds: %s, %s, %s, %s. Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", thresholds[row], unique.candidates[row - 1], unique.candidates[row], direction, packageDescription("pROC")$BugReports))
+  			}
+  		}
+  	}
+  }
+  return(thresholds)
 }
 
 # Find all the local maximas of the ROC curve. Returns a logical vector

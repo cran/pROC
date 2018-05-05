@@ -119,6 +119,16 @@ Development
 Download the source code from git, unzip it if necessary, and then type `R CMD INSTALL pROC`. Alternatively, you can use the [devtools](https://github.com/hadley/devtools/wiki) package by [Hadley Wickham](http://had.co.nz/) to automate the process (make sure you follow [the full instructions to get started](http://www.rstudio.com/projects/devtools/)):
 
 ```R
-install.packages("devtools")
+if (! requireNamespace("devtools")) install.packages("devtools")
 devtools::install_github("xrobin/pROC")
 ```
+
+To run all automated tests, including slow tests:
+
+```
+cd .. # Run from parent directory
+VERSION=$(grep Version pROC/DESCRIPTION | sed "s/.\+ //")
+R CMD build pROC
+RUN_SLOW_TESTS=true R CMD check pROC_$VERSION.tar.gz
+```
+
