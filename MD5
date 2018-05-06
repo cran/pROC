@@ -1,6 +1,6 @@
-7d5c1a9fd2794f09e94c996c6d9fbb23 *DESCRIPTION
+8aa8fa031406623b9a7074c608d57b57 *DESCRIPTION
 6dc077fb9c78873f8810cd9f5aea9f89 *NAMESPACE
-0ab641f97e536eec96ff0e2009527a1f *NEWS
+c24deddacbdd3977b36efae011564817 *NEWS
 172c525dd74d779b49be1382d5c98447 *R/RcppExports.R
 15158032eb13152090181eb3fa1d91a6 *R/are.paired.R
 0aa51b798f34dcafb67ec77cc0bc64fe *R/auc.R
@@ -29,12 +29,12 @@ edb63b6afd95b32a11e1e7db23dc4a9a *R/power.roc.test.R
 b63b3670109edf3f96471b7010a152bb *R/print.R
 f0f76c03f2dc191634ee6ea804039ebd *R/roc.R
 6bd3adc33d1c496a1e3c04be52db9588 *R/roc.test.R
-1c119290ca09265904769cc3e88affa6 *R/roc.utils.R
+6fa8c1ad92d3027260c7c759aa47b15f *R/roc.utils.R
 d8ac310a521cfac6e08e507c7c3ae0a3 *R/roc.utils.percent.R
 8ee3833b0c9e4c396a055fd601583ac7 *R/smooth.R
 0bb2525b5256154dd1ac74c451c17e75 *R/var.R
 4026da78c98725f60fb25c39bcb774af *R/venkatraman.R
-90f5269f8f2c385a14b7698a499213f3 *README.md
+8704dcc43c2ec2520183aa85ac6f13e8 *README.md
 e33e5e7b38d7ed92fcc33e9b0bea30ff *data/aSAH.RData
 758096d6223cccc30feb2b0545509ed5 *inst/CITATION
 af45f825fc7912e5fcac6d7fcb1c3ee5 *inst/extra/algorithms.speed.test.R
@@ -54,7 +54,7 @@ abcb62828a20acf2973d13dc7ac486fc *man/ggroc.Rd
 048bc5f42aa77f0da8dbf0273d44ca30 *man/has.partial.auc.Rd
 95566735dfda53dbbd337f31f1e2bd81 *man/lines.roc.Rd
 95b42004d462e376b6a2dc5980710b41 *man/multiclass.Rd
-f110fb2114710589050a68775a634986 *man/pROC-package.Rd
+1b31812317d263c37050015cc9e8eb23 *man/pROC-package.Rd
 dcba35ab90379725efeb6da0222c1d9e *man/plot.ci.Rd
 f81373b30863a4fa19bb1336b4a10086 *man/plot.roc.Rd
 5c19a1ee56771e7e4ba644153396e781 *man/power.roc.test.Rd
@@ -89,6 +89,7 @@ b427d1102c1605019c81b219c88a9ae6 *tests/testthat/helper-coords-expected.R
 ef3f21c5274d7ac198d6c5a6b4d4f3e1 *tests/testthat/test-coords.R
 e2cc035d8a0874384435d1f4bdaca48c *tests/testthat/test-cov.R
 65b4e98051acd9dabed164bc40cb9aaf *tests/testthat/test-deLongPlacementsCpp.R
+cf78f7ac2ee242d4b22952fddc4d89f8 *tests/testthat/test-large.R
 3e4a3e1f2a750678c416738641ba79b8 *tests/testthat/test-numeric-accuracy.R
 e540c7c9eee768c85cbcc5eb407e6de9 *tests/testthat/test-plot.R
 a2a78c2a1e8a6c46e8d6042ce61c231d *tests/testthat/test-power.roc.test.R
