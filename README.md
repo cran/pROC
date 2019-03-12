@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/xrobin/pROC.svg?branch=master)](https://travis-ci.org/xrobin/pROC)
+[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/xrobin/pROC?branch=master&svg=true)](https://ci.appveyor.com/project/xrobin/pROC)
 [![Codecov coverage](https://codecov.io/github/xrobin/pROC/branch/master/graphs/badge.svg)](https://codecov.io/github/xrobin/pROC) 
 [![CRAN Version](http://www.r-pkg.org/badges/version/pROC)](https://cran.r-project.org/package=pROC)
 [![Downloads](http://cranlogs.r-pkg.org/badges/pROC)](https://cran.r-project.org/package=pROC)
@@ -136,13 +137,31 @@ R CMD build pROC
 RUN_SLOW_TESTS=true R CMD check pROC_$VERSION.tar.gz
 ```
 
+### vdiffr
+
+The [vdiffr](https://github.com/r-lib/vdiffr) package is used for visual tests of plots.
+
+To run all the test cases (incl. slow ones) from the command line:
+
+```R
+run_slow_tests <- TRUE
+vdiffr::manage_cases()
+```
+
+To run the checks upon R CMD check, set environment variable `NOT_CRAN=1`:
+
+```
+NOT_CRAN=1 RUN_SLOW_TESTS=true R CMD check pROC_$VERSION.tar.gz
+```
+
 ### Release steps
 
-1. Build & check package: `R CMD build pROC && R CMD check --as-cran pROC_1.12.0.tar.gz`
-1. Check with slow tests: `RUN_SLOW_TESTS=true R CMD check pROC_1.12.0.tar.gz`
+1. Get new version to release: `VERSION=$(grep Version pROC/DESCRIPTION | sed "s/.\+ //") && echo $VERSION`
+1. Build & check package: `R CMD build pROC && R CMD check --as-cran pROC_$VERSION.tar.gz`
+1. Check with slow tests: `NOT_CRAN=1  RUN_SLOW_TESTS=true R CMD check pROC_$VERSION.tar.gz`
 1. Check with R-devel: `rhub::check_with_rdevel()`
 1. Chec reverse dependencies: `devtools::revdep_check(libpath = rappdirs::user_cache_dir("revdep_lib"), srcpath = rappdirs::user_cache_dir("revdep_src"))`
 1. Update `Version` and `Date` in `DESCRIPTION`
 1. Update version and date in `NEWS`
-1. Create a tag: `git tag v1.12.0`
+1. Create a tag: `git tag v$VERSION`
 1. [Submit to CRAN](https://cran.r-project.org/submit.html)

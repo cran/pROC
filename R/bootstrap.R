@@ -53,13 +53,13 @@ bootstrap.cov <- function(roc1, roc2, boot.n, boot.stratified, boot.return, smoo
   if (any(duplicated.auc1skeleton)) {
   	sessionInfo <- sessionInfo()
   	save(roc1, roc2, boot.n, boot.stratified, boot.return, smoothing.args, progress, parallel, sessionInfo, file="pROC_bug.RData")
-  	stop(sprintf("pROC: duplicated argument(s) in AUC1 skeleton: \"%s\". Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", paste(names(auc1skeleton)[duplicated(names(auc1skeleton))], collapse=", "), packageDescription("pROC")$BugReports))
+  	stop(sprintf("pROC: duplicated argument(s) in AUC1 skeleton: \"%s\". Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", paste(names(auc1skeleton)[duplicated(names(auc1skeleton))], collapse=", "), utils::packageDescription("pROC")$BugReports))
   	
   }
   if (any(duplicated.auc2skeleton)) {
   	sessionInfo <- sessionInfo()
   	save(roc1, roc2, boot.n, boot.stratified, boot.return, smoothing.args, progress, parallel, sessionInfo, file="pROC_bug.RData")
-  	stop(sprintf("duplicated argument(s) in AUC2 skeleton: \"%s\". Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", paste(names(auc2skeleton)[duplicated(names(auc2skeleton))], collapse=", "), packageDescription("pROC")$BugReports))
+  	stop(sprintf("duplicated argument(s) in AUC2 skeleton: \"%s\". Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", paste(names(auc2skeleton)[duplicated(names(auc2skeleton))], collapse=", "), utils::packageDescription("pROC")$BugReports))
   }
   if (boot.stratified) { # precompute sorted responses if stratified
     #response.roc1 <- factor(c(rep(roc1$levels[1], length(roc1$controls)), rep(roc1$levels[2], length(roc1$cases))), levels=roc1$levels)
@@ -124,13 +124,13 @@ bootstrap.test <- function(roc1, roc2, test, x, paired, boot.n, boot.stratified,
   if (any(duplicated.auc1skeleton)) {
   	sessionInfo <- sessionInfo()
   	save(roc1, roc2, test, x, paired, boot.n, boot.stratified, smoothing.args, progress, parallel, sessionInfo, file="pROC_bug.RData")
-  	stop(sprintf("pROC: duplicated argument(s) in AUC1 skeleton: \"%s\". Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", paste(names(auc1skeleton)[duplicated(names(auc1skeleton))], collapse=", "), packageDescription("pROC")$BugReports))
+  	stop(sprintf("pROC: duplicated argument(s) in AUC1 skeleton: \"%s\". Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", paste(names(auc1skeleton)[duplicated(names(auc1skeleton))], collapse=", "), utils:: packageDescription("pROC")$BugReports))
   	
   }
   if (any(duplicated.auc2skeleton)) {
   	sessionInfo <- sessionInfo()
   	save(roc1, roc2, test, x, paired, boot.n, boot.stratified, smoothing.args, progress, parallel, sessionInfo, file="pROC_bug.RData")
-  	stop(sprintf("duplicated argument(s) in AUC2 skeleton: \"%s\". Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", paste(names(auc2skeleton)[duplicated(names(auc2skeleton))], collapse=", "), packageDescription("pROC")$BugReports))
+  	stop(sprintf("duplicated argument(s) in AUC2 skeleton: \"%s\". Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", paste(names(auc2skeleton)[duplicated(names(auc2skeleton))], collapse=", "), utils:: packageDescription("pROC")$BugReports))
   }
 
   if (boot.stratified) { # precompute sorted responses if stratified
@@ -210,7 +210,7 @@ stratified.bootstrap.test <- function(n, roc1, roc2, test, x, paired, auc1skelet
   roc2 <- try(do.call("roc.cc.nochecks", auc2skeleton), silent=TRUE)
 
   # resampled ROCs might not be smoothable: return NA
-  if (is(roc1, "try-error") || is(roc2, "try-error")) {
+  if (methods::is(roc1, "try-error") || methods::is(roc2, "try-error")) {
     return(c(NA, NA))
   }
   else {
@@ -250,7 +250,7 @@ nonstratified.bootstrap.test <- function(n, roc1, roc2, test, x, paired, auc1ske
   roc1 <- try(do.call("roc.rp.nochecks", auc1skeleton), silent=TRUE)
   roc2 <- try(do.call("roc.rp.nochecks", auc2skeleton), silent=TRUE)
   # resampled ROCs might not be smoothable: return NA
-  if (is(roc1, "try-error") || is(roc2, "try-error")) {
+  if (methods::is(roc1, "try-error") || methods::is(roc2, "try-error")) {
     return(c(NA, NA))
   }
   else {
@@ -343,7 +343,7 @@ stratified.ci.smooth.auc <- function(n, roc, smooth.roc.call, auc.call) {
   # call smooth.roc and auc.smooth.roc
   smooth.roc.call$roc <- roc
   auc.call$smooth.roc <- try(eval(smooth.roc.call), silent=TRUE)
-  if (is(auc.call$smooth.roc, "try-error")) {
+  if (methods::is(auc.call$smooth.roc, "try-error")) {
     return(NA)
   }
   return(eval(auc.call))
@@ -373,65 +373,65 @@ nonstratified.ci.smooth.auc <- function(n, roc, smooth.roc.call, auc.call) {
   # call smooth.roc and auc.smooth.roc
   smooth.roc.call$roc <- roc
   auc.call$smooth.roc <- try(eval(smooth.roc.call), silent=TRUE)
-  if (is(auc.call$smooth.roc, "try-error")) {
+  if (methods::is(auc.call$smooth.roc, "try-error")) {
     return(NA)
   }
   return(eval(auc.call))
 }
 
-##########  AUC of a multiclass ROC (ci.multiclass.auc)  ##########
-  
-ci.multiclass.auc.bootstrap <- function(roc, conf.level, boot.n, boot.stratified, progress, parallel, ...) {
-  if(class(progress) != "list")
-    progress <- roc.utils.get.progress.bar(progress, title="Multi-class AUC confidence interval", label="Bootstrap in progress...", ...)
-
-  if (boot.stratified) {
-    aucs <- unlist(llply(1:boot.n, stratified.ci.multiclass.auc, roc=roc, .progress=progress, .parallel=parallel))
-  }
-  else {
-    aucs <- unlist(llply(1:boot.n, nonstratified.ci.multiclass.auc, roc=roc, .progress=progress, .parallel=parallel))
-  }
-
-  if (sum(is.na(aucs)) > 0) {
-    warning("NA value(s) produced during bootstrap were ignored.")
-    aucs <- aucs[!is.na(aucs)]
-  }
-  # TODO: Maybe apply a correction (it's in the Tibshirani?) What do Carpenter-Bithell say about that?
-  # Prepare the return value
-  return(quantile(aucs, c(0+(1-conf.level)/2, .5, 1-(1-conf.level)/2)))
-
-}
-
-# Returns an auc in a stratified manner
-stratified.ci.multiclass.auc <- function(n, roc) {
-  controls <- sample(roc$controls, replace=TRUE)
-  cases <- sample(roc$cases, replace=TRUE)
-  thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
-  
-  perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
-  roc$sensitivities <- perfs$se
-  roc$specificities <- perfs$sp
-
-  auc.roc(roc, partial.auc=attr(roc$auc, "partial.auc"), partial.auc.focus=attr(roc$auc, "partial.auc.focus"), partial.auc.correct=attr(roc$auc, "partial.auc.correct"))
-}
-
-
-# Returns an auc in a non stratified manner
-nonstratified.ci.multiclass.auc <- function(n, roc) {
-  tmp.idx <- sample(1:length(roc$predictor), replace=TRUE)
-  predictor <- roc$predictor[tmp.idx]
-  response <- roc$response[tmp.idx]
-  splitted <- split(predictor, response)
-  controls <- splitted[[as.character(roc$levels[1])]]
-  cases <- splitted[[as.character(roc$levels[2])]]
-  thresholds <- roc.utils.thresholds(c(controls, cases), roc$direction)
-
-  perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
-  roc$sensitivities <- perfs$se
-  roc$specificities <- perfs$sp
-  
-  auc.roc(roc, partial.auc=attr(roc$auc, "partial.auc"), partial.auc.focus=attr(roc$auc, "partial.auc.focus"), partial.auc.correct=attr(roc$auc, "partial.auc.correct"))
-}
+# ##########  AUC of a multiclass ROC (ci.multiclass.auc)  ##########
+#   
+# ci.multiclass.auc.bootstrap <- function(roc, conf.level, boot.n, boot.stratified, progress, parallel, ...) {
+#   if(class(progress) != "list")
+#     progress <- roc.utils.get.progress.bar(progress, title="Multi-class AUC confidence interval", label="Bootstrap in progress...", ...)
+# 
+#   if (boot.stratified) {
+#     aucs <- unlist(llply(1:boot.n, stratified.ci.multiclass.auc, roc=roc, .progress=progress, .parallel=parallel))
+#   }
+#   else {
+#     aucs <- unlist(llply(1:boot.n, nonstratified.ci.multiclass.auc, roc=roc, .progress=progress, .parallel=parallel))
+#   }
+# 
+#   if (sum(is.na(aucs)) > 0) {
+#     warning("NA value(s) produced during bootstrap were ignored.")
+#     aucs <- aucs[!is.na(aucs)]
+#   }
+#   # TODO: Maybe apply a correction (it's in the Tibshirani?) What do Carpenter-Bithell say about that?
+#   # Prepare the return value
+#   return(quantile(aucs, c(0+(1-conf.level)/2, .5, 1-(1-conf.level)/2)))
+# 
+# }
+# 
+# # Returns an auc in a stratified manner
+# stratified.ci.multiclass.auc <- function(n, roc) {
+#   controls <- sample(roc$controls, replace=TRUE)
+#   cases <- sample(roc$cases, replace=TRUE)
+#   thresholds <- roc.utils.thresholds(c(cases, controls), roc$direction)
+#   
+#   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
+#   roc$sensitivities <- perfs$se
+#   roc$specificities <- perfs$sp
+# 
+#   auc.roc(roc, partial.auc=attr(roc$auc, "partial.auc"), partial.auc.focus=attr(roc$auc, "partial.auc.focus"), partial.auc.correct=attr(roc$auc, "partial.auc.correct"))
+# }
+# 
+# 
+# # Returns an auc in a non stratified manner
+# nonstratified.ci.multiclass.auc <- function(n, roc) {
+#   tmp.idx <- sample(1:length(roc$predictor), replace=TRUE)
+#   predictor <- roc$predictor[tmp.idx]
+#   response <- roc$response[tmp.idx]
+#   splitted <- split(predictor, response)
+#   controls <- splitted[[as.character(roc$levels[1])]]
+#   cases <- splitted[[as.character(roc$levels[2])]]
+#   thresholds <- roc.utils.thresholds(c(controls, cases), roc$direction)
+# 
+#   perfs <- roc$fun.sesp(thresholds=thresholds, controls=controls, cases=cases, direction=roc$direction)
+#   roc$sensitivities <- perfs$se
+#   roc$specificities <- perfs$sp
+#   
+#   auc.roc(roc, partial.auc=attr(roc$auc, "partial.auc"), partial.auc.focus=attr(roc$auc, "partial.auc.focus"), partial.auc.correct=attr(roc$auc, "partial.auc.correct"))
+# }
 
 ##########  SE of a ROC curve (ci.se)  ##########
 
@@ -486,7 +486,7 @@ stratified.ci.smooth.se <- function(n, roc, sp, smooth.roc.call) {
   # call smooth.roc and auc.smooth.roc
   smooth.roc.call$roc <- roc
   smooth.roc <- try(eval(smooth.roc.call), silent=TRUE)
-  if (is(smooth.roc, "try-error"))
+  if (methods::is(smooth.roc, "try-error"))
     return(NA)
   return(sapply(sp, function(x) coords.smooth.roc(smooth.roc, x, input="specificity", ret="sensitivity")))
 }
@@ -514,7 +514,7 @@ nonstratified.ci.smooth.se <- function(n, roc, sp, smooth.roc.call) {
   # call smooth.roc and auc.smooth.roc
   smooth.roc.call$roc <- roc
   smooth.roc <- try(eval(smooth.roc.call), silent=TRUE)
-  if (is(smooth.roc, "try-error"))
+  if (methods::is(smooth.roc, "try-error"))
     return(NA)
   return(sapply(sp, function(x) coords.smooth.roc(smooth.roc, x, input="specificity", ret="sensitivity")))
 }
@@ -572,7 +572,7 @@ stratified.ci.smooth.sp <- function(n, roc, se, smooth.roc.call) {
   # call smooth.roc and auc.smooth.roc
   smooth.roc.call$roc <- roc
   smooth.roc <- try(eval(smooth.roc.call), silent=TRUE)
-  if (is(smooth.roc, "try-error"))
+  if (methods::is(smooth.roc, "try-error"))
     return(NA)
   return(sapply(se, function(x) coords.smooth.roc(smooth.roc, x, input="sensitivity", ret="specificity")))
 }
@@ -600,7 +600,7 @@ nonstratified.ci.smooth.sp <- function(n, roc, se, smooth.roc.call) {
   # call smooth.roc and auc.smooth.roc
   smooth.roc.call$roc <- roc
   smooth.roc <- try(eval(smooth.roc.call), silent=TRUE)
-  if (is(smooth.roc, "try-error"))
+  if (methods::is(smooth.roc, "try-error"))
     return(NA)
   return(sapply(se, function(x) coords.smooth.roc(smooth.roc, x, input="sensitivity", ret="specificity")))
 }
@@ -646,7 +646,7 @@ stratified.ci.coords <- function(roc, x, input, ret, best.method, best.weights, 
 
   res <- coords.roc(roc, x=x, input=input, ret=ret, best.method=best.method, best.weights=best.weights, drop=FALSE)
   # Return a random column with "best"
-  if (x == "best" && ncol(res) != 1) {
+  if (is.character(x) && x == "best" && ncol(res) != 1) {
   	return(enfore.best.policy(res, best.policy))
   }
   else {
@@ -707,7 +707,7 @@ stratified.ci.smooth.coords <- function(roc, x, input, ret, best.method, best.we
   # call smooth.roc and auc.smooth.roc
   smooth.roc.call$roc <- roc
   smooth.roc <- try(eval(smooth.roc.call), silent=TRUE)
-  if (is(smooth.roc, "try-error"))
+  if (methods::is(smooth.roc, "try-error"))
     return(NA)
   res <- coords.roc(smooth.roc, x=x, input=input, ret=ret, best.method=best.method, best.weights=best.weights, drop=FALSE)
   # Return a random column with "best"
@@ -742,7 +742,7 @@ nonstratified.ci.smooth.coords <- function(roc, x, input, ret, best.method, best
   # call smooth.roc and auc.smooth.roc
   smooth.roc.call$roc <- roc
   smooth.roc <- try(eval(smooth.roc.call), silent=TRUE)
-  if (is(smooth.roc, "try-error"))
+  if (methods::is(smooth.roc, "try-error"))
     return(NA)
   res <- coords.roc(smooth.roc, x=x, input=input, ret=ret, best.method=best.method, best.weights=best.weights, drop=FALSE)
   # Return a random column with "best"

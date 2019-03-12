@@ -21,9 +21,15 @@ roc <- function(...) {
   UseMethod("roc")
 }
 
-roc.formula <- function (formula, data, ...){
+roc.formula <- function (formula, data, ...) {
+  data.missing <- missing(data)
   # Get predictors (easy)
-  predictors <- attr(terms(formula), "term.labels")
+  if (data.missing) {
+  	predictors <- attr(terms(formula), "term.labels")
+  }
+  else {
+  	predictors <- attr(terms(formula, data = data), "term.labels")
+  }
   
   # Get the data. Use standard code from survival::coxph as suggested by Terry Therneau
   Call <- match.call()
@@ -48,6 +54,9 @@ roc.formula <- function (formula, data, ...){
   if (length(predictors) == 1) {
     roc <- roc.default(response, m[[predictors]], ...)
     roc$call <- Call
+    if (! data.missing) {
+      roc$data <- data
+    }
     if (!is.null(roc$smooth))
       attr(roc, "roc")$call <- roc$call
     return(roc)
@@ -60,6 +69,9 @@ roc.formula <- function (formula, data, ...){
       formula[3] <- call(predictor) # replace the predictor in formula
       call$formula <- formula # Replace modified formula
       roc$call <- call
+      if (! data.missing) {
+      	roc$data <- data
+      }
       return(roc)
     }, formula = formula, m.data = m, call = match.call(), ...)
     # Set the list names
@@ -103,6 +115,11 @@ roc.default <- function(response, predictor,
   direction <- match.arg(direction)
   # Response / Predictor
   if (!missing(response) && !is.null(response) && !missing(predictor) && !is.null(predictor)) {
+  	# Forbid case/controls
+  	if ((!missing(cases) && !is.null(cases)) || (!missing(controls) && !is.null(controls))) {
+  		stop("'cases/controls' argument incompatible with 'response/predictor'.")
+  	}
+  	
     original.predictor <- predictor # store a copy of the original predictor (before converting ordered to numeric and removing NA)
     original.response <- response # store a copy of the original predictor (before converting ordered to numeric)
     
@@ -282,8 +299,7 @@ roc.default <- function(response, predictor,
   
   # Choose algorithm
   if (isTRUE(algorithm == 0)) {
-    if (!requireNamespace("microbenchmark"))
-      stop("Package microbenchmark not available, required with algorithm=0'. Please install it with 'install.packages(\"microbenchmark\")'.")
+  	load.suggested.package("microbenchmark")
     cat("Starting benchmark of algorithms 2 and 3, 10 iterations...\n")
     thresholds <- roc.utils.thresholds(c(controls, cases), direction)
     benchmark <- microbenchmark::microbenchmark(

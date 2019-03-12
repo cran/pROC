@@ -50,16 +50,19 @@ test_that("Advanced screenshot 1 works correctly", {
 
 test_that("Advanced screenshot 2 works correctly", {
 	skip_if_not(exists("run_slow_tests") && run_slow_tests, message = "Slow test skipped")
-	set.seed(42) # For reproducible CI
 	test_advanced_screenshot_2 <- function() {
+		if (R.version$minor >= "6.0") {
+			RNGkind(sample.kind="Rounding")
+		}
+		set.seed(42) # For reproducible CI
 		rocobj <- plot.roc(aSAH$outcome, aSAH$s100b,
 						   main="Confidence intervals", percent=TRUE,
 						   ci=TRUE, # compute AUC (of AUC by default)
 						   print.auc=TRUE) # print the AUC (will contain the CI)
-		
+
 		ciobj <- ci.se(rocobj, progress = "none", # CI of sensitivity
 					   specificities=seq(0, 100, 5)) # over a select set of specificities
-		
+
 		plot(ciobj, type="shape", col="#1c61b6AA") # plot as a blue shape
 		plot(ci(rocobj, of="thresholds", thresholds="best", progress="none")) # add one threshold
 	}
@@ -90,8 +93,11 @@ test_that("Advanced screenshot 3 works correctly", {
 
 test_that("Advanced screenshot 4 works correctly", {
 	skip_if_not(exists("run_slow_tests") && run_slow_tests, message = "Slow test skipped")
-	set.seed(42) # For reproducible CI
 	test_advanced_screenshot_4 <- function() {
+		if (R.version$minor >= "6.0") {
+			RNGkind(sample.kind="Rounding")
+		}
+		set.seed(42) # For reproducible CI
 		rocobj <- plot.roc(aSAH$outcome, aSAH$s100b,
 						   main="Confidence intervals of specificity/sensitivity", percent=TRUE,
 						   ci=TRUE, of="se", # ci of sensitivity
@@ -109,8 +115,11 @@ test_that("Advanced screenshot 4 works correctly", {
 
 test_that("Advanced screenshot 5 works correctly", {
 	skip_if_not(exists("run_slow_tests") && run_slow_tests, message = "Slow test skipped")
-	set.seed(42) # For reproducible CI
 	test_advanced_screenshot_5 <- function() {
+		if (R.version$minor >= "6.0") {
+			RNGkind(sample.kind="Rounding")
+		}
+		set.seed(42) # For reproducible CI
 		plot.roc(aSAH$outcome, aSAH$s100b,
 				 main="Confidence interval of a threshold", percent=TRUE,
 				 ci=TRUE, of="thresholds", # compute AUC (of threshold)
@@ -132,3 +141,14 @@ test_that("Advanced screenshot 6 works correctly", {
 	}
 	vdiffr::expect_doppelganger("advanced.screenshot.6", test_advanced_screenshot_6)
 })
+
+
+test_that("plot and lines work with formula and subset", {
+	test_plot_formula <- function() {
+		plot.roc(outcome ~ ndka, data = aSAH, subset = gender == "Female", col="red")
+		lines.roc(outcome ~ ndka, data = aSAH)
+		lines.roc(outcome ~ ndka, data = aSAH, subset = gender == "Male", col="blue")
+	}
+	vdiffr::expect_doppelganger("plot_formula", test_plot_formula)
+})
+

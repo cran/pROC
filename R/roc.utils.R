@@ -34,7 +34,7 @@ roc.utils.perfs.all.test <- function(thresholds, controls, cases, direction) {
 	if (! (identical(perfs.safe, perfs.fast) && identical(perfs.safe, perfs.C))) {
 		sessionInfo <- sessionInfo()
 		save(thresholds, controls, cases, direction, sessionInfo, file="pROC_bug.RData")
-		stop(sprintf("pROC: algorithms returned different values. Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", packageDescription("pROC")$BugReports))
+		stop(sprintf("pROC: algorithms returned different values. Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", utils::packageDescription("pROC")$BugReports))
 	}
 	return(perfs.safe)
 }
@@ -63,7 +63,7 @@ roc.utils.perfs.all.fast <- function(thresholds, controls, cases, direction) {
   if (sum(!dups) != length(thresholds) - 1) {
   	sessionInfo <- sessionInfo()
   	save(thresholds, controls, cases, direction, sessionInfo, file="pROC_bug.RData")
-    stop(sprintf("pROC: fast algorithm computed an incorrect number of sensitivities and specificities. Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", packageDescription("pROC")$BugReports))
+    stop(sprintf("pROC: fast algorithm computed an incorrect number of sensitivities and specificities. Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", utils::packageDescription("pROC")$BugReports))
   }
   if (direction == "<") {
     se <- rev(c(0, se[!dups]))
@@ -141,7 +141,7 @@ roc.utils.thresholds <- function(predictor, direction) {
   			else {
   				sessionInfo <- sessionInfo()
   				save(predictor, direction, sessionInfo, file="pROC_bug.RData")
-  				stop(sprintf("Couldn't fix near ties in thresholds: %s, %s, %s, %s. Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", thresholds[tie.idx], unique.candidates[tie.idx - 1], unique.candidates[tie.idx], direction, packageDescription("pROC")$BugReports))
+  				stop(sprintf("Couldn't fix near ties in thresholds: %s, %s, %s, %s. Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", thresholds[tie.idx], unique.candidates[tie.idx - 1], unique.candidates[tie.idx], direction, utils::packageDescription("pROC")$BugReports))
   			}
   		}
   	}
@@ -163,7 +163,7 @@ roc.utils.thresholds <- function(predictor, direction) {
   			else {
   				sessionInfo <- sessionInfo()
   				save(predictor, direction, sessionInfo, file="pROC_bug.RData")
-  				stop(sprintf("Couldn't fix near ties in thresholds: %s, %s, %s, %s. Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", thresholds[tie.idx], unique.candidates[tie.idx - 1], unique.candidates[tie.idx], direction, packageDescription("pROC")$BugReports))
+  				stop(sprintf("Couldn't fix near ties in thresholds: %s, %s, %s, %s. Diagnostic data saved in pROC_bug.RData. Please report this bug to <%s>.", thresholds[tie.idx], unique.candidates[tie.idx - 1], unique.candidates[tie.idx], direction, utils::packageDescription("pROC")$BugReports))
   			}
   		}
   	}
@@ -323,4 +323,33 @@ roc.utils.max.partial.auc <- function(partial.auc, percent) {
 roc.utils.is.perfect.curve <- function(roc) {
 	best.point <- max(roc$sensitivities + roc$specificities) / ifelse(roc$percent, 100, 1)
 	return(abs(best.point - 2) < .Machine$double.eps ^ 0.5) # or best.point == 2, with numerical tolerance
+}
+
+# Load package namespace 'pkg'. 
+# Input: package name
+# Returns: TRUE upon success (or if the package was already loaded)
+# Stops if the package can't be loaded
+load.suggested.package <- function(pkg) {
+	if (requireNamespace(pkg)) {
+		return(TRUE)
+	}
+	else if (interactive()) {
+		if (getRversion() < "3.5.0") { # utils::askYesNo not available
+			message(sprintf("Package %s not available, do you want to install it now?", pkg))
+			auto.install <- utils::menu(c("Yes", "No")) == 1
+		}
+		else {
+			auto.install <- utils::askYesNo(sprintf("Package %s not available, do you want to install it now?", pkg))
+		}
+		if (isTRUE(auto.install)) {
+			utils::install.packages(pkg)
+			if (requireNamespace(pkg)) {
+				return(TRUE)
+			}
+			else {
+				stop(sprintf("Installation of %s failed!", pkg))
+			}
+		}
+	}
+	stop(sprintf("Package '%s' not available.", pkg))
 }

@@ -22,7 +22,22 @@ ci.auc <- function(...) {
 }
 
 ci.auc.formula <- function(formula, data, ...) {
-  ci.auc.roc(roc.formula(formula, data, ci=FALSE, ...), ...)
+	# Get the data. Use standard code from survival::coxph as suggested by Terry Therneau
+	Call <- match.call()
+	indx <- match(c("formula", "data", "weights", "subset", "na.action"), names(Call), nomatch=0)
+	if (indx[1] == 0) {
+		stop("A formula argument is required")
+	}
+	# Keep the standard arguments and run them in model.frame
+	temp <- Call[c(1,indx)]  
+	temp[[1]] <- as.name('model.frame')
+	m <- eval(temp, parent.frame())
+	
+	if (!is.null(model.weights(m))) stop("weights are not supported")
+	
+	response <- model.response(m)
+	predictor <- m[[attr(terms(formula), "term.labels")]]
+	ci.auc.roc(roc.default(response, predictor, ci=FALSE, ...), ...)
 }
 
 ci.auc.default <- function(response, predictor, ...) {
@@ -74,10 +89,10 @@ ci.auc.smooth.roc <- function(smooth.roc,
   }
 
   # prepare the calls
-  smooth.roc.call <- as.call(c(getS3method("smooth", "roc"), smooth.roc$smoothing.args))
+  smooth.roc.call <- as.call(c(utils::getS3method("smooth", "roc"), smooth.roc$smoothing.args))
   auc.args <- attributes(smooth.roc$auc)[grep("partial.auc", names(attributes(smooth.roc$auc)))]
   auc.args$allow.invalid.partial.auc.correct <- TRUE
-  auc.call <- as.call(c(getS3method("auc", "smooth.roc"), auc.args))
+  auc.call <- as.call(c(utils::getS3method("auc", "smooth.roc"), auc.args))
 
   if(class(progress) != "list")
     progress <- roc.utils.get.progress.bar(progress, title="AUC confidence interval", label="Bootstrap in progress...", ...)
@@ -178,4 +193,12 @@ ci.auc.roc <- function(roc,
   attr(ci, "auc") <- oldauc
   class(ci) <- c("ci.auc", "ci", class(ci))
   return(ci)
+}
+
+ci.auc.multiclass.roc <- function(multiclass.roc, ...) {
+	stop("CI of a multiclass ROC curve not implemented")
+}
+
+ci.auc.multiclass.auc <- function(multiclass.auc, ...) {
+	stop("CI of a multiclass AUC not implemented")
 }

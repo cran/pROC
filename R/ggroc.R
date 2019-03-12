@@ -5,29 +5,42 @@ get.coords.for.ggplot <- function(roc) {
 	return(df[rev(seq(nrow(df))),])
 }
 
-get.aes.for.ggplot <- function(roc, legacy.axes) {
+get.aes.for.ggplot <- function(roc, legacy.axes, extra_aes = c()) {
 	# Prepare the aesthetics
 	if(roc$percent) {
 		if (legacy.axes) {
-			aes <- ggplot2::aes_string(x = "1-specificity", y = "sensitivity")
+			aes_list <- list(x = "1-specificity", y = "sensitivity")
 			xlims <- ggplot2::scale_x_continuous(lim=c(0, 100))		
 		}
 		else {
-			aes <- ggplot2::aes_string(x = "specificity", y = "sensitivity")
+			aes_list <- list(x = "specificity", y = "sensitivity")
 			xlims <- ggplot2::scale_x_reverse(lim=c(100, 0))
 		}
 	}
 	else {
 		if (legacy.axes) {
-			aes <- ggplot2::aes_string(x = "1-specificity", y = "sensitivity")
+			aes_list <- list(x = "1-specificity", y = "sensitivity")
 			xlims <- ggplot2::scale_x_continuous(lim=c(0, 1))
 		}
 		else {
-			aes <- ggplot2::aes_string(x = "specificity", y = "sensitivity")
+			aes_list <- list(x = "specificity", y = "sensitivity")
 			xlims <- ggplot2::scale_x_reverse(lim=c(1, 0))
 		}
 	}
+	# Add extra aes
+	for (ae in extra_aes) {
+		aes_list[[ae]] <- "name"
+	}
+	aes <- do.call(ggplot2::aes_string, aes_list)
+	
 	return(list(aes=aes, xlims=xlims))
+}
+
+load.ggplot2 <- function() {
+	if (! isNamespaceLoaded("ggplot2")) {
+		message('You may need to call library(ggplot2) if you want to add layers, etc.')
+	}
+	load.suggested.package("ggplot2")
 }
 
 ggroc <- function(data, ...) {
@@ -35,6 +48,7 @@ ggroc <- function(data, ...) {
 }
 
 ggroc.roc <- function(data, legacy.axes = FALSE, ...) {
+	load.ggplot2()
 	# Get the roc data with coords
 	df <- get.coords.for.ggplot(data)
 
@@ -42,17 +56,22 @@ ggroc.roc <- function(data, legacy.axes = FALSE, ...) {
 	aes <- get.aes.for.ggplot(data, legacy.axes)
 
 	# Do the plotting
-	ggplot(df) + ggplot2::geom_line(aes$aes, ...) + aes$xlims
+	ggplot2::ggplot(df) + ggplot2::geom_line(aes$aes, ...) + aes$xlims
 		
 	# Or with ggvis:
 	# ggvis(df[rev(seq(nrow(df))),], ~1-specificity, ~sensitivity) %>% layer_lines()
 }
 
 ggroc.list <- function(data, aes = c("colour", "alpha", "linetype", "size", "group"), legacy.axes = FALSE, ...) {
-	aes <- match.arg(aes)
-	
+	load.ggplot2()
+	if (missing(aes)) {
+		aes <- "colour"
+	}
+	aes <- sub("color", "colour", aes)
+	aes <- match.arg(aes, several.ok = TRUE)
+
 	# Make sure data is a list and every element is a roc object
-	if (! all(sapply(data, is, "roc"))) {
+	if (! all(sapply(data, methods::is, "roc"))) {
 		stop("All elements in 'data' must be 'roc' objects.")
 	}
 	
@@ -83,10 +102,9 @@ ggroc.list <- function(data, aes = c("colour", "alpha", "linetype", "size", "gro
 	coord.dfs <- do.call(rbind, coord.dfs)
 	
 	# Prepare the aesthetics
-	aes.ggplot <- get.aes.for.ggplot(data[[1]], legacy.axes)
-	aes.ggplot$aes[[aes]] <- as.symbol("name")
+	aes.ggplot <- get.aes.for.ggplot(data[[1]], legacy.axes, aes)
 
 	# Do the plotting
-	ggplot(coord.dfs, aes.ggplot$aes) + ggplot2::geom_line(...) + aes.ggplot$xlims
+	ggplot2::ggplot(coord.dfs, aes.ggplot$aes) + ggplot2::geom_line(...) + aes.ggplot$xlims
 
 }

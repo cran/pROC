@@ -22,10 +22,28 @@ ci.se <- function(...) {
 }
 
 ci.se.formula <- function(formula, data, ...) {
-  ci.se(roc.formula(formula, data, ci=FALSE, ...), ...)
+	# Get the data. Use standard code from survival::coxph as suggested by Terry Therneau
+	Call <- match.call()
+	indx <- match(c("formula", "data", "weights", "subset", "na.action"), names(Call), nomatch=0)
+	if (indx[1] == 0) {
+		stop("A formula argument is required")
+	}
+	# Keep the standard arguments and run them in model.frame
+	temp <- Call[c(1,indx)]  
+	temp[[1]] <- as.name('model.frame')
+	m <- eval(temp, parent.frame())
+	
+	if (!is.null(model.weights(m))) stop("weights are not supported")
+	
+	response <- model.response(m)
+	predictor <- m[[attr(terms(formula), "term.labels")]]
+	ci.se(roc(response, predictor, ci=FALSE, ...), ...)
 }
 
 ci.se.default <- function(response, predictor, ...) {
+	if (methods::is(response, "multiclass.roc") || methods::is(response, "multiclass.auc")) {
+		stop("'ci.sp' not available for multiclass ROC curves.")
+	}
   ci.se(roc.default(response, predictor, ci=FALSE, ...), ...)
 }
 
@@ -54,7 +72,7 @@ ci.se.smooth.roc <- function(smooth.roc,
   roc$ci <- NULL # remove potential ci in roc to avoid infinite loop with smooth.roc()
 
   # prepare the calls
-  smooth.roc.call <- as.call(c(getS3method("smooth", "roc"), smooth.roc$smoothing.args))
+  smooth.roc.call <- as.call(c(utils::getS3method("smooth", "roc"), smooth.roc$smoothing.args))
 
   if(class(progress) != "list")
     progress <- roc.utils.get.progress.bar(progress, title="SE confidence interval", label="Bootstrap in progress...", ...)
