@@ -57,7 +57,7 @@ roc.utils.perfs.all.fast <- function(thresholds, controls, cases, direction) {
   sp <- (ncontrols - fp) / ncontrols
   # filter duplicate thresholds
   dups.pred <- rev(duplicated(rev(predictor.sorted)))
-  dups.sesp <- duplicated(matrix(c(se, sp), ncol=2), MARGIN=1)
+  dups.sesp <- duplicated(se) & duplicated(sp)
   dups <- dups.pred | dups.sesp
   # Make sure we have the right length
   if (sum(!dups) != length(thresholds) - 1) {
@@ -276,10 +276,26 @@ sort.smooth.roc <- function(roc) {
 # Arguments which can be returned by coords
 # @param threshold: FALSE for smooth.roc where threshold isn't valid
 roc.utils.match.coords.ret.args <- function(x, threshold = TRUE) {
-  valid.ret.args <- c("specificity", "sensitivity", "accuracy", "tn", "tp", "fn", "fp", "npv", "ppv", "1-specificity", "1-sensitivity", "1-accuracy", "1-npv", "1-ppv", "precision", "recall")
+  valid.ret.args <- c("specificity", "sensitivity", "accuracy",
+  					"tn", "tp", "fn", "fp",
+  					"npv", "ppv", "fdr",
+  					"fpr", "tpr", "tnr", "fnr", 
+  					"1-specificity", "1-sensitivity", "1-accuracy", "1-npv", "1-ppv",
+  					"precision", "recall",
+  					"youden", "closest.topleft")
+  if ("all" %in% x) {
+  	if (length(x) > 1) {
+  		stop("ret='all' can't be used with other 'ret' options.")
+  	}
+  	x <- valid.ret.args
+  	if (threshold) {
+  		x <- c("threshold", x)
+  	}
+  }
   if (threshold) {
   	valid.ret.args <- c("threshold", valid.ret.args)
   }
+  x <- replace(x, x=="topleft", "closest.topleft")
   x <- replace(x, x=="t", "threshold")
   x <- replace(x, x=="npe", "1-npv")
   x <- replace(x, x=="ppe", "1-ppv")
@@ -352,4 +368,121 @@ load.suggested.package <- function(pkg) {
 		}
 	}
 	stop(sprintf("Package '%s' not available.", pkg))
+}
+
+
+# Calculate coordinates
+# @param substr.percent: 1 or 100
+# @param se, sp
+# @param ncases, ncontrols
+# @return data.frame
+roc.utils.calc.coords <- function(substr.percent, thr, se, sp, ncases, ncontrols, best.weights) {
+	tp <- se * ncases / substr.percent
+	fn <- ncases - tp
+	tn <- sp * ncontrols / substr.percent
+	fp <- ncontrols - tn
+	npv <- substr.percent * tn / (tn + fn)
+	ppv <- substr.percent * tp / (tp + fp)
+	#res <- matrix(NA, nrow = length(ret), ncol = length(se))
+	#if ("tp" %in% ret) {}
+	accuracy <- substr.percent * (tp + tn) / (ncases + ncontrols)
+	precision <- ppv
+	recall <- tpr <- se
+	fpr <- substr.percent - sp
+	tnr <- sp
+	fnr <- substr.percent * fn / (tp + fn)
+	fdr <- substr.percent * fp / (tp + fp)
+	youden <- roc.utils.optim.crit(se, sp, substr.percent, best.weights, "youden")
+	closest.topleft <- - roc.utils.optim.crit(se, sp, substr.percent, best.weights, "closest.topleft") / substr.percent
+	
+	return(rbind(
+		threshold=thr,
+		sensitivity=se, 
+		specificity=sp, 
+		accuracy=accuracy, 
+		tn=tn, 
+		tp=tp,
+		fn=fn,
+		fp=fp,
+		npv=npv,
+		ppv=ppv,
+		tpr=tpr,
+		tnr=tnr,
+		fpr=fpr,
+		fnr=fnr,
+		fdr=fdr,
+		"1-specificity"=substr.percent-sp,
+		"1-sensitivity"=substr.percent-se,
+		"1-accuracy"=substr.percent-accuracy,
+		"1-npv"=substr.percent-npv,
+		"1-ppv"=substr.percent-ppv,
+		precision=precision,
+		recall=recall,
+		youden=youden,
+		closest.topleft=closest.topleft))
+}
+
+# Match arbitrary user-supplied thresholds to the threshold of the ROC curve.
+# We need to be careful to assign x to the right thresholds around exact data point
+# values. This means this function cannot look at the ROC thresholds themselves
+# but must instead use the predictor values to assess the thresholds exactly.
+# Returns the indices of the thresholds x.
+# @param roc: the roc curve
+# @param x: the threshold to determine indices
+# @return integer vector of indices along roc$thresholds/roc$se/roc$sp.
+roc.utils.thr.idx <- function(roc, x) {
+	cut_points <- sort(unique(roc$predictor))
+	thr_idx <- rep(NA_integer_, length(x))
+	if (roc$direction == "<") {
+		cut_points <- c(cut_points, Inf)
+		j <- 1
+		o <- order(x)
+		for (i in seq_along(x)) {
+			t <- x[o[i]]
+			while (cut_points[j] < t) {
+				j <- j + 1
+			}
+			thr_idx[o[i]] <- j
+		}
+	}
+	else {
+		cut_points <- c(rev(cut_points), Inf)
+		j <- 1
+		o <- order(x, decreasing = TRUE)
+		for (i in seq_along(x)) {
+			t <- x[o[i]]
+			while (cut_points[j] > t) {
+				j <- j + 1
+			}
+			thr_idx[o[i]] <- j
+		}
+	}
+	return(thr_idx)
+}
+
+
+# Get optimal criteria Youden or Closest Topleft
+# @param se, sp: the roc curve
+# @param max: the maximum value, 1 or 100, based on percent. Namely ifelse(percent, 100, 1)
+# @param weights: see coords(best.weights=)
+# @param method: youden or closest.topleft coords(best.method=)
+# @return numeric vector along roc$thresholds/roc$se/roc$sp.
+roc.utils.optim.crit <- function(se, sp, max, weights, method) {
+	if (is.numeric(weights) && length(weights) == 2) {
+		r <- (1 - weights[2]) / (weights[1] * weights[2]) # r should be 1 by default
+	}
+	else {
+		stop("'best.weights' must be a numeric vector of length 2")
+	}
+	if (weights[2] <= 0 || weights[2] >= 1) {
+		stop("prevalence ('best.weights[2]') must be in the interval ]0,1[.")
+	}
+	
+	if (method == "youden") {
+		optim.crit <- se + r * sp
+	}
+	else if (method == "closest.topleft" || method == "topleft") {
+		optim.crit <- - ((max - se)^2 + r * (max - sp)^2)
+	}
+	return(optim.crit)
 }

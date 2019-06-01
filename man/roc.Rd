@@ -1,7 +1,9 @@
 \encoding{UTF-8}
 \name{roc}
 \alias{roc}
+\alias{roc_}
 \alias{roc.formula}
+\alias{roc.data.frame}
 \alias{roc.default}
 \title{
  Build a ROC curve
@@ -17,13 +19,15 @@
 \usage{
 roc(...)
 \S3method{roc}{formula}(formula, data, ...)
+\S3method{roc}{data.frame}(data, response, predictor,
+ret = c("roc", "coords", "all_coords"), ...)
 \S3method{roc}{default}(response, predictor, controls, cases,
 density.controls, density.cases,
 levels=base::levels(as.factor(response)), percent=FALSE, na.rm=TRUE,
-direction=c("auto", "<", ">"), algorithm = 5, quiet = TRUE, 
+direction=c("auto", "<", ">"), algorithm = 6, quiet = FALSE, 
 smooth=FALSE, auc=TRUE, ci=FALSE, plot=FALSE, smooth.method="binormal",
-ci.method=NULL, density=NULL, ...)
-
+smooth.n=512, ci.method=NULL, density=NULL, ...)
+roc_(data, response, predictor, ret = c("roc", "coords", "all_coords"), ...)
 }
 
 \arguments{
@@ -33,13 +37,22 @@ ci.method=NULL, density=NULL, ...)
     contains more than two unique values, or if their order could be
     ambiguous, use \code{levels} to specify which values must be used as
     control and case value.
+    If the first argument was a \code{\link{data.frame}}, \code{response}
+    should be the name of the column in \code{data} containing the
+    response, quoted for \code{roc_}, and optionally quoted for 
+    \code{roc.data.frame} (non-standard evaluation or NSE).
   }
-  \item{predictor}{a numeric vector of the same length than \code{response},
-    containing the predicted value of each
-    observation. An ordered factor is coerced to a numeric.
+  \item{predictor}{a \code{\link{numeric}} or \code{\link{ordered}} vector
+  of the same length than \code{response}, containing the predicted
+  value of each observation.
+    If the first argument was a \code{\link{data.frame}}, \code{predictor}
+    should be the name of the column in \code{data} containing the
+    predictor, quoted for \code{roc_}, and optionally quoted for 
+    \code{roc.data.frame} (non-standard evaluation or NSE).
   }
   \item{controls, cases}{instead of \code{response}, \code{predictor},
-    the data can be supplied as two numeric or ordered vectors containing the predictor
+    the data can be supplied as two \code{\link{numeric}} or
+    \code{\link{ordered}} vectors containing the predictor
     values for control and case observations.
   }
   \item{density.controls, density.cases}{a smoothed ROC curve can be
@@ -79,24 +92,29 @@ ci.method=NULL, density=NULL, ...)
     curves will be biased towards higher AUC values.
   }
   \item{algorithm}{the method used to compute sensitivity and specificity, 
-    an integer of length 1 between \code{0} and \code{4}.
-    \code{1} (default): a safe, well-tested, pure-\R code that is efficient when the 
+    an integer of length 1 between \code{0} and \code{6}.
+    \code{1}: a safe, well-tested, pure-\R code that is efficient when the 
     number of thresholds is low. It goes with O(T*N).
     \code{2}: an alternative pure-\R algorithm that goes in
     O(N). Typically faster than \code{1} when the number of thresholds of
     the ROC curve is above 1000. Less tested than \code{1}.
     \code{3}: a C++ 
     implementation of \code{1}, about 3-5x faster. Typically the fastest with
-    ROC curves with less than 1500 thresholds, but has a very bad worst-case
+    ROC curves with less than 50-100 thresholds, but has a very bad worst-case
     when that number increases.
     \code{4} (debug only, slow):
-    runs all 3 algorithms and makes sure they return the same values.
-    \code{5}: quickly select 2 or 3 based on the number of thresholds.
+    runs algorithms 1 to 3 and makes sure they return the same values.
+    \code{5}: select \code{2} or \code{3} based on the number of thresholds.
+    \code{6} (default): quickly select the algorithm on the class of the data: \code{2}
+    for \code{\link{numeric}} and \code{3} for \code{\link{ordered}}.
     \code{0}: use \pkg{microbenchmark} to choose between \code{2} and \code{3}.
   }
-  \item{quiet}{set to \code{FALSE} to turn on \code{\link{message}}s
+  \item{ret}{for \code{roc.data.frame} only, whether to return the
+	threshold sensitivity and specificity at all thresholds (\dQuote{coords}),
+	all the coordinates at all thresholds (\dQuote{all_coords}) or the
+	\code{roc} object (\dQuote{roc}).}
+  \item{quiet}{set to \code{TRUE} to turn off \code{\link{message}}s
 	 when \code{direction} and \code{levels} are auto-detected.
-	 This default will be changed to \code{TRUE} in the future.
   }
   \item{smooth}{if TRUE, the ROC curve is passed to \code{\link{smooth}}
     to be smoothed.
@@ -110,11 +128,11 @@ ci.method=NULL, density=NULL, ...)
   \item{plot}{plot the ROC curve? If \code{TRUE}, additional
     arguments can be passed to \code{\link{plot.roc}}.
   }
-  \item{smooth.method, ci.method}{in \code{roc.formula} and
-	\code{roc.default}, the \code{method} arguments to
+  \item{smooth.method, smooth.n, ci.method}{in \code{roc.formula} and
+	\code{roc.default}, the \code{method} and \code{n} arguments to
 	\code{\link[=smooth.roc]{smooth}} (if \code{smooth=TRUE}) and
 	\code{of="auc"}) must be passed as
-	\code{smooth.method} and \code{ci.method} to avoid confusions.
+	\code{smooth.method}, \code{smooth.n} and \code{ci.method} to avoid confusions.
   }
   \item{density}{\code{density} argument passed to \code{\link[=smooth.roc]{smooth}}.}
   \item{\dots}{further arguments passed to or from other methods, and
@@ -237,6 +255,52 @@ ci.method=NULL, density=NULL, ...)
   \code{auc} and \code{ci} (according to the call).
 }
 
+\section{Experimental: pipelines}{
+	Since version 1.15.0, the \code{roc} function can be used in pipelines, for instance with \pkg{dplyr} or \pkg{magrittr}. This is still a highly experimental feature and will change significantly in future versions  (see \href{https://github.com/xrobin/pROC/issues/54}{issue 54}).
+	The \code{roc.data.frame} method supports both standard and non-standard evaluation (NSE):
+	
+    \preformatted{
+library(dplyr)
+# Standard evaluation:
+aSAH \%>\%
+    filter(gender == "Female") \%>\%
+    roc("outcome", "s100b")
+# Non-Standard Evaluation:
+aSAH \%>\%
+    filter(gender == "Female") \%>\%
+    roc(outcome, s100b)
+	}
+	
+	For tasks involving programming and variable column names, the \code{roc_} function provides
+	standard evaluation:
+	
+    \preformatted{
+# Standard evaluation:
+aSAH \%>\%
+    filter(gender == "Female") \%>\%
+    roc_("outcome", "s100b")
+    }
+	
+	By default it returns the \code{\link{roc}} object, which can then be piped to
+	the \code{\link{coords}} function to extract coordinates that can be used
+	in further pipelines.
+	
+    \preformatted{
+# Returns thresholds, sensitivities and specificities:
+aSAH  \%>\%
+    roc(outcome, s100b) \%>\%
+    coords(transpose = FALSE) \%>\%
+    filter(sensitivity > 0.6, 
+           specificity > 0.6)
+
+# Returns all existing coordinates, then select precision and recall:
+aSAH  \%>\%
+    roc(outcome, s100b) \%>\%
+    coords(ret = "all", transpose = FALSE) \%>\%
+    select(precision, recall)
+    }
+}
+
 \section{Errors}{
   If no control or case observation exist for the given levels of
   response, no ROC curve can be built and an error is triggered with
@@ -294,6 +358,13 @@ with(aSAH, roc(outcome ~ s100b))
 # With a formula:
 roc(outcome ~ s100b, data=aSAH)
 
+\dontrun{
+library(dplyr)
+aSAH \%>\%
+    filter(gender == "Female") \%>\%
+    roc(outcome, s100b)
+}
+
 # Using subset (only with formula)
 roc(outcome ~ s100b, data=aSAH, subset=(gender == "Male"))
 roc(outcome ~ s100b, data=aSAH, subset=(gender == "Female"))
@@ -318,14 +389,6 @@ roc(aSAH$outcome, aSAH$s100b, quiet = TRUE)
 
 # If we prefer counting in percent:
 roc(aSAH$outcome, aSAH$s100b, percent=TRUE)
-
-# Test the different algorithms:
-roc(aSAH$outcome, aSAH$s100b, algorithm = 1)
-roc(aSAH$outcome, aSAH$s100b, algorithm = 2)
-roc(aSAH$outcome, aSAH$s100b, algorithm = 3)
-if (require(microbenchmark)) {
-  roc(aSAH$outcome, aSAH$s100b, algorithm = 0)
-}
 
 # Plot and CI (see plot.roc and ci for more options):
 roc(aSAH$outcome, aSAH$s100b,

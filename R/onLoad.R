@@ -21,17 +21,10 @@
   # Generate progressbar option with smart default values
   if (is.null(getOption("pROCProgress"))) {
     if (interactive()) {
-      # Check the presence of tcltk
-      tcltk.present <- length(find.package("tcltk", quiet=TRUE)) > 0
-      if (Sys.info()[['sysname']] == "Darwin") {
-        options("pROCProgress" = list(name = "text", width = NA, char = "=", style = 3)) # Tcltk looks broken in some macs (just hangs forever)
-      }
-      else if (!is.null(getOption("STERM")) && getOption("STERM") == "iESS")
+      if (!is.null(getOption("STERM")) && getOption("STERM") == "iESS")
         options("pROCProgress" = list(name = "text", width = NA, char = "=", style = 1))
       else if (.Platform$OS.type == "windows")
         options("pROCProgress" = list(name = "win", width = 300))
-      else if (tcltk.present && Sys.getenv("DISPLAY") != "")
-        options("pROCProgress" = list(name = "tk", width = 300))
       else
         options("pROCProgress" = list(name = "text", width = NA, char = "=", style = 3))
     }

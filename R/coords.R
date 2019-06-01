@@ -20,10 +20,26 @@
 coords <- function(...)
   UseMethod("coords")
 
-coords.smooth.roc <- function(smooth.roc, x, input=c("specificity", "sensitivity"), ret=c("specificity", "sensitivity"), as.list=FALSE, drop=TRUE, best.method=c("youden", "closest.topleft"), best.weights=c(1, 0.5), ...) {
+coords.smooth.roc <- function(smooth.roc,
+                              x,
+                              input=c("specificity", "sensitivity"),
+                              ret=c("specificity", "sensitivity"),
+                              as.list=FALSE,
+                              drop=TRUE,
+                              best.method=c("youden", "closest.topleft"),
+                              best.weights=c(1, 0.5),
+                              transpose = TRUE,
+                              ...) {
   # make sure x was provided
   if (missing(x))
     stop("'x' must be a numeric or character vector.")
+  
+  # Warn about future change in transpose <https://github.com/xrobin/pROC/issues/54>
+  if (missing(transpose) || is.null(transpose)) {
+    transpose <- TRUE
+    warning("An upcoming version of pROC will set the 'transpose' argument to FALSE by default. Set transpose = TRUE explicitly to keep the current behavior, or transpose = FALSE to adopt the new one and silence this warning. Type help(coords_transpose) for additional information.")
+  }
+  
   # match input 
   input <- match.arg(input)
   # match return
@@ -32,106 +48,103 @@ coords.smooth.roc <- function(smooth.roc, x, input=c("specificity", "sensitivity
   if (is.character(x)) {
     x <- match.arg(x, c("best")) # no thresholds in smoothed roc: only best is possible
     partial.auc <- attr(smooth.roc$auc, "partial.auc")
-    # What kind of "best" do we want?
-    # Compute weights
-    if (! is.numeric(best.weights) || length(best.weights) != 2)
-      stop("'best.weights' must be a numeric vector of length 2.")
-    if (best.weights[2] <= 0 || best.weights[2] >= 1)
-      stop("prevalence ('best.weights[2]') must be in the interval ]0,1[.")
-    r <- (1 - best.weights[2]) / (best.weights[1] * best.weights[2]) # r should be 1 by default
-      
-    # Compute optimality criterion and store it in the optim.crit vector
-    best.method <- match.arg(best.method[1], c("youden", "closest.topleft", "topleft")) # cheat: allow the user to pass "topleft"
-    if (best.method == "youden") {
-      optim.crit <- smooth.roc$sensitivities + r * smooth.roc$specificities
+
+    # cheat: allow the user to pass "topleft"
+    best.method <- match.arg(best.method[1], c("youden", "closest.topleft", "topleft"))
+    if (best.method == "topleft") {
+    	best.method <- "closest.topleft"
     }
-    else if (best.method == "closest.topleft" || best.method == "topleft") {
-      fac.1 <- ifelse(smooth.roc$percent, 100, 1)
-      optim.crit <- - ((fac.1 - smooth.roc$sensitivities)^2 + r * (fac.1 - smooth.roc$specificities)^2)
-    }
+    optim.crit <- roc.utils.optim.crit(smooth.roc$sensitivities, smooth.roc$specificities,
+    								   ifelse(smooth.roc$percent, 100, 1),
+    								   best.weights, best.method)
     
     if (is.null(smooth.roc$auc) || identical(partial.auc, FALSE)) {
       se <- smooth.roc$sensitivities[optim.crit==max(optim.crit)]
       sp <- smooth.roc$specificities[optim.crit==max(optim.crit)]
+      optim.crit <- optim.crit[optim.crit==max(optim.crit)]
     }
     else {
       if (attr(smooth.roc$auc, "partial.auc.focus") == "sensitivity") {
-        optim.crit <- (optim.crit)[smooth.roc$se <= partial.auc[1] & smooth.roc$se >= partial.auc[2]]
-        se <- smooth.roc$sensitivities[smooth.roc$sensitivities <= partial.auc[1] & smooth.roc$sensitivities >= partial.auc[2]][optim.crit==max(optim.crit)]
-        sp <- smooth.roc$specificities[smooth.roc$sensitivities <= partial.auc[1] & smooth.roc$sensitivities >= partial.auc[2]][optim.crit==max(optim.crit)]
+        optim.crit.partial <- (optim.crit)[smooth.roc$se <= partial.auc[1] & smooth.roc$se >= partial.auc[2]]
+        se <- smooth.roc$sensitivities[smooth.roc$sensitivities <= partial.auc[1] & smooth.roc$sensitivities >= partial.auc[2]][optim.crit.partial==max(optim.crit.partial)]
+        sp <- smooth.roc$specificities[smooth.roc$sensitivities <= partial.auc[1] & smooth.roc$sensitivities >= partial.auc[2]][optim.crit.partial==max(optim.crit.partial)]
+        optim.crit <- optim.crit[smooth.roc$sensitivities <= partial.auc[1] & smooth.roc$sensitivities >= partial.auc[2]][optim.crit.partial==max(optim.crit.partial)]
       }
       else {
-        optim.crit <- (optim.crit)[smooth.roc$sp <= partial.auc[1] & smooth.roc$sp >= partial.auc[2]]
-        se <- smooth.roc$sensitivities[smooth.roc$specificities <= partial.auc[1] & smooth.roc$specificities >= partial.auc[2]][optim.crit==max(optim.crit)]
-        sp <- smooth.roc$specificities[smooth.roc$specificities <= partial.auc[1] & smooth.roc$specificities >= partial.auc[2]][optim.crit==max(optim.crit)]
+        optim.crit.partial <- (optim.crit)[smooth.roc$sp <= partial.auc[1] & smooth.roc$sp >= partial.auc[2]]
+        se <- smooth.roc$sensitivities[smooth.roc$specificities <= partial.auc[1] & smooth.roc$specificities >= partial.auc[2]][optim.crit.partial==max(optim.crit.partial)]
+        sp <- smooth.roc$specificities[smooth.roc$specificities <= partial.auc[1] & smooth.roc$specificities >= partial.auc[2]][optim.crit.partial==max(optim.crit.partial)]
+        optim.crit <- optim.crit[smooth.roc$specificities <= partial.auc[1] & smooth.roc$specificities >= partial.auc[2]][optim.crit.partial==max(optim.crit.partial)]
       }
     }
-    # Deduce additional tn, tp, fn, fp, npv, ppv
-    ncases <- length(attr(smooth.roc, "roc")$cases)
-    ncontrols <- length(attr(smooth.roc, "roc")$controls)
-    if (smooth.roc$percent) {
-      tp <- se * ncases / 100
-      fn <- ncases - tp
-      tn <- sp * ncontrols / 100
-      fp <- ncontrols - tn
-      npv <- 100 * tn / (tn + fn)
-      ppv <- 100 * tp / (tp + fp)
-      accuracy <- 100 * (tp + tn) / (tp + tn + fp + fn)
-      precision <- 100 * (tp) / (tp + fp)
-      recall <- 100 * (tp) / (tp + fn)
-      substr.percent <- 100
+    
+    if (any(! ret %in% c("specificity", "sensitivity", best.method))) {
+    	# Deduce additional tn, tp, fn, fp, npv, ppv
+    	ncases <- length(attr(smooth.roc, "roc")$cases)
+    	ncontrols <- length(attr(smooth.roc, "roc")$controls)
+    	substr.percent <- ifelse(smooth.roc$percent, 100, 1)
+    	res <- roc.utils.calc.coords(substr.percent, NA, se, sp, ncases, ncontrols, best.weights)
     }
     else {
-      tp <- se * ncases
-      fn <- ncases - tp
-      tn <- sp * ncontrols
-      fp <- ncontrols - tn
-      npv <- tn / (tn + fn)
-      ppv <- tp / (tp + fp)
-      accuracy <- (tp + tn) / (tp + tn + fp + fn)
-      precision <- (tp) / (tp + fp)
-      recall <- (tp) / (tp + fn)
-      substr.percent <- 1
+    	res <- rbind(
+    		specificity = sp,
+    		sensitivity = se,
+    		best.method = ifelse(best.method == "youden", 1, -1) * optim.crit
+    	)
+    	rownames(res)[3] <- best.method
     }
-    if (length(se) == 1) {
-      if (as.list) {
-        list <- list(sensitivity=se, specificity=sp, accuracy=accuracy, tn=tn, tp=tp, fn=fn, fp=fp, npv=npv, ppv=ppv, "1-specificity"=substr.percent-sp, "1-sensitivity"=substr.percent-se, "1-accuracy"=substr.percent-accuracy, "1-npv"=substr.percent-npv, "1-ppv"=substr.percent-ppv, precision=precision, recall=recall)[ret]
-        if (drop == FALSE) {
-          list <- list(list)
-          names(list) <- x
-        }
-        return(list)
+    colnames(res) <- rep("best", ncol(res))
+    
+    if (as.list) {
+      warning("'as.list' is deprecated and will be removed in a future version.")
+    	list <- apply(res[ret, , drop=FALSE], 2, as.list)
+    	if (drop == TRUE && length(x) == 1) {
+    		return(list[[1]])
+    	}
+    	return(list)
+    }
+    else if (transpose) {
+      return(res[ret,, drop=drop])
+    }
+    else {
+      if (missing(drop) ) {
+        return(as.data.frame(t(res))[, ret])
       }
       else {
-        res <- c(sensitivity=se, specificity=sp, accuracy=accuracy, tn=tn, tp=tp, fn=fn, fp=fp, npv=npv, ppv=ppv, "1-specificity"=substr.percent-sp, "1-sensitivity"=substr.percent-se, "1-accuracy"=substr.percent-accuracy, "1-npv"=substr.percent-npv, "1-ppv"=substr.percent-ppv, precision=precision, recall=recall)[ret]
-        if (drop == FALSE) {
-        }
-        return(res)
-      }
-    }
-    else if (length(se) > 1) {
-      if (as.list) {
-        co <- apply(rbind(sensitivity=se, specificity=sp, accuracy=accuracy, tn=tn, tp=tp, fn=fn, fp=fp, npv=npv, ppv=ppv, "1-specificity"=substr.percent-sp, "1-sensitivity"=substr.percent-se, "1-accuracy"=substr.percent-accuracy, "1-npv"=substr.percent-npv, "1-ppv"=substr.percent-ppv, precision=precision, recall=recall), 2, as.list)
-        names(co) <- rep("best", length(co))
-        return(co)
-      }
-      else {
-        co <- rbind(sensitivity=se, specificity=sp, accuracy=accuracy, tn=tn, tp=tp, fn=fn, fp=fp, npv=npv, ppv=ppv, "1-specificity"=substr.percent-sp, "1-sensitivity"=substr.percent-se, "1-accuracy"=substr.percent-accuracy, "1-npv"=substr.percent-npv, "1-ppv"=substr.percent-ppv, precision=precision, recall=recall)
-        colnames(co) <- rep(x, dim(co)[2])
-        return(co)
+        return(as.data.frame(t(res))[, ret, drop=drop])
       }
     }
   }
 
   # use coords.roc
   smooth.roc$thresholds <- rep(NA, length(smooth.roc$specificities))
-  coords.roc(smooth.roc, x, input, ret, as.list, drop, ...)
+  return(coords.roc(smooth.roc, x, input, ret, as.list, drop, transpose = transpose, ...))
 }
 
-coords.roc <- function(roc, x, input=c("threshold", "specificity", "sensitivity"), ret=c("threshold", "specificity", "sensitivity"), as.list=FALSE, drop=TRUE, best.method=c("youden", "closest.topleft"), best.weights=c(1, 0.5), ...) {
+coords.roc <- function(roc,
+                       x,
+                       input=c("threshold", "specificity", "sensitivity"),
+                       ret=c("threshold", "specificity", "sensitivity"),
+                       as.list=FALSE,
+                       drop=TRUE,
+                       best.method=c("youden", "closest.topleft"),
+                       best.weights=c(1, 0.5), 
+                       transpose = TRUE,
+                       ...) {
   # make sure x was provided
-  if (missing(x) || length(x) == 0)
-    stop("'x' must be a numeric or character vector of positive length.")
+  if (missing(x) || is.null(x) || (length(x) == 0 && !is.numeric(x))) {
+    x <- "all"
+  }
+  else if (length(x) == 0 && is.numeric(x)) {
+    stop("Numeric 'x' has length 0")
+  }
+  
+  # Warn about future change in transpose <https://github.com/xrobin/pROC/issues/54>
+  if (missing(transpose) || is.null(transpose)) {
+    transpose <- TRUE
+    warning("An upcoming version of pROC will set the 'transpose' argument to FALSE by default. Set transpose = TRUE explicitly to keep the current behavior, or transpose = FALSE to adopt the new one and silence this warning. Type help(coords_transpose) for additional information.")
+  }
+  
   # match input 
   input <- match.arg(input)
   # match return
@@ -161,14 +174,16 @@ coords.roc <- function(roc, x, input=c("threshold", "specificity", "sensitivity"
           thres <- roc$thresholds[roc$sp <= partial.auc[1] & roc$sp >= partial.auc[2]]
         }
       }
-      if (length(thres) == 0)
-        return(NULL)
-      co <- coords(roc, x=thres, input="threshold", ret=ret, as.list=as.list, drop=drop)
-      if (class(co) == "matrix")
-        colnames(co) <- rep(x, dim(co)[2])
-      else if (class(co) == "list" && class(co[[1]]) == "list")
-        names(co) <- rep(x, length(co))
-      return(co)
+      if (length(thres) == 0) {
+      	warning("No coordinates found, returning NULL. This is possibly cased by a too small partial AUC interval.")
+      	return(NULL)
+      }
+      res <- rbind(
+      	threshold = thres,
+      	specificity = sp,
+      	sensitivity = se
+      )
+      cn <- rep(x, ncol(res))
     }
     else if (x == "local maximas") {
       # Pre-filter thresholds based on partial.auc
@@ -189,151 +204,148 @@ coords.roc <- function(roc, x, input=c("threshold", "specificity", "sensitivity"
           thres <- roc$thresholds[roc$sp <= partial.auc[1] & roc$sp >= partial.auc[2]]
         }
       }
-      if (length(thres) == 0)
-        return(NULL)
+      if (length(thres) == 0) {
+      	warning("No coordinates found, returning NULL. This is possibly cased by a too small partial AUC interval.")
+      	return(NULL)
+      }
       lm.idx <- roc.utils.max.thresholds.idx(thres, sp=sp, se=se)
-      co <- coords(roc, x=thres[lm.idx], input="threshold", ret=ret, as.list=as.list, drop=drop)
-      if (class(co) == "matrix")
-        colnames(co) <- rep(x, dim(co)[2])
-      else if (class(co) == "list" && class(co[[1]]) == "list")
-        names(co) <- rep(x, length(co))
-      return(co)
+      res <- rbind(
+      	threshold = thres[lm.idx],
+      	specificity = sp[lm.idx],
+      	sensitivity = se[lm.idx]
+      )
+      cn <- rep(x, ncol(res))
     }
     else { # x == "best"
-      # What kind of "best" do we want?
-      # Compute weights
-      if (is.numeric(best.weights) && length(best.weights) == 2)
-        r <- (1 - best.weights[2]) / (best.weights[1] * best.weights[2]) # r should be 1 by default
-      else
-        stop("'best.weights' must be a numeric vector of length 2")
-      # Compute optimality criterion and store it in the optim.crit vector
-      best.method <- match.arg(best.method[1], c("youden", "closest.topleft", "topleft")) # cheat: allow the user to pass "topleft"
-      if (best.method == "youden") {
-        optim.crit <- roc$sensitivities + r * roc$specificities
+      # cheat: allow the user to pass "topleft"
+      best.method <- match.arg(best.method[1], c("youden", "closest.topleft", "topleft"))
+      if (best.method == "topleft") {
+        best.method <- "closest.topleft"
       }
-      else if (best.method == "closest.topleft" || best.method == "topleft") {
-        fac.1 <- ifelse(roc$percent, 100, 1)
-        optim.crit <- - ((fac.1 - roc$sensitivities)^2 + r * (fac.1 - roc$specificities)^2)
-      }
+      optim.crit <- roc.utils.optim.crit(roc$sensitivities, roc$specificities,
+      								   ifelse(roc$percent, 100, 1),
+      								   best.weights, best.method)
 
       # Filter thresholds based on partial.auc
       if (is.null(roc$auc) || identical(partial.auc, FALSE)) {
+      	se <- roc$se[optim.crit==max(optim.crit)]
+      	sp <- roc$sp[optim.crit==max(optim.crit)]
         thres <- roc$thresholds[optim.crit==max(optim.crit)]
+        optim.crit <- optim.crit[optim.crit==max(optim.crit)]
       }
       else {
         if (attr(roc$auc, "partial.auc.focus") == "sensitivity") {
           optim.crit <- (optim.crit)[roc$se <= partial.auc[1] & roc$se >= partial.auc[2]]
+          se <- roc$se[roc$se <= partial.auc[1] & roc$se >= partial.auc[2]][optim.crit==max(optim.crit)]
+          sp <- roc$sp[roc$se <= partial.auc[1] & roc$se >= partial.auc[2]][optim.crit==max(optim.crit)]
           thres <- roc$thresholds[roc$se <= partial.auc[1] & roc$se >= partial.auc[2]][optim.crit==max(optim.crit)]
+          optim.crit <- optim.crit[roc$se <= partial.auc[1] & roc$se >= partial.auc[2]][optim.crit==max(optim.crit)]
         }
         else {
           optim.crit <- (optim.crit)[roc$sp <= partial.auc[1] & roc$sp >= partial.auc[2]]
+          se <- roc$se[roc$sp <= partial.auc[1] & roc$sp >= partial.auc[2]][optim.crit==max(optim.crit)]
+          sp <- roc$sp[roc$sp <= partial.auc[1] & roc$sp >= partial.auc[2]][optim.crit==max(optim.crit)]
           thres <- roc$thresholds[roc$sp <= partial.auc[1] & roc$sp >= partial.auc[2]][optim.crit==max(optim.crit)]
+          optim.crit <- optim.crit[roc$sp <= partial.auc[1] & roc$sp >= partial.auc[2]][optim.crit==max(optim.crit)]
         }
       }
-      if (length(thres) == 0)
-        return(NULL)
-      co <- coords(roc, x=thres, input="threshold", ret=ret, as.list=as.list, drop=drop)
-      if (class(co) == "matrix")
-        colnames(co) <- rep(x, dim(co)[2])
-      else if (class(co) == "list" && class(co[[1]]) == "list")
-        names(co) <- rep(x, length(co))
-      return(co)
+      if (length(thres) == 0) {
+      	warning("No coordinates found, returning NULL. This is possibly cased by a too small partial AUC interval.")
+      	return(NULL)
+      }
+      res <- rbind(
+      	threshold = thres,
+      	specificity = sp,
+      	sensitivity = se,
+      	best.method = ifelse(best.method == "youden", 1, -1) * optim.crit
+      )
+      rownames(res)[4] <- best.method
+      cn <- rep(x, ncol(res))
     }
   }
   else if (is.numeric(x)) {
-    if (length(x) > 1) { # make this function a vector function
-      if (as.list) {
-        res <- lapply(x, function(x) coords.roc(roc, x, input, ret, as.list))
-        names(res) <- x
-      }
-      else {
-        res <- sapply(x, function(x) coords.roc(roc, x, input, ret, as.list))
-        if (length(ret) == 1) {# sapply returns a vector instead of a matrix
-          res <- t(res)
-          rownames(res) <- ret
-        }
-        colnames(res) <- x
-      }
-      return(res)
-    }
+
     if (input == "threshold") {
-      res <- c(x, as.vector(roc.utils.perfs(x, roc$controls, roc$cases, roc$direction)) * ifelse(roc$percent, 100, 1))
+    	thr_idx <- roc.utils.thr.idx(roc, x)
+    	res <- rbind(
+    		threshold = x, # roc$thresholds[thr_idx], # user-supplied vs ours.
+    		specificity = roc$specificities[thr_idx],
+    		sensitivity = roc$sensitivities[thr_idx]
+    	)
     }
     if (input == "specificity") {
-      if (x < 0 || x > ifelse(roc$percent, 100, 1))
-        stop("Input specificity not within the ROC space.")
-      if (x %in% roc$sp) {
-        idx <- match(x, roc$sp)
-        res <- c(roc$thresholds[idx], roc$sp[idx], roc$se[idx])
-      }
-      else { # need to interpolate
-        idx.next <- match(TRUE, roc$sp > x)
-        proportion <-  (x - roc$sp[idx.next - 1]) / (roc$sp[idx.next] - roc$sp[idx.next - 1])
-        int.se <- roc$se[idx.next - 1] - proportion * (roc$se[idx.next - 1] - roc$se[idx.next])
-        res <- c(NA, x, int.se)
-      }
+    	if (any(x < 0) || any(x > ifelse(roc$percent, 100, 1))) {
+    		stop("Input specificity not within the ROC space.")
+    	}
+    	res <- matrix(nrow=3, ncol=length(x))
+    	rownames(res) <- c("threshold", "specificity", "sensitivity")
+    	for (i in seq_along(x)) {
+    		sp <- x[i]
+    		if (sp %in% roc$sp) {
+    			idx <- match(sp, roc$sp)
+    			res[, i] <- c(roc$thresholds[idx], roc$sp[idx], roc$se[idx])
+    		}
+    		else { # need to interpolate
+    			idx.next <- match(TRUE, roc$sp > sp)
+    			proportion <-  (sp - roc$sp[idx.next - 1]) / (roc$sp[idx.next] - roc$sp[idx.next - 1])
+    			int.se <- roc$se[idx.next - 1] - proportion * (roc$se[idx.next - 1] - roc$se[idx.next])
+    			res[, i] <- c(NA, sp, int.se)
+    		}
+    	}
     }
     if (input == "sensitivity") {
-      if (x < 0 || x > ifelse(roc$percent, 100, 1))
-        stop("Input sensitivity not within the ROC space.")
-      if (x %in% roc$se) {
-        idx <- length(roc$se) + 1 - match(TRUE, rev(roc$se) == x)
-        res <- c(roc$thresholds[idx], roc$sp[idx], roc$se[idx])
-      }
-      else { # need to interpolate
-        idx.next <- match(TRUE, roc$se < x)
-        proportion <- (x - roc$se[idx.next]) / (roc$se[idx.next - 1] - roc$se[idx.next])
-        int.sp <- roc$sp[idx.next] + proportion * (roc$sp[idx.next - 1] - roc$sp[idx.next])
-        res <- c(NA, int.sp, x)
-      }
+    	if (any(x < 0) || any(x > ifelse(roc$percent, 100, 1))) {
+    		stop("Input sensitivity not within the ROC space.")
+    	}
+    	res <- matrix(nrow=3, ncol=length(x))
+    	rownames(res) <- c("threshold", "specificity", "sensitivity")
+    	for (i in seq_along(x)) {
+    		se <- x[i]
+    		if (se %in% roc$se) {
+    			idx <- length(roc$se) + 1 - match(TRUE, rev(roc$se) == se)
+    			res[, i] <- c(roc$thresholds[idx], roc$sp[idx], roc$se[idx])
+    		}
+    		else { # need to interpolate
+    			idx.next <- match(TRUE, roc$se < se)
+    			proportion <- (se - roc$se[idx.next]) / (roc$se[idx.next - 1] - roc$se[idx.next])
+    			int.sp <- roc$sp[idx.next] + proportion * (roc$sp[idx.next - 1] - roc$sp[idx.next])
+    			res[, i] <- c(NA, int.sp, se)
+    		}
+    	}
     }
-    # Deduce additional tn, tp, fn, fp, npv, ppv
-    ncases <- ifelse(methods::is(roc, "smooth.roc"), length(attr(roc, "roc")$cases), length(roc$cases))
-    ncontrols <- ifelse(methods::is(roc, "smooth.roc"), length(attr(roc, "roc")$controls), length(roc$controls))
-    se <- res[3]
-    sp <- res[2]
-    if (roc$percent) {
-      tp <- se * ncases / 100
-      fn <- ncases - tp
-      tn <- sp * ncontrols / 100
-      fp <- ncontrols - tn
-      npv <- 100 * tn / (tn + fn)
-      ppv <- 100 * tp / (tp + fp)
-      accuracy <- 100 * (tp + tn) / (tp + tn + fp + fn)
-      precision <- 100 * (tp) / (tp + fp)
-      recall <- 100 * (tp) / (tp + fn)
-      substr.percent <- 100
-    }
-    else {
-      tp <- se * ncases
-      fn <- ncases - tp
-      tn <- sp * ncontrols
-      fp <- ncontrols - tn
-      npv <- tn / (tn + fn)
-      ppv <- tp / (tp + fp)
-      accuracy <- 1 * (tp + tn) / (tp + tn + fp + fn)
-      precision <- (tp) / (tp + fp)
-      recall <- (tp) / (tp + fn)
-      substr.percent <- 1
-    }
-    if (as.list) {
-      list <- list(threshold=res[1], specificity=sp, sensitivity=se, accuracy=accuracy, tn=tn, tp=tp, fn=fn, fp=fp, npv=npv, ppv=ppv, "1-specificity"=substr.percent-sp, "1-sensitivity"=substr.percent-se, "1-accuracy"=substr.percent-accuracy, "1-npv"=substr.percent-npv, "1-ppv"=substr.percent-ppv, precision=precision, recall=recall)
-      list <- list[ret]
-      if (drop == FALSE) {
-        list <- list(list)
-        names(list) <- x
-      }
-      return(list)
-    }
-    else {
-      res <- as.matrix(res)
-      res <- rbind(res, accuracy, tn, tp, fn, fp, npv, ppv, substr.percent-sp, substr.percent-se, substr.percent-accuracy, substr.percent-npv, substr.percent-ppv, precision, recall)
-      rownames(res) <- c("threshold", "specificity", "sensitivity", "accuracy", "tn", "tp", "fn", "fp", "npv", "ppv", "1-specificity", "1-sensitivity", "1-accuracy", "1-npv", "1-ppv", "precision", "recall")
-      colnames(res) <- x
-      return(res[ret,, drop=drop])
-    }
+  	cn <- x
   }
   else {
     stop("'x' must be a numeric or character vector.")
+  }
+  
+  if (any(! ret %in% rownames(res))) {
+  	# Deduce additional tn, tp, fn, fp, npv, ppv
+  	ncases <- ifelse(methods::is(roc, "smooth.roc"), length(attr(roc, "roc")$cases), length(roc$cases))
+  	ncontrols <- ifelse(methods::is(roc, "smooth.roc"), length(attr(roc, "roc")$controls), length(roc$controls))
+  	substr.percent <- ifelse(roc$percent, 100, 1)
+  	res <- roc.utils.calc.coords(substr.percent, res[1, ], res[3,], res[2,], ncases, ncontrols, best.weights)
+  }
+  colnames(res) <- cn
+  
+  if (as.list) {
+    warning("'as.list' is deprecated and will be removed in a future version.")
+  	list <- apply(res[ret, , drop=FALSE], 2, as.list)
+  	if (drop == TRUE && length(x) == 1) {
+  		return(list[[1]])
+  	}
+  	return(list)
+  }
+  else if (transpose) {
+    return(res[ret,, drop=drop])
+  }
+  else {
+    if (missing(drop)) {
+      return(as.data.frame(t(res))[, ret])
+    }
+    else {
+      return(as.data.frame(t(res))[, ret, drop=drop])
+    }
+  	
   }
 }

@@ -16,11 +16,11 @@ coords(...)
 \S3method{coords}{roc}(roc, x, input=c("threshold", "specificity",
 "sensitivity"), ret=c("threshold", "specificity", "sensitivity"),
 as.list=FALSE, drop=TRUE, best.method=c("youden", "closest.topleft"),
-best.weights=c(1, 0.5), ...)
+best.weights=c(1, 0.5), transpose = TRUE, ...)
 \S3method{coords}{smooth.roc}(smooth.roc, x, input=c("specificity",
 "sensitivity"), ret=c("specificity", "sensitivity"), as.list=FALSE,
 drop=TRUE, best.method=c("youden", "closest.topleft"), 
-best.weights=c(1, 0.5), ...)
+best.weights=c(1, 0.5), transpose = TRUE, ...)
 }
 		   
 \arguments{
@@ -32,8 +32,8 @@ best.weights=c(1, 0.5), ...)
 		the coordinates to look for. Numeric (if so, their meaning is
 		defined by the \code{input} argument) or one of \dQuote{all} (all
 		the points of the ROC curve), \dQuote{local maximas} (the local
-		maximas of the ROC curve) or \dQuote{best} (the point with the best
-		sum of sensitivity and specificity).
+		maximas of the ROC curve) or \dQuote{best} (see \code{best.method}
+		argument). If missing or \code{NULL}, defaults to \dQuote{all}.
   }
   \item{input}{
 		If \code{x} is numeric, the kind of input coordinate (x). One of
@@ -45,24 +45,16 @@ best.weights=c(1, 0.5), ...)
 		\code{coords.smooth.roc}, and that the argument is ignored when
 		\code{x} is a character.
   }
-  \item{ret}{The coordinates to return. One or more of
-    \dQuote{threshold}, \dQuote{specificity}, \dQuote{sensitivity}, \dQuote{accuracy},
-    \dQuote{tn} (true negative count), \dQuote{tp} (true positive count),
-    \dQuote{fn} (false negative count), \dQuote{fp} (false positive count), 
-    \dQuote{npv} (negative predictive value), \dQuote{ppv} (positive predictive value),
-    \dQuote{precision}, \dQuote{recall}.
-    \dQuote{1-specificity}, \dQuote{1-sensitivity}, \dQuote{1-accuracy}, \dQuote{1-npv} and \dQuote{1-ppv} are recognized
-    as well, and must be used verbatim in ROC curves with \code{percent=TRUE} (for instance \dQuote{100-ppv} is never accepted).
-    Values can be shortenend (for example to \dQuote{thr}, \dQuote{sens} and \dQuote{spec}, or even to
-    \dQuote{se}, \dQuote{sp} or \dQuote{1-np}). Note that \dQuote{threshold} is not allowed in
-    \code{coords.smooth.roc}.
-    In addition, \dQuote{npe} is replaced by \dQuote{1-npv} and \dQuote{ppe} by \dQuote{1-ppv}
-    (but they cannot be shortened).
+  \item{ret}{The coordinates to return. See "Valid \code{ret} arguments"
+  	section below. Alternatively, the single value \dQuote{all} can be used to return
+    every coordinate available.
   }
-  \item{as.list}{If the returned object must be a list. If \code{FALSE}
-    (default), a named numeric vector is returned.}
+  \item{as.list}{DEPRECATED. If the returned object must be a list. 
+   Will be removed in a future version.
+  }
   \item{drop}{If \code{TRUE} the result is coerced to the lowest
-    possible dimension, as per \link{Extract}. With \code{FALSE} if \code{x} is
+    possible dimension, as per \link{Extract}. With \code{FALSE} if either
+    \code{ret} or \code{x} is
     of length 1, the object returned will have the same format than if
     \code{x} was of length > 1.}
   \item{best.method}{if \code{x="best"}, the method to determine the
@@ -71,7 +63,14 @@ best.weights=c(1, 0.5), ...)
   \item{best.weights}{if \code{x="best"}, the weights to determine the
     best threshold. See details in the \sQuote{Best thresholds} section.
   }
-  \item{\dots}{further arguments passed to or from other methods. Ignored.}
+  \item{transpose}{when returning a matrix (\code{as.list=FALSE}), whether
+  	to return of thresholds in columns (\code{TRUE}) or rows (\code{FALSE}).
+  	The current default is \code{TRUE} and has been so since the initial
+  	version. However an upcoming version will change the default to \code{FALSE},
+  	and a warning is printed if the argument is not passed explicitly.
+  	See \link{coords_transpose} for more details about upcoming changes.
+  }
+  \item{\dots}{further arguments passed from other methods. Ignored.}
 }
 
 \details{
@@ -106,9 +105,8 @@ best.weights=c(1, 0.5), ...)
   \pkg{colorspace} or \pkg{spatstat} if they are loaded after
   \pkg{pROC}. In this case, call the \code{coords.roc} or
   \code{coords.smooth.roc} functions directly.
-}
 
-\section{Best thresholds}{
+\subsection{Best thresholds}{
   If \code{x="best"}, the \code{best.method} argument controls how the
   optimal threshold is determined.
   \describe{
@@ -158,14 +156,68 @@ best.weights=c(1, 0.5), ...)
   Note that several thresholds might be equally optimal.
 }
 
+\subsection{Valid \code{ret} arguments}{
+
+The following table lists valid \code{ret} arguments.
+
+  \tabular{rlll}{
+    Value \tab Description \tab Formula \tab Synonyms \cr
+    \code{threshold} \tab The threshold value \tab - \tab - \cr
+    \code{tn} \tab True negative count \tab - \tab - \cr
+    \code{tp} \tab True positive count \tab - \tab - \cr
+    \code{fn} \tab False negative count \tab - \tab - \cr
+    \code{fp} \tab False positive count \tab - \tab - \cr
+    \code{specificity} \tab Specificity  \tab tn / (tn + fp) \tab tnr \cr
+    \code{sensitivity} \tab Sensitivity \tab tp / (tp + fn)  \tab recall, tpr \cr
+    \code{accuracy} \tab Accuracy \tab  (tp + tn) / N \tab - \cr
+    \code{npv} \tab Negative Predictive Value \tab tn / (tn + fn) \tab - \cr
+    \code{ppv} \tab Positive Predictive Value \tab tp / (tp + fp) \tab precision \cr
+    \code{precision} \tab Precision \tab tp / (tp + fp) \tab ppv \cr
+    \code{recall} \tab Recall \tab tp / (tp + fn) \tab sensitivity, tpr \cr
+    \code{tpr} \tab True Positive Rate \tab tp / (tp + fn) \tab sensitivity, recall \cr
+    \code{fpr} \tab False Positive Rate \tab fp / (tn + fp) \tab 1-specificity \cr
+    \code{tnr} \tab True Negative Rate \tab tn / (tn + fp) \tab specificity \cr
+    \code{fnr} \tab False Negative Rate \tab fn / (tp + fn) \tab 1-sensitivity \cr
+    \code{fdr} \tab False Discovery Rate \tab fp / (tp + fp) \tab 1-ppv \cr
+    \code{youden} \tab Youden Index \tab 
+    	se + r * sp
+    	\tab - \cr
+    \code{closest.topleft} \tab Distance to the top left corner of the ROC space \tab 
+    	- ((1 - se)^2 + r * (1 - sp)^2)
+    	\tab - \cr
+  }
+  
+	The value \dQuote{threshold} is not allowed in \code{coords.smooth.roc}.
+  
+	Values can be shortenend (for example to \dQuote{thr}, \dQuote{sens} and \dQuote{spec}, or even to
+	\dQuote{se}, \dQuote{sp} or \dQuote{1-np}). In addition, some values can be prefixed with
+	\code{1-} to get their complement:
+	\code{1-specificity}, \code{1-sensitivity}, \code{1-accuracy}, \code{1-npv}, \code{1-ppv}
+	(but they cannot be shortened).
+  
+	The values \code{npe} and \code{ppe} are automatically replaced with
+	\code{1-npv} and \code{1-ppv}, respectively (and will therefore not appear
+	as is in the output, but as \code{1-npv} and \code{1-ppv} instead).
+	These must be used verbatim in ROC curves with \code{percent=TRUE} 
+	(ie. \dQuote{100-ppv} is never accepted).
+	
+	The \dQuote{youden} and \dQuote{closest.topleft} are weighted with \code{r}, according
+	to the value of the \code{best.weights} argument. See the "Best thresholds"
+	section above for more details.
+
+    The single value \dQuote{all} can be used to return
+    every coordinate available.
+}
+} % details
+
 \value{
   Depending on the length of \code{x} and \code{as.list} argument.
 
   
   \tabular{lll}{
 	\tab
-	length(x) == 1 \tab
-	length(x) > 1 or drop == FALSE
+	length(x) == 1 or length(ret) == 1 \tab
+	length(x) > 1 or length(ret) > 1 or drop == FALSE
 	\cr
 	
     \code{as.list=TRUE} \tab
@@ -173,7 +225,8 @@ best.weights=c(1, 0.5), ...)
 	a list of the length of, and named after, \code{x}. Each element of this list is a list of the length of, in the order of, and named after, \code{ret}. \cr
 
     \code{as.list=FALSE}  \tab
-	a numeric vector of the length of, in the order of, and named after, \code{ret}.\tab
+	a numeric vector of the length of, in the order of, and named after, \code{ret} (if \code{length(x) == 1})
+	or a numeric vector of the length of, in the order of, and named after, \code{x} (if \code{length(ret) == 1}.\tab
 	a numeric matrix with one row for each \code{ret} and one column for each \code{x}\cr
   }
   
@@ -213,49 +266,45 @@ best.weights=c(1, 0.5), ...)
 data(aSAH)
 
 # Print a roc object:
-rocobj <- roc(aSAH$outcome, aSAH$s100b)
+rocobj <- roc(aSAH$outcome, aSAH$s100b, percent = TRUE)
 
-coords(rocobj, 0.55)
-coords(rocobj, 0.9, "specificity", as.list=TRUE)
-coords(rocobj, 0.5, "se", ret="se")
-# fully qualified but identical:
-coords(roc=rocobj, x=0.5, input="sensitivity", ret="sensitivity")
+# Get the coordinates of S100B threshold 0.55
+coords(rocobj, 0.55, transpose = FALSE)
 
-# Compare with drop=FALSE
-coords(rocobj, 0.55, drop=FALSE)
-coords(rocobj, 0.9, "specificity", as.list=TRUE, drop=FALSE)
+# Get the coordinates at 50\% sensitivity
+coords(roc=rocobj, x=50, input="sensitivity", transpose = FALSE)
+# Can be abbreviated:
+coords(rocobj, 50, "se", transpose = FALSE)
 
-# Same in percent
-rocobj <- roc(aSAH$outcome, aSAH$s100b, percent=TRUE)
-
-coords(rocobj, 0.55)
-coords(rocobj, 90, "specificity", as.list=TRUE)
-coords(rocobj, x=50, input="sensitivity", ret=c("sen", "spec"))
-
-# And with a smoothed ROC curve
-coords(smooth(rocobj), 90, "specificity")
-coords(smooth(rocobj), 90, "specificity", drop=FALSE)
-coords(smooth(rocobj), 90, "specificity", as.list=TRUE)
-coords(smooth(rocobj), 90, "specificity", as.list=TRUE, drop=FALSE)
+# Works with smoothed ROC curves
+coords(smooth(rocobj), 90, "specificity", transpose = FALSE)
 
 # Get the sensitivities for all thresholds
-sensitivities <- coords(rocobj, rocobj$thresholds, "thr", "se")
+sensitivities <- coords(rocobj, rocobj$thresholds, "thr", "se", transpose = FALSE)
+print(sensitivities)
+
 # This is equivalent to taking sensitivities from rocobj directly
 stopifnot(all.equal(as.vector(rocobj$sensitivities), as.vector(sensitivities)))
 # You could also write:
-sensitivities <- coords(rocobj, "all", ret="se")
+sensitivities <- coords(rocobj, "all", ret="se", transpose = FALSE)
 stopifnot(all.equal(as.vector(rocobj$sensitivities), as.vector(sensitivities)))
 
 # Get the best threshold
-coords(rocobj, "b", ret="t")
+coords(rocobj, "b", ret="t", transpose = FALSE)
 
 # Get the best threshold according to different methods
 rocobj <- roc(aSAH$outcome, aSAH$ndka, percent=TRUE)
-coords(rocobj, "b", ret="t", best.method="youden") # default
-coords(rocobj, "b", ret="t", best.method="closest.topleft")
+coords(rocobj, "best", ret="threshold", transpose = FALSE, 
+       best.method="youden") # default
+coords(rocobj, "best", ret="threshold", transpose = FALSE, 
+       best.method="closest.topleft")
+
 # and with different weights
-coords(rocobj, "b", ret="t", best.method="youden", best.weights=c(50, 0.2))
-coords(rocobj, "b", ret="t", best.method="closest.topleft", best.weights=c(5, 0.2))
+coords(rocobj, "best", ret="threshold", transpose = FALSE, 
+       best.method="youden", best.weights=c(50, 0.2))
+coords(rocobj, "best", ret="threshold", transpose = FALSE, 
+       best.method="closest.topleft", best.weights=c(5, 0.2))
+
 # and plot them
 plot(rocobj, print.thres="best", print.thres.best.method="youden")
 plot(rocobj, print.thres="best", print.thres.best.method="closest.topleft")
@@ -266,25 +315,28 @@ plot(rocobj, print.thres="best", print.thres.best.method="closest.topleft",
 
 # Return more values:
 coords(rocobj, "best", ret=c("threshold", "specificity", "sensitivity", "accuracy",
-                           "tn", "tp", "fn", "fp", "npv", "ppv", "1-specificity",
-                           "1-sensitivity", "1-accuracy", "1-npv", "1-ppv",
-                           "precision", "recall"))
-coords(smooth(rocobj), "best", ret=c("threshold", "specificity", "sensitivity", "accuracy",
-                           "tn", "tp", "fn", "fp", "npv", "ppv", "1-specificity",
-                           "1-sensitivity", "1-accuracy", "1-npv", "1-ppv",
-                           "precision", "recall"))
-coords(smooth(rocobj), 0.5, ret=c("threshold", "specificity", "sensitivity", "accuracy",
-                           "tn", "tp", "fn", "fp", "npv", "ppv", "1-specificity",
-                           "1-sensitivity", "1-accuracy", "1-npv", "1-ppv",
-                           "precision", "recall"))
+                           "precision", "recall"), transpose = FALSE)
+
+# Return all values
+coords(rocobj, "best", ret = "all", transpose = FALSE)
                            
 # You can use coords to plot for instance a sensitivity + specificity vs. cut-off diagram
 
-plot(specificity + sensitivity ~ threshold, t(coords(rocobj, seq(0, 1, 0.01))), type = "l")
+plot(specificity + sensitivity ~ threshold, 
+     coords(rocobj, "all", transpose = FALSE), 
+     type = "l", log="x", 
+     subset = is.finite(threshold))
 
 # Plot the Precision-Recall curve
-plot(precision ~ recall, t(coords(rocobj, "all", ret = c("recall", "precision"))), type="l")
+plot(precision ~ recall, 
+     coords(rocobj, "all", ret = c("recall", "precision"), transpose = FALSE),
+     type="l", ylim = c(0, 100))
 
+# Alternatively plot the curve with TPR and FPR instead of SE/SP 
+# (identical curve, only the axis change)
+plot(tpr ~ fpr, 
+     coords(rocobj, "all", ret = c("tpr", "fpr"), transpose = FALSE),
+     type="l")
 }
 
 \keyword{univar}

@@ -54,9 +54,6 @@ roc.formula <- function (formula, data, ...) {
   if (length(predictors) == 1) {
     roc <- roc.default(response, m[[predictors]], ...)
     roc$call <- Call
-    if (! data.missing) {
-      roc$data <- data
-    }
     if (!is.null(roc$smooth))
       attr(roc, "roc")$call <- roc$call
     return(roc)
@@ -69,9 +66,6 @@ roc.formula <- function (formula, data, ...) {
       formula[3] <- call(predictor) # replace the predictor in formula
       call$formula <- formula # Replace modified formula
       roc$call <- call
-      if (! data.missing) {
-      	roc$data <- data
-      }
       return(roc)
     }, formula = formula, m.data = m, call = match.call(), ...)
     # Set the list names
@@ -80,6 +74,71 @@ roc.formula <- function (formula, data, ...) {
   }
   else {
     stop("Invalid formula:at least 1 predictor is required in a formula of type response~predictor.")
+  }
+}
+
+roc.data.frame <- function(data, response, predictor, 
+                           ret = c("roc", "coords", "all_coords"),
+                           ...) {
+  ret <- match.arg(ret)
+  
+  if (is.character(substitute(response))) {
+  	response_name <- response
+  }
+  else {
+  	if (! "name" %in% class(substitute(response))) {
+  		stop("'response' argument should be the name of the column, optionally quoted.")
+  	}
+  	response_name <- deparse(substitute(response))
+  }
+  
+  if (is.character(substitute(predictor))) {
+  	predictor_name <- predictor
+  }
+  else {
+  	if (! "name" %in% class(substitute(predictor))) {
+  		stop("'predictor' argument should be the name of the column, optionally quoted.")
+  	}
+  	predictor_name <- deparse(substitute(predictor))
+  }
+  
+  r <- roc_(data, response_name, predictor_name, ret = ret, ...)
+  
+  if (ret == "roc") {
+    r$call <- match.call()
+  }
+  return(r)
+}
+
+roc_ <- function(data, response, predictor,
+                 ret = c("roc", "coords", "all_coords"),
+                 ...) {
+  ret <- match.arg(ret)
+  
+  # Ensure the data contains the columns we need
+  if (! response %in% colnames(data)) {
+  	stop(sprintf("Column %s not present in data %s", response, deparse(substitute(data))))
+  }
+  
+  if (! predictor %in% colnames(data)) {
+  	stop(sprintf("Column '%s' not present in data %s", predictor, deparse(substitute(data))))
+  }
+  
+  r <- roc(data[[response]], data[[predictor]], ...)
+  
+  if (ret == "roc") {
+    r$call <- match.call()
+    return(r)
+  }
+  else if (ret == "coords") {
+    co <- coords(r, x = "all", transpose = FALSE)
+    rownames(co) <- NULL
+    return(co)
+  }
+  else if (ret == "all_coords") {
+    co <- coords(r, x = "all", ret="all", transpose = FALSE)
+    rownames(co) <- NULL
+    return(co)
   }
 }
 
@@ -92,8 +151,8 @@ roc.default <- function(response, predictor,
                         percent=FALSE, # Must sensitivities, specificities and AUC be reported in percent? Note that if TRUE, and you want a partial area, you must pass it in percent also (partial.area=c(100, 80))
                         na.rm=TRUE,
                         direction=c("auto", "<", ">"), # direction of the comparison. Auto: automatically define in which group the median is higher and take the good direction to have an AUC >= 0.5
-                        algorithm=5,
-						quiet = TRUE,
+                        algorithm=6,
+						quiet = FALSE,
 
                         # what computation must be done
                         smooth=FALSE, # call smooth.roc on the current object
@@ -101,8 +160,9 @@ roc.default <- function(response, predictor,
                         ci=FALSE, # call ci.roc on the current object
                         plot=FALSE, # call plot.roc on the current object
 
-                        # disambiguate method for ci and smooth
+                        # disambiguate method/n for ci and smooth
                         smooth.method="binormal",
+						smooth.n=512,
                         ci.method=NULL,
                         # capture density for smooth.roc here (do not pass to graphical functions)
                         density=NULL,
@@ -118,6 +178,10 @@ roc.default <- function(response, predictor,
   	# Forbid case/controls
   	if ((!missing(cases) && !is.null(cases)) || (!missing(controls) && !is.null(controls))) {
   		stop("'cases/controls' argument incompatible with 'response/predictor'.")
+  	}
+  	# Forbid density
+  	if ((!missing(density.cases) && !is.null(density.cases)) || (!missing(density.controls) && !is.null(density.controls))) {
+  		stop("'density.*' arguments incompatible with 'response/predictor'.")
   	}
   	
     original.predictor <- predictor # store a copy of the original predictor (before converting ordered to numeric and removing NA)
@@ -187,6 +251,10 @@ roc.default <- function(response, predictor,
 
   # Cases / Controls
   else if (!missing(cases) && !is.null(cases) && !missing(controls) && !is.null(controls)) {
+  	# Forbid density
+  	if ((!missing(density.cases) && !is.null(density.cases)) || (!missing(density.controls) && !is.null(density.controls))) {
+  		stop("'density.*' arguments incompatible with 'response/predictor'.")
+  	}
   	# remove nas
   	if (na.rm) {
   		if (any(is.na(controls)))
@@ -232,7 +300,7 @@ roc.default <- function(response, predictor,
     	}
     }
     else { 
-    	stop("Cases and controls must be numeric ordered.")
+    	stop("Cases and controls must be numeric or ordered.")
     }
   	
   	# Check infinities
@@ -298,7 +366,15 @@ roc.default <- function(response, predictor,
   }
   
   # Choose algorithm
-  if (isTRUE(algorithm == 0)) {
+  if (isTRUE(algorithm == 6)) {
+    if (is.numeric(predictor)) {
+      algorithm <- 2
+    }
+    else {
+      algorithm <- 3
+    }
+  }
+  else if (isTRUE(algorithm == 0)) {
   	load.suggested.package("microbenchmark")
     cat("Starting benchmark of algorithms 2 and 3, 10 iterations...\n")
     thresholds <- roc.utils.thresholds(c(controls, cases), direction)
@@ -311,30 +387,31 @@ roc.default <- function(response, predictor,
     print(summary(benchmark))
     if (any(is.na(benchmark))) {
       warning("Microbenchmark returned NA. Using default algorithm 1.")
-      algorithm <- 1
+      algorithm <- 2
     }
     algorithm <- as.integer(names(which.min(tapply(benchmark$time, benchmark$expr, sum))))
     cat(sprintf("Selecting algorithm %s.\n", algorithm))
   }
-  if (isTRUE(algorithm ==  1)) {
-    fun.sesp <- roc.utils.perfs.all.safe
+  else if (isTRUE(algorithm == 5)) {
+    thresholds <- length(roc.utils.thresholds(c(controls, cases), direction))
+    if (thresholds > 55) { # critical number determined in inst/extra/algorithms.speed.test.R
+      algorithm <- 2
+    } else {
+      algorithm <- 3
+    }
   }
-  else if (isTRUE(algorithm == 2)) {
+  
+  if (isTRUE(algorithm == 2)) {
     fun.sesp <- roc.utils.perfs.all.fast
   }
   else if (isTRUE(algorithm  == 3)) {
     fun.sesp <- rocUtilsPerfsAllC
   }
+  else if (isTRUE(algorithm ==  1)) {
+    fun.sesp <- roc.utils.perfs.all.safe
+  }
   else if (isTRUE(algorithm == 4)) {
     fun.sesp <- roc.utils.perfs.all.test
-  }
-  else if (isTRUE(algorithm == 5)) {
-  	thresholds <- length(roc.utils.thresholds(c(controls, cases), direction))
-  	if (thresholds > 1437) { # critical number determined in inst/extra/algorithms.speed.test.R
-  		fun.sesp <- roc.utils.perfs.all.fast
-  	} else {
-  		fun.sesp <- rocUtilsPerfsAllC
-  	}
   }
   else {
     stop("Unknown algorithm (must be 0, 1, 2, 3, 4 or 5).")
@@ -344,7 +421,7 @@ roc.default <- function(response, predictor,
              percent=percent,
              direction=direction,
              fun.sesp=fun.sesp,
-             smooth = smooth, density.cases = density.cases,  density.controls = density.controls, smooth.method = smooth.method, 
+             smooth = smooth, density.cases = density.cases,  density.controls = density.controls, smooth.method = smooth.method, smooth.n = smooth.n,
              auc, ...)
   
   roc$call <- match.call()
@@ -390,7 +467,7 @@ roc.rp.nochecks <- function(response, predictor, levels, ...) {
 }
 
 #' Creates a ROC object from controls, cases, ... without argument checking. Not to be exposed to the end user
-roc.cc.nochecks <- function(controls, cases, percent, direction, fun.sesp, smooth, smooth.method, auc, ...) {
+roc.cc.nochecks <- function(controls, cases, percent, direction, fun.sesp, smooth, smooth.method, smooth.n, auc, ...) {
   # create the roc object
   roc <- list()
   class(roc) <- "roc"
@@ -419,7 +496,7 @@ roc.cc.nochecks <- function(controls, cases, percent, direction, fun.sesp, smoot
   roc$fun.sesp <- fun.sesp
   
   if (smooth) {
-    roc <- smooth.roc(roc, method=smooth.method, ...)
+    roc <- smooth.roc(roc, method=smooth.method, n=smooth.n, ...)
   }
   # compute AUC
   if (auc)
