@@ -1,8 +1,8 @@
 Package: pROC
 Type: Package
 Title: Display and Analyze ROC Curves
-Version: 1.15.0
-Date: 2019-06-01
+Version: 1.15.3
+Date: 2019-07-21
 Encoding: UTF-8
 Depends: R (>= 2.14)
 Imports: methods, plyr, Rcpp (>= 0.11.1)
@@ -27,9 +27,9 @@ Description: Tools for visualizing, smoothing and comparing receiver operating c
 License: GPL (>= 3)
 URL: http://expasy.org/tools/pROC/
 BugReports: https://github.com/xrobin/pROC/issues
-LazyLoad: yes
+LazyData: yes
 NeedsCompilation: yes
-Packaged: 2019-06-01 07:44:22 UTC; xavier
+Packaged: 2019-07-21 08:43:05 UTC; xavier
 Author: Xavier Robin [cre, aut] (<https://orcid.org/0000-0002-6813-3200>),
   Natacha Turck [aut],
   Alexandre Hainard [aut],
@@ -41,4 +41,4 @@ Author: Xavier Robin [cre, aut] (<https://orcid.org/0000-0002-6813-3200>),
   Matthias Doering [ctb] (Hand & Till Multiclass)
 Maintainer: Xavier Robin <pROC-cran@xavier.robin.name>
 Repository: CRAN
-Date/Publication: 2019-06-01 09:00:03 UTC
+Date/Publication: 2019-07-21 22:40:02 UTC
