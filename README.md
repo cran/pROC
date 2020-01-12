@@ -24,11 +24,6 @@ The latest stable version is best installed from the CRAN:
 
     install.packages("pROC")
 
-Help
--------
-
-Once the library is loaded with `library(pROC)`, you can get help on pROC by typing `?pROC`.
-
 Getting started
 -------
 
@@ -114,6 +109,20 @@ plot(ci.thresholds(roc2))
 ```
 
 
+Getting Help
+------------
+
+* Type `?pROC` on the R command line
+* Make sure you've [read the FAQ](https://github.com/xrobin/pROC/wiki/FAQ---Frequently-asked-questions)
+* Search for [questions tagged with pROC-R-package on Stack Overflow](https://stackoverflow.com/questions/tagged/proc-r-package?tab=Votes)
+
+If you still can't find an answer, you can:
+
+* [Ask a question on Stack Overflow with the pROC-r-package tag](https://stackoverflow.com/questions/ask?tags=pROC-r-package)
+* [Bug reports should be submitted to the GitHub issue tracker](https://github.com/xrobin/pROC/issues)
+
+
+
 Development
 -------
 
@@ -160,8 +169,8 @@ NOT_CRAN=1 RUN_SLOW_TESTS=true R CMD check pROC_$VERSION.tar.gz
 1. Build & check package: `R CMD build pROC && R CMD check --as-cran pROC_$VERSION.tar.gz`
 1. Check with slow tests: `NOT_CRAN=1  RUN_SLOW_TESTS=true R CMD check pROC_$VERSION.tar.gz`
 1. Check with R-devel: `rhub::check_with_rdevel()`
-1. Chec reverse dependencies: `devtools::revdep_check(libpath = rappdirs::user_cache_dir("revdep_lib"), srcpath = rappdirs::user_cache_dir("revdep_src"))`
+1. Check reverse dependencies: `revdepcheck::revdep_check(num_workers=8, timeout = as.difftime(60, units = "mins"))`
 1. Update `Version` and `Date` in `DESCRIPTION`
 1. Update version and date in `NEWS`
-1. Create a tag: `git tag v$VERSION`
+1. Create a tag: `git tag v$VERSION && git push --tags`
 1. [Submit to CRAN](https://cran.r-project.org/submit.html)

@@ -95,9 +95,6 @@ ci.auc.delong <- function(roc, conf.level) {
   SY <- sum((V$Y - V$theta) * (V$Y - V$theta))/(n-1)
   S <- SX/m + SY/n
   ci <- qnorm(c(0+(1-conf.level)/2, .5, 1-(1-conf.level)/2), mean = V$theta, sd = sqrt(S))
-  if (roc$direction == ">") {
-    ci <- rev(1 - ci)
-  }
   # In some rare cases we have ci[3] > 1 or ci[1] < 0
   ci[ci > 1] <- 1
   ci[ci < 0] <- 0
@@ -120,10 +117,7 @@ delongPlacements <- function(roc) {
 	placements <- delongPlacementsCpp(roc)
 
 	# Ensure theta equals auc
-	auc <- roc$auc / ifelse(roc$percent, 100, 1) 
-	if (roc$direction == ">") {
-		auc <- 1 - auc
-	}
+	auc <- roc$auc / ifelse(roc$percent, 100, 1)
 	if (! isTRUE(all.equal(placements$theta, auc))) {
 		sessionInfo <- sessionInfo()
 		save(roc, placements, sessionInfo, file="pROC_bug.RData")

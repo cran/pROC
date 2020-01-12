@@ -16,11 +16,11 @@ coords(...)
 \S3method{coords}{roc}(roc, x, input=c("threshold", "specificity",
 "sensitivity"), ret=c("threshold", "specificity", "sensitivity"),
 as.list=FALSE, drop=TRUE, best.method=c("youden", "closest.topleft"),
-best.weights=c(1, 0.5), transpose = TRUE, ...)
+best.weights=c(1, 0.5), transpose = FALSE, as.matrix=FALSE, ...)
 \S3method{coords}{smooth.roc}(smooth.roc, x, input=c("specificity",
 "sensitivity"), ret=c("specificity", "sensitivity"), as.list=FALSE,
 drop=TRUE, best.method=c("youden", "closest.topleft"), 
-best.weights=c(1, 0.5), transpose = TRUE, ...)
+best.weights=c(1, 0.5), transpose = FALSE, as.matrix=FALSE, ...)
 }
 		   
 \arguments{
@@ -49,26 +49,31 @@ best.weights=c(1, 0.5), transpose = TRUE, ...)
   	section below. Alternatively, the single value \dQuote{all} can be used to return
     every coordinate available.
   }
-  \item{as.list}{DEPRECATED. If the returned object must be a list. 
+  \item{as.list}{DEPRECATED. If the returned object must be a list.
    Will be removed in a future version.
   }
   \item{drop}{If \code{TRUE} the result is coerced to the lowest
-    possible dimension, as per \link{Extract}. With \code{FALSE} if either
-    \code{ret} or \code{x} is
-    of length 1, the object returned will have the same format than if
-    \code{x} was of length > 1.}
+    possible dimension, as per \link{Extract}. By default only drops
+    if \code{transpose = TRUE} and either \code{ret} or \code{x} is
+    of length 1.
+  }
   \item{best.method}{if \code{x="best"}, the method to determine the
     best threshold. See details in the \sQuote{Best thresholds} section.
   }
   \item{best.weights}{if \code{x="best"}, the weights to determine the
     best threshold. See details in the \sQuote{Best thresholds} section.
   }
-  \item{transpose}{when returning a matrix (\code{as.list=FALSE}), whether
-  	to return of thresholds in columns (\code{TRUE}) or rows (\code{FALSE}).
-  	The current default is \code{TRUE} and has been so since the initial
-  	version. However an upcoming version will change the default to \code{FALSE},
-  	and a warning is printed if the argument is not passed explicitly.
-  	See \link{coords_transpose} for more details about upcoming changes.
+  \item{transpose}{whether
+  	to return the thresholds in columns (\code{TRUE}) or rows (\code{FALSE}).
+  	Since pROC 1.16 the default value is \code{FALSE}.
+  	See \link{coords_transpose} for more details the change.
+  }
+  \item{as.matrix}{if \code{transpose} is \code{FALSE}, whether to return
+    a \code{\link{matrix}} (\code{TRUE}) or a \code{\link{data.frame}}
+    (\code{FALSE}, the default). A \code{data.frame} is more convenient
+    and flexible to use, but incurs a slight speed penalty. Consider
+    setting this argument to \code{TRUE} if you are calling the function
+    repeatedly.
   }
   \item{\dots}{further arguments passed from other methods. Ignored.}
 }
@@ -103,8 +108,7 @@ best.weights=c(1, 0.5), transpose = TRUE, ...)
   The coords function in this package is a generic, but it might be
   superseded by functions in other packages such as
   \pkg{colorspace} or \pkg{spatstat} if they are loaded after
-  \pkg{pROC}. In this case, call the \code{coords.roc} or
-  \code{coords.smooth.roc} functions directly.
+  \pkg{pROC}. In this case, call the \code{pROC::coords} explicitly.
 
 \subsection{Best thresholds}{
   If \code{x="best"}, the \code{best.method} argument controls how the
@@ -263,79 +267,68 @@ The following table lists valid \code{ret} arguments.
 \code{\link{roc}}, \code{\link{ci.coords}}
 }
 \examples{
-data(aSAH)
 
-# Print a roc object:
-rocobj <- roc(aSAH$outcome, aSAH$s100b, percent = TRUE)
+# Create a ROC curve:
+data(aSAH)
+roc.s100b <- roc(aSAH$outcome, aSAH$s100b, percent = TRUE)
 
 # Get the coordinates of S100B threshold 0.55
-coords(rocobj, 0.55, transpose = FALSE)
+coords(roc.s100b, 0.55, transpose = FALSE)
 
 # Get the coordinates at 50\% sensitivity
-coords(roc=rocobj, x=50, input="sensitivity", transpose = FALSE)
+coords(roc=roc.s100b, x=50, input="sensitivity", transpose = FALSE)
 # Can be abbreviated:
-coords(rocobj, 50, "se", transpose = FALSE)
+coords(roc.s100b, 50, "se", transpose = FALSE)
 
 # Works with smoothed ROC curves
-coords(smooth(rocobj), 90, "specificity", transpose = FALSE)
+coords(smooth(roc.s100b), 90, "specificity", transpose = FALSE)
 
 # Get the sensitivities for all thresholds
-sensitivities <- coords(rocobj, rocobj$thresholds, "thr", "se", transpose = FALSE)
-print(sensitivities)
-
-# This is equivalent to taking sensitivities from rocobj directly
-stopifnot(all.equal(as.vector(rocobj$sensitivities), as.vector(sensitivities)))
-# You could also write:
-sensitivities <- coords(rocobj, "all", ret="se", transpose = FALSE)
-stopifnot(all.equal(as.vector(rocobj$sensitivities), as.vector(sensitivities)))
+cc <- coords(roc.s100b, "all", ret="sensitivity", transpose = FALSE)
+print(cc$sensitivity)
 
 # Get the best threshold
-coords(rocobj, "b", ret="t", transpose = FALSE)
+coords(roc.s100b, "best", ret="threshold", transpose = FALSE)
 
 # Get the best threshold according to different methods
-rocobj <- roc(aSAH$outcome, aSAH$ndka, percent=TRUE)
-coords(rocobj, "best", ret="threshold", transpose = FALSE, 
+roc.ndka <- roc(aSAH$outcome, aSAH$ndka, percent=TRUE)
+coords(roc.ndka, "best", ret="threshold", transpose = FALSE, 
        best.method="youden") # default
-coords(rocobj, "best", ret="threshold", transpose = FALSE, 
+coords(roc.ndka, "best", ret="threshold", transpose = FALSE, 
        best.method="closest.topleft")
 
 # and with different weights
-coords(rocobj, "best", ret="threshold", transpose = FALSE, 
+coords(roc.ndka, "best", ret="threshold", transpose = FALSE, 
        best.method="youden", best.weights=c(50, 0.2))
-coords(rocobj, "best", ret="threshold", transpose = FALSE, 
+coords(roc.ndka, "best", ret="threshold", transpose = FALSE, 
        best.method="closest.topleft", best.weights=c(5, 0.2))
-
-# and plot them
-plot(rocobj, print.thres="best", print.thres.best.method="youden")
-plot(rocobj, print.thres="best", print.thres.best.method="closest.topleft")
-plot(rocobj, print.thres="best", print.thres.best.method="youden",
+       
+# This is available with the plot.roc function too:
+plot(roc.ndka, print.thres="best", print.thres.best.method="youden",
                                  print.thres.best.weights=c(50, 0.2)) 
-plot(rocobj, print.thres="best", print.thres.best.method="closest.topleft",
-                                 print.thres.best.weights=c(5, 0.2)) 
 
 # Return more values:
-coords(rocobj, "best", ret=c("threshold", "specificity", "sensitivity", "accuracy",
+coords(roc.s100b, "best", ret=c("threshold", "specificity", "sensitivity", "accuracy",
                            "precision", "recall"), transpose = FALSE)
 
 # Return all values
-coords(rocobj, "best", ret = "all", transpose = FALSE)
+coords(roc.s100b, "best", ret = "all", transpose = FALSE)
                            
 # You can use coords to plot for instance a sensitivity + specificity vs. cut-off diagram
-
 plot(specificity + sensitivity ~ threshold, 
-     coords(rocobj, "all", transpose = FALSE), 
+     coords(roc.ndka, "all", transpose = FALSE), 
      type = "l", log="x", 
      subset = is.finite(threshold))
 
 # Plot the Precision-Recall curve
 plot(precision ~ recall, 
-     coords(rocobj, "all", ret = c("recall", "precision"), transpose = FALSE),
+     coords(roc.ndka, "all", ret = c("recall", "precision"), transpose = FALSE),
      type="l", ylim = c(0, 100))
 
 # Alternatively plot the curve with TPR and FPR instead of SE/SP 
 # (identical curve, only the axis change)
 plot(tpr ~ fpr, 
-     coords(rocobj, "all", ret = c("tpr", "fpr"), transpose = FALSE),
+     coords(roc.ndka, "all", ret = c("tpr", "fpr"), transpose = FALSE),
      type="l")
 }
 

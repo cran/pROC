@@ -1,9 +1,19 @@
+1.16.0 (2020-01-12)
+  * BACKWARD INCOMPATIBLE CHANGE: 'transpose' argument to 'coords' switched to FALSE by default (issue #54)
+  * BACKWARD INCOMPATIBLE CHANGE: 'ci.coords' return value is now of list type and easier to use
+  * Fix one-sided DeLong test for curves with 'direction=">"' (issue #64)
+  * Fix an error in 'ci.coords' due to expected NA values in some coords (like "precision") (issue #65)
+  * Ordrered predictors are converted to numeric in a more robust way (issue #63)
+  * Cleaned up 'power.roc.test' code (issue #50)
+  * Fix pairing with 'roc.formula' and warn if 'na.action' is not set to "na.pass" or "na.fail" (issue #68)
+  * Fix 'ci.coords' not working with 'smooth.roc' curves
+  
 1.15.3 (2019-07-21)
   * Fix: previous version accidentally set transpose = FALSE, should only be for next major release
 
 1.15.2 (2019-07-20)
-  * Fix -Inf threshold in coords for curves with direction = ">" (issue #60)
-  * Restore lazy loading of the data and fix a 'R CMD check' warning 'Variables with usage in documentation object aSAH not in code'
+  * Fix -Inf threshold in coords for curves with 'direction = ">"' (issue #60)
+  * Restore lazy loading of the data and fix an 'R CMD check' warning "Variables with usage in documentation object 'aSAH' not in code"
 
 1.15.1 (2019-07-17)
   * Fix erroneous error in 'ci.coords' with 'ret="threshold"' (issue #57)

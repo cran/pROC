@@ -22,59 +22,41 @@ roc <- function(...) {
 }
 
 roc.formula <- function (formula, data, ...) {
-  data.missing <- missing(data)
-  # Get predictors (easy)
-  if (data.missing) {
-  	predictors <- attr(terms(formula), "term.labels")
-  }
-  else {
-  	predictors <- attr(terms(formula, data = data), "term.labels")
-  }
-  
-  # Get the data. Use standard code from survival::coxph as suggested by Terry Therneau
-  Call <- match.call()
-  indx <- match(c("formula", "data", "weights", "subset", "na.action"), names(Call), nomatch=0)
-  if (indx[1] == 0) {
-  	stop("A formula argument is required")
-  }
-  # Keep the standard arguments and run them in model.frame
-  temp <- Call[c(1,indx)]  
-  temp[[1]] <- as.name('model.frame')
-  m <- eval(temp, parent.frame())
-  
-  if (!is.null(model.weights(m))) stop("weights are not supported")
-  
-  # Get response (easy)
-  response <- model.response(m)
-
-  if (length(response) == 0) {
-    stop("Error in the formula: a response is required in a formula of type response~predictor.")
-  }
-
-  if (length(predictors) == 1) {
-    roc <- roc.default(response, m[[predictors]], ...)
-    roc$call <- Call
-    if (!is.null(roc$smooth))
-      attr(roc, "roc")$call <- roc$call
-    return(roc)
-  }
-  else if (length(predictors) > 1) {
-    roclist <- lapply(predictors, function(predictor, formula, m.data, call, ...) {
-      # Get one ROC
-      roc <- roc.default(response, m.data[[predictor]], ...)
-      # Update the call to reflect the parents
-      formula[3] <- call(predictor) # replace the predictor in formula
-      call$formula <- formula # Replace modified formula
-      roc$call <- call
-      return(roc)
-    }, formula = formula, m.data = m, call = match.call(), ...)
-    # Set the list names
-    names(roclist) <- predictors
-    return(roclist)
-  }
-  else {
-    stop("Invalid formula:at least 1 predictor is required in a formula of type response~predictor.")
-  }
+	data.missing <- missing(data)
+	roc.data <- roc.utils.extract.formula(formula, data, ..., 
+										  data.missing = data.missing,
+										  call = match.call())
+	response <- roc.data$response
+	predictors <- roc.data$predictors
+	
+	if (length(response) == 0) {
+		stop("Error in the formula: a response is required in a formula of type response~predictor.")
+	}
+	
+	if (ncol(predictors) == 1) {
+		roc <- roc.default(response, predictors[, 1], ...)
+		roc$call <- match.call()
+		if (!is.null(roc$smooth))
+			attr(roc, "roc")$call <- roc$call
+		return(roc)
+	}
+	else if (ncol(predictors) > 1) {
+		roclist <- lapply(roc.data$predictor.names, function(predictor, formula, m.data, call, ...) {
+			# Get one ROC
+			roc <- roc.default(response, m.data[[predictor]], ...)
+			# Update the call to reflect the parents
+			formula[3] <- call(predictor) # replace the predictor in formula
+			call$formula <- formula # Replace modified formula
+			roc$call <- call
+			return(roc)
+		}, formula = formula, m.data = predictors, call = match.call(), ...)
+		# Set the list names
+		names(roclist) <- roc.data$predictor.names
+		return(roclist)
+	}
+	else {
+		stop("Invalid formula:at least 1 predictor is required in a formula of type response~predictor.")
+	}
 }
 
 roc.data.frame <- function(data, response, predictor, 
@@ -86,9 +68,6 @@ roc.data.frame <- function(data, response, predictor,
   	response_name <- response
   }
   else {
-  	if (! "name" %in% class(substitute(response))) {
-  		stop("'response' argument should be the name of the column, optionally quoted.")
-  	}
   	response_name <- deparse(substitute(response))
   }
   
@@ -96,10 +75,12 @@ roc.data.frame <- function(data, response, predictor,
   	predictor_name <- predictor
   }
   else {
-  	if (! "name" %in% class(substitute(predictor))) {
-  		stop("'predictor' argument should be the name of the column, optionally quoted.")
-  	}
   	predictor_name <- deparse(substitute(predictor))
+  }
+  
+  if (any(! c(response_name, predictor_name) %in% colnames(data))) {
+  	# Some column is not in data. This could be a genuine error or the user not aware or NSE and wants to use roc_ instead
+  	warning("This method uses non-standard evaluation (NSE). Did you want to use the `roc_` function instead?")
   }
   
   r <- roc_(data, response_name, predictor_name, ret = ret, ...)
@@ -116,12 +97,19 @@ roc_ <- function(data, response, predictor,
   ret <- match.arg(ret)
   
   # Ensure the data contains the columns we need
-  if (! response %in% colnames(data)) {
-  	stop(sprintf("Column %s not present in data %s", response, deparse(substitute(data))))
+  # In case of an error we want to show the name of the data. If the function
+  # was called from roc.data.frame we want to deparse in that environment instead
+  if (sys.nframe() > 1 && deparse(sys.calls()[[sys.nframe()-1]][[1]]) == "roc.data.frame") {
+  	data_name <- deparse(substitute(data, parent.frame(n = 1)))
   }
-  
+  else {
+  	data_name <- deparse(substitute(data))
+  }
+  if (! response %in% colnames(data)) {
+  	stop(sprintf("Column %s not present in data %s", response, data_name))
+  }
   if (! predictor %in% colnames(data)) {
-  	stop(sprintf("Column '%s' not present in data %s", predictor, deparse(substitute(data))))
+  	stop(sprintf("Column '%s' not present in data %s", predictor, data_name))
   }
   
   r <- roc(data[[response]], data[[predictor]], ...)
@@ -204,10 +192,20 @@ roc.default <- function(response, predictor,
 
     # ensure predictor is numeric or ordered
     if (!is.numeric(predictor)) {
-      if (is.ordered(predictor))
-        predictor <- as.numeric(predictor)
-      else
+      if (is.ordered(predictor)) {
+      	predictor <- tryCatch(
+      		{
+	      		as.numeric(as.character(predictor))
+	      	},
+	      	warning = function(warn) {
+	      		warning("Ordered predictor converted to numeric vector. Threshold values will not correspond to values in predictor.")
+	      		return(as.numeric(predictor))
+	      	}
+      	)
+      }
+      else {
         stop("Predictor must be numeric or ordered.")
+      }
     }
     if (is.matrix(predictor)) {
     	warning("Deprecated use a matrix as predictor. Unexpected results may be produced, please pass a numeric vector.")

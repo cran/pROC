@@ -395,7 +395,7 @@ roc.utils.calc.coords <- function(substr.percent, thr, se, sp, ncases, ncontrols
 	youden <- roc.utils.optim.crit(se, sp, substr.percent, best.weights, "youden")
 	closest.topleft <- - roc.utils.optim.crit(se, sp, substr.percent, best.weights, "closest.topleft") / substr.percent
 	
-	return(rbind(
+	return(cbind(
 		threshold=thr,
 		sensitivity=se, 
 		specificity=sp, 
@@ -419,7 +419,8 @@ roc.utils.calc.coords <- function(substr.percent, thr, se, sp, ncases, ncontrols
 		precision=precision,
 		recall=recall,
 		youden=youden,
-		closest.topleft=closest.topleft))
+		closest.topleft=closest.topleft
+	))
 }
 
 # Match arbitrary user-supplied thresholds to the threshold of the ROC curve.
@@ -485,4 +486,60 @@ roc.utils.optim.crit <- function(se, sp, max, weights, method) {
 		optim.crit <- - ((max - se)^2 + r * (max - sp)^2)
 	}
 	return(optim.crit)
+}
+
+
+# Get response and predictor(s) from a formula.
+# This function takes care of all the logic to handle
+# weights, subset, na.action etc. It handles formulas with 
+# and without data. It rejects weights and certain na.actions.
+# @param formula
+# @param data
+# @param data.missing 
+# @param call the call from the parent function
+# @param ... the ... from the parent function
+# @return a list with 3 elements: response (vector), predictor.names (character),
+#         predictors (data.frame).
+roc.utils.extract.formula <- function(formula, data, data.missing, call, ...) {
+	# Get predictors (easy)
+	if (data.missing) {
+		predictors <- attr(terms(formula), "term.labels")
+	}
+	else {
+		predictors <- attr(terms(formula, data = data), "term.labels")
+	}
+	
+	indx <- match(c("formula", "data", "weights", "subset", "na.action"), names(call), nomatch=0)
+	if (indx[1] == 0) {
+		stop("A formula argument is required")
+	}
+	# Keep the standard arguments and run them in model.frame
+	temp <- call[c(1,indx)]  
+	temp[[1]] <- as.name("model.frame")
+	# Only na.pass and na.fail should be used
+	if (indx[5] != 0) {
+		na.action.value = as.character(call[indx[5]])
+		if (! na.action.value %in% c("na.pass", "na.fail")) {
+			warning(paste0(sprintf("Value %s of na.action is not supported ", na.action.value),
+						   "and will break pairing in roc.test and are.paired. ",
+						   "Please use 'na.rm = TRUE' instead."))
+		}
+	}
+	else {
+		temp$na.action = "na.pass"
+	}
+	# Adjust call with data from caller
+	if (data.missing) {
+		temp$data <- NULL
+	}
+	
+	# Run model.frame in the parent
+	m <- eval.parent(temp, n = 2)
+	
+	if (!is.null(model.weights(m))) stop("weights are not supported")
+	
+	return(list(response.name = names(m)[1],
+				response = model.response(m),
+				predictor.names = predictors,
+				predictors = m[predictors]))
 }

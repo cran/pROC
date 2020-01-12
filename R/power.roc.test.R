@@ -76,20 +76,20 @@ power.roc.test.roc <- function(roc1, roc2, sig.level = 0.05, power = NULL, alter
       if (is.null(power)) {
         if (is.null(sig.level))
           stop("'sig.level' or 'power' must be provided.")
-        zalpha <- qnorm(sig.level)
+        zalpha <- qnorm(1 - sig.level)
         zbeta <- zbeta.obuchowski(roc1, roc2, zalpha, method=method, ...)
-        power <- 1 - pnorm(zbeta)
+        power <- pnorm(zbeta)
       }
       # sig.level
       else if (is.null(sig.level)) {
-        zbeta <- qnorm(1 - power)
+        zbeta <- qnorm(power)
         zalpha <- zalpha.obuchowski(roc1, roc2, zbeta, method=method, ...)
-        sig.level <- pnorm(zalpha)
+        sig.level <- 1 - pnorm(zalpha)
       }
       # Sample size
       else {
-        zalpha <- qnorm(sig.level)
-        zbeta <- qnorm(1 - power)
+        zalpha <- qnorm(1 - sig.level)
+        zbeta <- qnorm(power)
         ncases <- ncases.obuchowski(roc1, roc2, zalpha, zbeta, method=method, ...)
         ncontrols <- kappa * ncases
       }
@@ -151,8 +151,8 @@ power.roc.test.numeric <- function(auc = NULL, ncontrols = NULL, ncases = NULL, 
     else if (is.null(sig.level))
       stop("'sig.level' or 'auc' must be provided.")
     kappa <- ncontrols / ncases
-    zalpha <- qnorm(sig.level)
-    zbeta <- qnorm(1 - power)
+    zalpha <- qnorm(1 - sig.level)
+    zbeta <- qnorm(power)
 
     tryCatch(
              root <- uniroot(power.roc.test.optimize.auc.function, interval=c(0.5, 1-1e-16), ncontrols=ncontrols, ncases=ncases, zalpha=zalpha, zbeta=zbeta),
@@ -174,9 +174,12 @@ power.roc.test.numeric <- function(auc = NULL, ncontrols = NULL, ncases = NULL, 
 
     theta <- as.numeric(auc)
     Vtheta <- var.theta.obuchowski(theta, kappa)
-    zalpha <- qnorm(sig.level)
-    zbeta <- qnorm(1 - power)
-    ncases <- (zalpha * sqrt(0.0792 * (1 + 1/kappa)) + zbeta * sqrt(Vtheta))^2 / (theta - 0.5)^2
+    
+    ncases <- solve.nd(zalpha = qnorm(1 - sig.level),
+    				   zbeta = qnorm(power),
+    				   v0 = 0.0792 * (1 + 1 / kappa),
+    				   va = Vtheta,
+    				   delta = theta - 0.5)
     ncontrols <- kappa * ncases
   }
   
@@ -188,20 +191,17 @@ power.roc.test.numeric <- function(auc = NULL, ncontrols = NULL, ncases = NULL, 
       stop("'auc' or 'power' must be provided.")
     else if (is.null(sig.level))
       stop("'sig.level' or 'power' must be provided.")
+  	
     kappa <- ncontrols / ncases
-
     theta <- as.numeric(auc)
     Vtheta <- var.theta.obuchowski(theta, kappa)
-    zalpha <- qnorm(sig.level)
-
-    rs.beta <- Vtheta
-    rs.alpha <- 0.0792 * (1 + 1 / kappa)
-    zar <- zalpha * sqrt(rs.alpha)
-    a <- rs.beta
-    b <- 2 * zar * sqrt(rs.beta)
-    c <- (zar^2 - ncases * (theta^2 - theta + 0.25))
-    zbeta <- solve.2deg.eqn(a, b, c)
-    power <- 1 - pnorm(zbeta)
+    
+    zbeta <- solve.zbeta(nd = ncases,
+    					 zalpha = qnorm(1 - sig.level),
+    					 v0 = 0.0792 * (1 + 1 / kappa),
+    					 va = Vtheta,
+    					 delta = theta - 0.5)
+    power <- pnorm(zbeta)
   }
 
   # Determine sig.level
@@ -212,20 +212,17 @@ power.roc.test.numeric <- function(auc = NULL, ncontrols = NULL, ncases = NULL, 
       stop("'auc' or 'sig.level' must be provided.")
     else if (is.null(power))
       stop("'power' or 'sig.level' must be provided.")
+  	
     kappa <- ncontrols / ncases
-
     theta <- as.numeric(auc)
     Vtheta <- var.theta.obuchowski(theta, kappa)
     
-    zbeta <- qnorm(1 - power)
-
-    zbr <- qnorm(1 - power) * sqrt(Vtheta)
-    rs.alpha <- 0.0792 * (1 + 1 / kappa)
-    a <- rs.alpha
-    b <- 2 * zbr * sqrt(rs.alpha)
-    c <- (zbr^2 - ncases * (theta^2 - theta + 0.25))
-    zalpha <- solve.2deg.eqn(a, b, c)
-    sig.level <- pnorm(zalpha)
+    zalpha <- solve.zalpha(nd = ncases,
+    					  zbeta = qnorm(power),
+    					  v0 = 0.0792 * (1 + 1 / kappa),
+    					  va = Vtheta,
+    					  delta = theta - 0.5)
+    sig.level <- 1 - pnorm(zalpha)
   }
   else {
     stop("One of 'power', 'sig.level', 'auc', or both 'ncases' and 'ncontrols' must be NULL.")
@@ -282,8 +279,8 @@ power.roc.test.list <- function(parslist, ncontrols = NULL, ncases = NULL, sig.l
     else if (is.null(sig.level))
       stop("'sig.level' or 'ncases' and 'ncontrols' must be provided.")
 
-    zalpha <- qnorm(sig.level)
-    zbeta <- qnorm(1 - power)
+    zalpha <- qnorm(1 - sig.level)
+    zbeta <- qnorm(power)
     ncases <- ncases.obuchowski.params(parslist, zalpha, zbeta, kappa)
     ncontrols <- kappa * ncases
   }
@@ -296,9 +293,9 @@ power.roc.test.list <- function(parslist, ncontrols = NULL, ncases = NULL, sig.l
       stop("'sig.level' or 'power' must be provided.")
     kappa <- ncontrols / ncases
 
-    zalpha <- qnorm(sig.level)
+    zalpha <- qnorm(1 - sig.level)
     zbeta <- zbeta.obuchowski.params(parslist, zalpha, ncases, kappa)
-    power <- 1 - pnorm(zbeta)
+    power <- pnorm(zbeta)
   }
 
   # Determine sig.level
@@ -309,9 +306,9 @@ power.roc.test.list <- function(parslist, ncontrols = NULL, ncases = NULL, sig.l
       stop("'power' or 'sig.level' must be provided.")
     kappa <- ncontrols / ncases
 
-    zbeta <- qnorm(1 - power)
+    zbeta <- qnorm(power)
     zalpha <- zalpha.obuchowski.params(parslist, zbeta, ncases, kappa)
-    sig.level <- pnorm(zalpha)
+    sig.level <- 1 - pnorm(zalpha)
   }
   else {
     stop("One of 'power', 'sig.level', 'auc', or both 'ncases' and 'ncontrols' must be NULL.")
@@ -350,10 +347,13 @@ var0.delta.covvar <- function(covvar) {
 ncases.obuchowski <- function(roc1, roc2, zalpha, zbeta, method, ...) {
   delta <- roc1$auc - roc2$auc
   covvar <- covvar(roc1, roc2, method, ...)
-  na <- (zalpha * sqrt(var0.delta.covvar(covvar)) +
-       zbeta * sqrt(var.delta.covvar(covvar))) ^2 /
-       delta^2
-  return(as.vector(na))
+  v0 <- var0.delta.covvar(covvar)
+  va <- var.delta.covvar(covvar)
+  nd <- solve.nd(zalpha = zalpha,
+  			   zbeta = zbeta,
+  			   v0 = v0, va = va,
+  			   delta = delta)
+  return(nd)
 }
 
 # Compute the number of cases with Obuchowski formula from params
@@ -363,10 +363,13 @@ ncases.obuchowski.params <- function(parslist, zalpha, zbeta, kappa) {
                  var2 = var.params.obuchowski(parslist$A2, parslist$B2, kappa, parslist$FPR21, parslist$FPR22),
                  cov12 = cov.params.obuchowski(parslist$A1, parslist$B1, parslist$A2, parslist$B2, parslist$rn, parslist$ra, kappa, parslist$FPR11, parslist$FPR12, parslist$FPR21, parslist$FPR22)
                  )
-  na <- (zalpha * sqrt(var0.delta.covvar(covvar)) +
-       zbeta * sqrt(var.delta.covvar(covvar))) ^2 /
-       parslist$delta^2
-  return(as.vector(na))
+  v0 <- var0.delta.covvar(covvar)
+  va <- var.delta.covvar(covvar)
+  nd <- solve.nd(zalpha = zalpha,
+  			   zbeta = zbeta,
+  			   v0 = v0, va = va,
+  			   delta = parslist$delta)
+  return(nd)
 }
 
 # Compute the z alpha with Obuchowski formula and var(... method=method)
@@ -376,10 +379,11 @@ zalpha.obuchowski <- function(roc1, roc2, zbeta, method, ...) {
   covvar <- covvar(roc1, roc2, method, ...)
   v0 <- var0.delta.covvar(covvar)
   va <- var.delta.covvar(covvar)
-  a <- v0
-  b <- 2 * zbeta * sqrt(v0) * sqrt(va)
-  c <- zbeta^2 * va - ncases * delta ^ 2
-  return(as.vector(solve.2deg.eqn(a, b, c)))
+  zalpha <- solve.zalpha(nd=ncases,
+  					   zbeta = zbeta,
+  					   v0 = v0, va = va,
+  					   delta = delta)
+  return(zalpha)
 }
 
 # Compute the z alpha with Obuchowski formula from params
@@ -391,10 +395,11 @@ zalpha.obuchowski.params <- function(parslist, zbeta, ncases, kappa) {
                  )
   v0 <- var0.delta.covvar(covvar)
   va <- var.delta.covvar(covvar)
-  a <- v0
-  b <- 2 * zbeta * sqrt(v0) * sqrt(va)
-  c <- zbeta^2 * va - ncases * parslist$delta ^ 2
-  return(as.vector(solve.2deg.eqn(a, b, c)))
+  zalpha <- solve.zalpha(nd=ncases,
+  					   zbeta = zbeta,
+  					   v0 = v0, va = va,
+  					   delta = parslist$delta)
+  return(zalpha)
 }
 
 # Compute the z beta with Obuchowski formula and var(... method=method)
@@ -404,30 +409,73 @@ zbeta.obuchowski <- function(roc1, roc2, zalpha, method, ...) {
   covvar <- covvar(roc1, roc2, method, ...)
   v0 <- var0.delta.covvar(covvar)
   va <- var.delta.covvar(covvar)
-  a <- va
-  b <- 2 * zalpha * sqrt(va) * sqrt(v0)
-  c <- zalpha^2 * v0 - ncases * delta ^ 2
-  return(as.vector(solve.2deg.eqn(a, b, c)))
+  zbeta <- solve.zbeta(nd=ncases,
+  					 zalpha = zalpha,
+  					 v0 = v0, va = va,
+  					 delta = delta)
+  return(zbeta)
 }
 
 # Compute the z beta with Obuchowski formula from params
 zbeta.obuchowski.params <- function(parslist, zalpha, ncases, kappa) {
-  covvar <- list(
-                 var1 = var.params.obuchowski(parslist$A1, parslist$B1, kappa, parslist$FPR11, parslist$FPR12),
-                 var2 = var.params.obuchowski(parslist$A2, parslist$B2, kappa, parslist$FPR21, parslist$FPR22),
-                 cov12 = cov.params.obuchowski(parslist$A1, parslist$B1, parslist$A2, parslist$B2, parslist$rn, parslist$ra, kappa, parslist$FPR11, parslist$FPR12, parslist$FPR21, parslist$FPR22)
-                 )
-  v0 <- var0.delta.covvar(covvar)
-  va <- var.delta.covvar(covvar)
-  a <- va
-  b <- 2 * zalpha * sqrt(va) * sqrt(v0)
-  c <- zalpha^2 * v0 - ncases * parslist$delta ^ 2
-  return(as.vector(solve.2deg.eqn(a, b, c)))
+	covvar <- list(
+		var1 = var.params.obuchowski(parslist$A1, parslist$B1, kappa, parslist$FPR11, parslist$FPR12),
+		var2 = var.params.obuchowski(parslist$A2, parslist$B2, kappa, parslist$FPR21, parslist$FPR22),
+		cov12 = cov.params.obuchowski(parslist$A1, parslist$B1, parslist$A2, parslist$B2, parslist$rn, parslist$ra, kappa, parslist$FPR11, parslist$FPR12, parslist$FPR21, parslist$FPR22)
+	)
+	v0 <- var0.delta.covvar(covvar)
+	va <- var.delta.covvar(covvar)
+	a <- va
+	zbeta <- solve.zbeta(nd=ncases,
+						 zalpha = zalpha,
+						 v0 = v0, va = va,
+						 delta = parslist$delta)
+	return(zbeta)
 }
 
-# Solve the quadratic equation from a, b and c
-solve.2deg.eqn <- function(a, b, c) {
-  return((- b - sqrt(b^2 - 4*a*c)) / (2*a))
+solve.zbeta <- function(nd, zalpha, v0, va, delta) {
+	# Solve for z_\beta in Obuchowski formula:
+	# See formula 2 in Obuchowsk & McClish 1997  (2 ROC curves)
+	# or formula 2 in Obuchowski et al 2004 (1 ROC curve)
+	# The formula is of the form:
+	# nd = (z_alpha * sqrt(v0) - z_beta * sqrt(va)) / delta ^ 2
+	# Re-organized:
+	# z_beta = (sqrt(nd * delta ^ 2) - z_alpha * sqrt(v0)) / sqrt(va)
+	# @param nd: number of diseased patients (or abornmal, N_A in Obuchowsk & McClish 1997)
+	# @param zalpha: upper \alpha (sig.level) percentile of the standard normal distribution
+	# @param v0 the null variance associated with z_alpha
+	# @param va: the alternative variance associated with z_beta
+	# @param delta: the difference in AUC
+	return((sqrt(nd * delta ^ 2) - zalpha * sqrt(v0)) / sqrt(va))
+}
+
+solve.nd <- function(zalpha, zbeta, v0, va, delta) {
+	# Solve for number of diseased (abnormal) patients in Obuchowski formula:
+	# See formula 2 in Obuchowsk & McClish 1997  (2 ROC curves)
+	# or formula 2 in Obuchowski et al 2004 (1 ROC curve)
+	# nd = (z_alpha * sqrt(v0) - z_beta * sqrt(va)) / delta ^ 2
+	# @param zalpha: upper \alpha (sig.level) percentile of the standard normal distribution
+	# @param zbeta: upper \beta (power) percentile of the standard normal distribution
+	# @param v0 the null variance associated with z_alpha
+	# @param va: the alternative variance associated with z_beta
+	# @param delta: the difference in AUC
+	return((zalpha * sqrt(v0) + zbeta * sqrt(va)) ^ 2 / delta ^ 2)
+}
+
+solve.zalpha <- function(nd, zbeta, v0, va, delta) {
+	# Solve for z_\alpha in Obuchowski formula:
+	# See formula 2 in Obuchowsk & McClish 1997  (2 ROC curves)
+	# or formula 2 in Obuchowski et al 2004 (1 ROC curve)
+	# The formula is of the form:
+	# nd = (z_alpha * sqrt(v0) - z_beta * sqrt(va)) / delta ^ 2
+	# Re-organized:
+	# z_alpha = (sqrt(nd * delta ^ 2) - z_beta * sqrt(va)) / sqrt(v0)
+	# @param nd: number of diseased patients (or abornmal, N_A in Obuchowsk & McClish 1997)
+	# @param zbeta: upper \beta (power) percentile of the standard normal distribution
+	# @param v0 the null variance associated with z_alpha
+	# @param va: the alternative variance associated with z_beta
+	# @param delta: the difference in AUC
+	return((sqrt(nd * delta ^ 2) - zbeta * sqrt(va)) / sqrt(v0))
 }
 
 # Compute var and cov of two ROC curves by bootstrap in a single bootstrap run

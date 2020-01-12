@@ -28,7 +28,8 @@ coords.smooth.roc <- function(smooth.roc,
                               drop=TRUE,
                               best.method=c("youden", "closest.topleft"),
                               best.weights=c(1, 0.5),
-                              transpose = TRUE,
+                              transpose = FALSE,
+                              as.matrix = FALSE,
                               ...) {
   # make sure x was provided
   if (missing(x))
@@ -36,8 +37,8 @@ coords.smooth.roc <- function(smooth.roc,
   
   # Warn about future change in transpose <https://github.com/xrobin/pROC/issues/54>
   if (missing(transpose) || is.null(transpose)) {
-    transpose <- TRUE
-    warning("An upcoming version of pROC will set the 'transpose' argument to FALSE by default. Set transpose = TRUE explicitly to keep the current behavior, or transpose = FALSE to adopt the new one and silence this warning. Type help(coords_transpose) for additional information.")
+    transpose <- FALSE
+    warning("The 'transpose' argument is set to FALSE by default since pROC 1.16. Set transpose = FALSE explicitly silence this warning or transpose = TRUE to revert to the previous behavior. Type help(coords_transpose) for additional information.")
   }
   
   # match input 
@@ -86,39 +87,46 @@ coords.smooth.roc <- function(smooth.roc,
     	res <- roc.utils.calc.coords(substr.percent, NA, se, sp, ncases, ncontrols, best.weights)
     }
     else {
-    	res <- rbind(
+    	res <- cbind(
     		specificity = sp,
     		sensitivity = se,
     		best.method = ifelse(best.method == "youden", 1, -1) * optim.crit
     	)
-    	rownames(res)[3] <- best.method
+    	colnames(res)[3] <- best.method
     }
-    colnames(res) <- rep("best", ncol(res))
-    
+
     if (as.list) {
       warning("'as.list' is deprecated and will be removed in a future version.")
-    	list <- apply(res[ret, , drop=FALSE], 2, as.list)
+    	list <- apply(t(res)[ret, , drop=FALSE], 2, as.list)
     	if (drop == TRUE && length(x) == 1) {
     		return(list[[1]])
     	}
     	return(list)
     }
     else if (transpose) {
-      return(res[ret,, drop=drop])
+      rownames(res) <- NULL
+      return(t(res)[ret,, drop=drop])
     }
     else {
       if (missing(drop) ) {
-        return(as.data.frame(t(res))[, ret])
+        drop = FALSE
       }
-      else {
-        return(as.data.frame(t(res))[, ret, drop=drop])
+      if (! as.matrix) {
+        res <- as.data.frame(res)
       }
+      return(res[, ret, drop=drop])
     }
+  }
+  
+  # Adjust drop for downstream call
+  if (missing(drop) && ! transpose) {
+    drop = FALSE
   }
 
   # use coords.roc
   smooth.roc$thresholds <- rep(NA, length(smooth.roc$specificities))
-  return(coords.roc(smooth.roc, x, input, ret, as.list, drop, transpose = transpose, ...))
+  return(coords.roc(smooth.roc, x, input, ret, as.list, drop, 
+                    transpose = transpose, as.matrix = as.matrix, ...))
 }
 
 coords.roc <- function(roc,
@@ -129,7 +137,8 @@ coords.roc <- function(roc,
                        drop=TRUE,
                        best.method=c("youden", "closest.topleft"),
                        best.weights=c(1, 0.5), 
-                       transpose = TRUE,
+                       transpose = FALSE,
+                       as.matrix = FALSE,
                        ...) {
   # make sure x was provided
   if (missing(x) || is.null(x) || (length(x) == 0 && !is.numeric(x))) {
@@ -141,8 +150,8 @@ coords.roc <- function(roc,
   
   # Warn about future change in transpose <https://github.com/xrobin/pROC/issues/54>
   if (missing(transpose) || is.null(transpose)) {
-    transpose <- TRUE
-    warning("An upcoming version of pROC will set the 'transpose' argument to FALSE by default. Set transpose = TRUE explicitly to keep the current behavior, or transpose = FALSE to adopt the new one and silence this warning. Type help(coords_transpose) for additional information.")
+    transpose <- FALSE
+    warning("The 'transpose' argument to FALSE by default since pROC 1.16. Set transpose = TRUE explicitly to revert to the previous behavior, or transpose = TRUE to silence this warning. Type help(coords_transpose) for additional information.")
   }
   
   # match input 
@@ -178,12 +187,11 @@ coords.roc <- function(roc,
       	warning("No coordinates found, returning NULL. This is possibly cased by a too small partial AUC interval.")
       	return(NULL)
       }
-      res <- rbind(
+      res <- cbind(
       	threshold = thres,
       	specificity = sp,
       	sensitivity = se
       )
-      cn <- rep(x, ncol(res))
     }
     else if (x == "local maximas") {
       # Pre-filter thresholds based on partial.auc
@@ -209,12 +217,11 @@ coords.roc <- function(roc,
       	return(NULL)
       }
       lm.idx <- roc.utils.max.thresholds.idx(thres, sp=sp, se=se)
-      res <- rbind(
+      res <- cbind(
       	threshold = thres[lm.idx],
       	specificity = sp[lm.idx],
       	sensitivity = se[lm.idx]
       )
-      cn <- rep(x, ncol(res))
     }
     else { # x == "best"
       # cheat: allow the user to pass "topleft"
@@ -253,21 +260,20 @@ coords.roc <- function(roc,
       	warning("No coordinates found, returning NULL. This is possibly cased by a too small partial AUC interval.")
       	return(NULL)
       }
-      res <- rbind(
+      res <- cbind(
       	threshold = thres,
       	specificity = sp,
       	sensitivity = se,
       	best.method = ifelse(best.method == "youden", 1, -1) * optim.crit
       )
-      rownames(res)[4] <- best.method
-      cn <- rep(x, ncol(res))
+      colnames(res)[4] <- best.method
     }
   }
   else if (is.numeric(x)) {
 
     if (input == "threshold") {
     	thr_idx <- roc.utils.thr.idx(roc, x)
-    	res <- rbind(
+    	res <- cbind(
     		threshold = x, # roc$thresholds[thr_idx], # user-supplied vs ours.
     		specificity = roc$specificities[thr_idx],
     		sensitivity = roc$sensitivities[thr_idx]
@@ -277,19 +283,26 @@ coords.roc <- function(roc,
     	if (any(x < 0) || any(x > ifelse(roc$percent, 100, 1))) {
     		stop("Input specificity not within the ROC space.")
     	}
-    	res <- matrix(nrow=3, ncol=length(x))
-    	rownames(res) <- c("threshold", "specificity", "sensitivity")
+    	res <- cbind(threshold = rep(NA, length(x)),
+    					  specificity = rep(NA, length(x)),
+    					  sensitivity = rep(NA, length(x)))
+    	if (methods::is(roc, "smooth.roc")) {
+    	  thresholds <- rep(NA, length(roc$sensitivities))
+    	}
+    	else {
+    	  thresholds <- roc$thresholds
+    	}
     	for (i in seq_along(x)) {
     		sp <- x[i]
     		if (sp %in% roc$sp) {
     			idx <- match(sp, roc$sp)
-    			res[, i] <- c(roc$thresholds[idx], roc$sp[idx], roc$se[idx])
+    			res[i,] <- c(thresholds[idx], roc$sp[idx], roc$se[idx])
     		}
     		else { # need to interpolate
     			idx.next <- match(TRUE, roc$sp > sp)
     			proportion <-  (sp - roc$sp[idx.next - 1]) / (roc$sp[idx.next] - roc$sp[idx.next - 1])
     			int.se <- roc$se[idx.next - 1] - proportion * (roc$se[idx.next - 1] - roc$se[idx.next])
-    			res[, i] <- c(NA, sp, int.se)
+    			res[i,] <- c(NA, sp, int.se)
     		}
     	}
     }
@@ -297,55 +310,79 @@ coords.roc <- function(roc,
     	if (any(x < 0) || any(x > ifelse(roc$percent, 100, 1))) {
     		stop("Input sensitivity not within the ROC space.")
     	}
-    	res <- matrix(nrow=3, ncol=length(x))
-    	rownames(res) <- c("threshold", "specificity", "sensitivity")
+    	res <- cbind(threshold = rep(NA, length(x)),
+    					  specificity = rep(NA, length(x)),
+    					  sensitivity = rep(NA, length(x)))
+    	if (methods::is(roc, "smooth.roc")) {
+    	  thresholds <- rep(NA, length(roc$sensitivities))
+    	}
+    	else {
+    	  thresholds <- roc$thresholds
+    	}
     	for (i in seq_along(x)) {
     		se <- x[i]
     		if (se %in% roc$se) {
     			idx <- length(roc$se) + 1 - match(TRUE, rev(roc$se) == se)
-    			res[, i] <- c(roc$thresholds[idx], roc$sp[idx], roc$se[idx])
+    			res[i,] <- c(thresholds[idx], roc$sp[idx], roc$se[idx])
     		}
     		else { # need to interpolate
     			idx.next <- match(TRUE, roc$se < se)
     			proportion <- (se - roc$se[idx.next]) / (roc$se[idx.next - 1] - roc$se[idx.next])
     			int.sp <- roc$sp[idx.next] + proportion * (roc$sp[idx.next - 1] - roc$sp[idx.next])
-    			res[, i] <- c(NA, int.sp, se)
+    			res[i,] <- c(NA, int.sp, se)
     		}
     	}
     }
-  	cn <- x
   }
   else {
     stop("'x' must be a numeric or character vector.")
   }
   
-  if (any(! ret %in% rownames(res))) {
+  if (any(! ret %in% colnames(res))) {
   	# Deduce additional tn, tp, fn, fp, npv, ppv
   	ncases <- ifelse(methods::is(roc, "smooth.roc"), length(attr(roc, "roc")$cases), length(roc$cases))
   	ncontrols <- ifelse(methods::is(roc, "smooth.roc"), length(attr(roc, "roc")$controls), length(roc$controls))
   	substr.percent <- ifelse(roc$percent, 100, 1)
-  	res <- roc.utils.calc.coords(substr.percent, res[1, ], res[3,], res[2,], ncases, ncontrols, best.weights)
+  	res <- roc.utils.calc.coords(substr.percent, res[, "threshold"], res[, "sensitivity"], res[, "specificity"],
+  	                             ncases, ncontrols, best.weights)
   }
-  colnames(res) <- cn
-  
+
   if (as.list) {
     warning("'as.list' is deprecated and will be removed in a future version.")
-  	list <- apply(res[ret, , drop=FALSE], 2, as.list)
+  	list <- apply(t(res)[ret, , drop=FALSE], 2, as.list)
   	if (drop == TRUE && length(x) == 1) {
   		return(list[[1]])
   	}
   	return(list)
   }
   else if (transpose) {
-    return(res[ret,, drop=drop])
+    rownames(res) <- NULL
+    return(t(res)[ret,, drop=drop])
   }
   else {
+  	# HACK:
+  	# We need an exception for r4lineups that will keep the old drop = TRUE 
+  	# behavior, until r4lineups gets updated. This is an ugly hack but allows
+  	# us to switch to a better drop = FALSE for everyone else
     if (missing(drop)) {
-      return(as.data.frame(t(res))[, ret])
+    	if (sys.nframe() > 2 && 
+    	    length(deparse(sys.call(-2))) == 1 && 
+    	    deparse(sys.call(-2)) == 'make_rocdata(df_confacc)' && 
+    	    length(deparse(sys.call(-1))) == 1 && (
+    	      deparse(sys.call(-1)) == 'coords(rocobj, "all", ret = c("tp"))' ||
+    	      deparse(sys.call(-1)) == 'coords(rocobj, "all", ret = "fp")'
+    	    )) {
+    		# We're in r4lineups
+    		drop = TRUE
+    	}
+    	else {
+    		drop = FALSE
+    	}
     }
-    else {
-      return(as.data.frame(t(res))[, ret, drop=drop])
+    if (! as.matrix) {
+      res <- as.data.frame(res)
     }
+    return(res[, ret, drop=drop])
   	
   }
 }
