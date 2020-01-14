@@ -1,6 +1,6 @@
-da1953d577d42d0f63de0a451a528d10 *DESCRIPTION
+4ba73ad62a9a7b530bf0e3231a382699 *DESCRIPTION
 908664aeb38226259df19a094f81d19f *NAMESPACE
-926389099753a3bfc259118ba8dccd47 *NEWS
+dd48cfdfa50be2fe16bce5a64e4308bf *NEWS
 733a035f55579ce3bce8a274fb4bc2ea *R/RcppExports.R
 986b425be214866a411c22cde9bbb853 *R/are.paired.R
 c8ffe1bd915d728d66fc7030044ac2eb *R/auc.R
@@ -152,7 +152,7 @@ d3374d5946b76678aeb05c0e8933b8a1 *tests/testthat/test-onload.R
 f0d3f799423cf711d8de99caf0394e5c *tests/testthat/test-plot.R
 6107890a93f7186d857ea0cfed88238e *tests/testthat/test-power.roc.test.R
 10b4b304c6766e9feeaaf85da9d7ad70 *tests/testthat/test-print.R
-8768784f93c9e74db4aa11171bd6f3b3 *tests/testthat/test-roc.R
+025356f3eb65d878427a5cccb35edca7 *tests/testthat/test-roc.R
 d97c2d952695df413c0edb32bee1fa32 *tests/testthat/test-roc.test.R
 8c7e9a16c3fd48895d1ee36f14476c03 *tests/testthat/test-roc.utils.R
 7256934af10a4beefbde6c075b1a8f7f *tests/testthat/test-roc.utils.percent.R
