@@ -1,6 +1,6 @@
-4ba73ad62a9a7b530bf0e3231a382699 *DESCRIPTION
+4526add861cdf94cf55be885de157ad3 *DESCRIPTION
 908664aeb38226259df19a094f81d19f *NAMESPACE
-dd48cfdfa50be2fe16bce5a64e4308bf *NEWS
+eac9066d2178d734ca030778aa264fe8 *NEWS
 733a035f55579ce3bce8a274fb4bc2ea *R/RcppExports.R
 986b425be214866a411c22cde9bbb853 *R/are.paired.R
 c8ffe1bd915d728d66fc7030044ac2eb *R/auc.R
@@ -148,7 +148,7 @@ e2cc035d8a0874384435d1f4bdaca48c *tests/testthat/test-cov.R
 c22b29a0120f4902785107c1e9aafd83 *tests/testthat/test-multiclass.R
 252c1e6a9fc983930134e97e06a57e34 *tests/testthat/test-numeric-Inf.R
 062fc7395806cd1653b70f6a44ef9262 *tests/testthat/test-numeric-accuracy.R
-d3374d5946b76678aeb05c0e8933b8a1 *tests/testthat/test-onload.R
+20aef2d5eee5afc58d3b3a797cbd153d *tests/testthat/test-onload.R
 f0d3f799423cf711d8de99caf0394e5c *tests/testthat/test-plot.R
 6107890a93f7186d857ea0cfed88238e *tests/testthat/test-power.roc.test.R
 10b4b304c6766e9feeaaf85da9d7ad70 *tests/testthat/test-print.R
