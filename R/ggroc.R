@@ -57,10 +57,9 @@ ggroc.roc <- function(data, legacy.axes = FALSE, ...) {
 
 	# Do the plotting
 	ggplot2::ggplot(df) + ggplot2::geom_line(aes$aes, ...) + aes$xlims
-		
-	# Or with ggvis:
-	# ggvis(df[rev(seq(nrow(df))),], ~1-specificity, ~sensitivity) %>% layer_lines()
 }
+
+ggroc.smooth.roc <- ggroc.roc
 
 ggroc.list <- function(data, aes = c("colour", "alpha", "linetype", "size", "group"), legacy.axes = FALSE, ...) {
 	load.ggplot2()
@@ -71,7 +70,7 @@ ggroc.list <- function(data, aes = c("colour", "alpha", "linetype", "size", "gro
 	aes <- match.arg(aes, several.ok = TRUE)
 
 	# Make sure data is a list and every element is a roc object
-	if (! all(sapply(data, methods::is, "roc"))) {
+	if (! all(sapply(data, methods::is, "roc") | sapply(data, methods::is, "smooth.roc"))) {
 		stop("All elements in 'data' must be 'roc' objects.")
 	}
 	
@@ -92,7 +91,7 @@ ggroc.list <- function(data, aes = c("colour", "alpha", "linetype", "size", "gro
 	
 	# Get the coords
 	coord.dfs <- sapply(data, get.coords.for.ggplot, simplify = FALSE)
-	
+
 	# Add a "name" colummn
 	for (i in seq_along(coord.dfs)) {
 		coord.dfs[[i]]$name <- names(coord.dfs)[i]
@@ -107,5 +106,4 @@ ggroc.list <- function(data, aes = c("colour", "alpha", "linetype", "size", "gro
 
 	# Do the plotting
 	ggplot2::ggplot(coord.dfs, aes.ggplot$aes) + ggplot2::geom_line(...) + aes.ggplot$xlims
-
 }

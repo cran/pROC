@@ -15,7 +15,7 @@
 power.roc.test(...)
 # One or Two ROC curves test with roc objects:
 \S3method{power.roc.test}{roc}(roc1, roc2, sig.level = 0.05, 
-power = NULL, alternative = c("two.sided", "one.sided"), 
+power = NULL, kappa = NULL, alternative = c("two.sided", "one.sided"),
 reuse.auc=TRUE, method = c("delong", "bootstrap", "obuchowski"), ...)
 # One ROC curve with a given AUC:
 \S3method{power.roc.test}{numeric}(auc = NULL, ncontrols = NULL, 
@@ -97,7 +97,8 @@ alternative = c("two.sided", "one.sided"), ...)
   2 and 3, p. 1123).
 
   For the sample size, \code{ncases} is computed directly from formulas
-  2 and 3 and ncontrols is deduced with \code{kappa}.
+  2 and 3 and ncontrols is deduced with \code{kappa} (defaults to the
+  ratio of controls to cases).
   AUC is optimized by \code{\link{uniroot}} while \code{sig.level}
   and \code{power} are solved as quadratic equations.
 
@@ -117,7 +118,8 @@ alternative = c("two.sided", "one.sided"), ...)
   \code{roc1} taken as the reference ROC curve.
 
   For the sample size, \code{ncases} is computed directly from formula 2
-  and ncontrols is deduced from the ratio observed in \code{roc1} and \code{roc2}.
+  and ncontrols is deduced with \code{kappa} (defaults to the
+  ratio of controls to cases in \code{roc1}).
   \code{sig.level} and \code{power} are solved as quadratic equations.
 
   The variance and covariance of the ROC curve are computed with the
@@ -182,17 +184,17 @@ alternative = c("two.sided", "one.sided"), ...)
   Nancy A. Obuchowski, Donna K. McClish (1997). ``Sample size
   determination for diagnostic accurary studies involving binormal ROC
   curve indices''. \emph{Statistics in Medicine}, \bold{16},
-  1529--1542. DOI: \href{http://dx.doi.org/10.1002/(SICI)1097-0258(19970715)16\%3A13\%3C1529\%3A\%3AAID-SIM565\%3E3.0.CO\%3B2-H}{10.1002/(SICI)1097-0258(19970715)16:13<1529::AID-SIM565>3.0.CO;2-H}.
+  1529--1542. DOI: \doi{10.1002/(SICI)1097-0258(19970715)16:13<1529::AID-SIM565>3.0.CO;2-H}.
 
   Nancy A. Obuchowski, Micharl L. Lieber, Frank H. Wians
   Jr. (2004). ``ROC Curves in Clinical Chemistry: Uses, Misuses, and
   Possible Solutions''. \emph{Clinical Chemistry}, \bold{50}, 1118--1125. DOI:
-  \href{http://dx.doi.org/10.1373/clinchem.2004.031823}{10.1373/clinchem.2004.031823}.
+  \doi{10.1373/clinchem.2004.031823}.
   
   Xu Sun and Weichao Xu (2014) ``Fast Implementation of DeLongs Algorithm for Comparing
   the Areas Under Correlated Receiver Operating Characteristic Curves''. \emph{IEEE Signal
   Processing Letters}, \bold{21}, 1389--1393. 
-  DOI: \href{http://dx.doi.org/10.1109/LSP.2014.2337313}{10.1109/LSP.2014.2337313}.
+  DOI: \doi{10.1109/LSP.2014.2337313}.
 }
 
 \seealso{

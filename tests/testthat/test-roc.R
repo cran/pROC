@@ -88,6 +88,9 @@ for (marker in c("ndka", "wfns", "s100b")) {
 						for (smooth.method in available.smooth.methods) {
 							context(sprintf("smooth(roc(...)) works with percent = %s, marker = %s, levels.direction = %s, direction = %s and smooth.method = %s", percent, marker, levels.direction, direction, smooth.method))
 							test_that("smoothing a ROC curve produces expected results", {
+								if (smooth.method == "logcondens" || smooth.method == "logcondens.smooth") {
+									testthat::skip_if_not_installed("logcondens")
+								}
 								s <- smooth(r, method=smooth.method, 10)
 								expect_is(s, "smooth.roc")
 								expect_identical(s$percent, percent)
@@ -97,6 +100,9 @@ for (marker in c("ndka", "wfns", "s100b")) {
 							})
 							test_that("building curve with smooth=TRUE produces expected results", {
 								context(sprintf("roc(..., smooth=TRUE) works with percent = %s, marker = %s, levels.direction = %s, direction = %s and smooth.method = %s", percent, marker, levels.direction, direction, smooth.method))
+								if (smooth.method == "logcondens" || smooth.method == "logcondens.smooth") {
+									testthat::skip_if_not_installed("logcondens")
+								}
 								s2 <- roc(aSAH$outcome, aSAH[[marker]], levels = level.values[[levels.direction]], direction = direction, percent = percent, algorithm = algorithm, quiet = TRUE, 
 										  smooth = TRUE, smooth.n = 10, smooth.method=smooth.method)
 								expect_is(s2, "smooth.roc")
@@ -206,12 +212,13 @@ test_that("roc can't take both response/predictor and case/control", {
 test_that("microbenchmark works", {
 	skip_if_not_installed("microbenchmark")
 	skip_on_cran()
+	skip("Not enough difference any longer, randomly selecting algorithm 2.")
 	# Algorithm 3 (C) should be selected with small low number of thresholds like aSAH$wfns
 	expect_output(r <- roc(aSAH$outcome, aSAH$wfns, algorithm = 0), "Selecting algorithm 3")
 	
 	# Algorithm 2 (R cumsum) should be selected with large datasets with many thresholds
 	# This is going to be slow, so skip unless we're running slow tests
-	skip_if_not(exists("run_slow_tests") && run_slow_tests, message = "Slow test skipped")
+	skip_slow()
 	expect_output(r <- roc(round(runif(10000)), rnorm(10000), algorithm = 0), "Selecting algorithm 2")
 })
 

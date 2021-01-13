@@ -73,7 +73,7 @@ test_that("print works without the auc", {
 })
 
 test_that("print works with the CI", {
-	skip_if_not(exists("run_slow_tests") && run_slow_tests, message = "Slow test skipped")
+	skip_slow()
 	if (R.version$minor >= "6.0") {
 		RNGkind(sample.kind="Rounding")
 	}
@@ -86,8 +86,56 @@ test_that("print.smooth.roc works", {
 	expect_known_output(print(smooth(roc(outcome ~ s100b, aSAH))), "print_output/smooth.s100b.formula")
 	expect_known_output(print(smooth(roc(aSAH$outcome, aSAH$ndka))), "print_output/smooth.wfns")
 	expect_known_output(print(smooth(roc(aSAH$outcome, aSAH$ndka), method="binormal")), "print_output/smooth.s100b.binormal")
-	expect_known_output(print(smooth(roc(outcome ~ s100b, aSAH), method="logcondens")), "print_output/smooth.s100b.logcondens")
-	expect_known_output(print(smooth(roc(outcome ~ s100b, aSAH), method="logcondens.smooth")), "print_output/smooth.s100b.logcondens.smooth")
 	expect_known_output(print(smooth(roc(outcome ~ s100b, aSAH), method="fitdistr")), "print_output/smooth.s100b.fitdistr")
 	expect_known_output(print(smooth(roc(outcome ~ s100b, aSAH), method="density")), "print_output/smooth.s100b.density")
+	
+	testthat::skip_if_not_installed("logcondens")
+	expect_known_output(print(smooth(roc(outcome ~ s100b, aSAH), method="logcondens")), "print_output/smooth.s100b.logcondens")
+	expect_known_output(print(smooth(roc(outcome ~ s100b, aSAH), method="logcondens.smooth")), "print_output/smooth.s100b.logcondens.smooth")
 })
+
+test_that("print works with ci.auc", {
+	skip_slow()
+	if (R.version$minor >= "6.0") {
+		RNGkind(sample.kind="Rounding")
+	}
+	set.seed(42) # For reproducible CI
+	expect_known_output(print(ci.auc(r.ndka, method = "bootstrap", boot.n = 3, progress = "none")), "print_output/r.ndka.ci.auc")
+})
+
+test_that("print works with ci.coords", {
+	skip_slow()
+	if (R.version$minor >= "6.0") {
+		RNGkind(sample.kind="Rounding")
+	}
+	set.seed(42) # For reproducible CI
+	expect_known_output(print(ci.coords(r.ndka, x = c(0.5, 0.2), boot.n = 3, progress = "none")), "print_output/r.ndka.ci.coords")
+})
+
+test_that("print works with ci.thresholds", {
+	skip_slow()
+	if (R.version$minor >= "6.0") {
+		RNGkind(sample.kind="Rounding")
+	}
+	set.seed(42) # For reproducible CI
+	expect_known_output(print(ci.thresholds(r.ndka, thresholds = c(0.5, 0.2), boot.n = 3, progress = "none")), "print_output/r.ndka.ci.thresholds")
+})
+
+test_that("print works with ci.se", {
+	skip_slow()
+	if (R.version$minor >= "6.0") {
+		RNGkind(sample.kind="Rounding")
+	}
+	set.seed(42) # For reproducible CI
+	expect_known_output(print(ci.se(r.ndka, boot.n = 3, progress = "none")), "print_output/r.ndka.ci.se")
+})
+
+test_that("print works with ci.sp", {
+	skip_slow()
+	if (R.version$minor >= "6.0") {
+		RNGkind(sample.kind="Rounding")
+	}
+	set.seed(42) # For reproducible CI
+	expect_known_output(print(ci.sp(r.ndka, boot.n = 3, progress = "none")), "print_output/r.ndka.ci.sp")
+})
+

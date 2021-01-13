@@ -143,7 +143,7 @@ test_that("power.roc.test sig.level can take 2 ROC curves with Obuchowski varian
 })
 
 test_that("power.roc.test works with partial AUC", {
-  skip_if_not(exists("run_slow_tests") && run_slow_tests, message = "Slow test skipped")
+  skip_slow()
   skip("Bootstrap cannot be tested yet")
   r.wfns.partial <<- roc(aSAH$outcome, aSAH$wfns, quiet = TRUE, partial.auc=c(1, 0.9))
   r.ndka.partial <<- roc(aSAH$outcome, aSAH$ndka, quiet = TRUE, partial.auc=c(1, 0.9))
@@ -229,4 +229,31 @@ test_that("power.roc.test returns correct results from litterature", {
 			expect_equal(max(10, ifelse(ceiling(pr$ncontrols) < 10, 10, 0) / kappa, ceiling(pr$ncases)), expected.ncases[as.character(kappa), as.character(theta)])
 		}
 	}
+})
+
+
+test_that("kappa works with a single ROC curve", {
+	# kappa from data
+	res <- power.roc.test(r.s100b, sig.level = 0.05, power = 0.9)
+	expect_equal(res$ncases, 23.5598674)
+	expect_equal(res$ncontrols, 41.3734257)
+	expect_equal(res$ncases/res$ncontrols, length(r.s100b$cases)/length(r.s100b$controls))
+	# set kappa
+	res <- power.roc.test(r.s100b, sig.level = 0.05, power = 0.9, kappa = 1)
+	expect_equal(res$ncases, 29.5697422)
+	expect_equal(res$ncontrols, 29.5697422)
+})
+
+
+test_that("kappa works with two ROC curves", {
+	# kappa from data
+	res <- power.roc.test(r.s100b, r.ndka, sig.level = 0.05, power = 0.9)
+	expect_equal(res$ncases, 213.117677)
+	expect_equal(res$ncontrols, 374.255432)
+	expect_equal(res$ncases/res$ncontrols, length(r.s100b$cases)/length(r.s100b$controls))
+	# set kappa
+	res <- power.roc.test(r.s100b, r.ndka, sig.level = 0.05, power = 0.9, kappa = 1)
+	expect_equal(res$ncases, 213.117677)
+	expect_equal(res$ncases, 213.117677)
+	# ...
 })

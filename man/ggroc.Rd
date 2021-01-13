@@ -1,6 +1,7 @@
 \encoding{UTF-8}
 \name{ggroc.roc}
 \alias{ggroc.roc}
+\alias{ggroc.smooth.roc}
 \alias{ggroc.list}
 \alias{ggroc}
 
@@ -12,6 +13,7 @@
 }
 \usage{
 \S3method{ggroc}{roc}(data, legacy.axes = FALSE, ...)
+\S3method{ggroc}{smooth.roc}(data, legacy.axes = FALSE, ...)
 \S3method{ggroc}{list}(data, aes = c("colour", "alpha", "linetype", "size", "group"),
       legacy.axes = FALSE, ...)
 }
@@ -19,13 +21,19 @@
 \arguments{
   \item{data}{a roc object from the \link{roc} function, or a list of roc objects.
   }
-  \item{aes}{the name(s) of the aesthetics for \code{\link[ggplot2]{geom_line}} to map to the different ROC curves supplied. Use \dQuote{group} if
-  you want the curves to appear with the same aestetic, for instance if you are faceting instead.}
+  \item{aes}{the name(s) of the aesthetics for \code{\link[ggplot2:geom_path]{geom_line}} 
+    to map to the different ROC curves supplied. Use \dQuote{group} if
+    you want the curves to appear with the same aestetic, for instance if you are 
+    faceting instead.
+  }
   \item{legacy.axes}{a logical indicating if the specificity axis (x
     axis) must be plotted as as decreasing \dQuote{specificity}
     (\code{FALSE}, the default) or increasing \dQuote{1 - specificity}
-    (\code{TRUE}) as in most legacy software.}
-  \item{...}{additional aesthetics for \code{\link[ggplot2]{geom_line}} to set: \code{alpha}, \code{colour}, \code{linetype} and \code{size}.}
+    (\code{TRUE}) as in most legacy software.
+  }
+  \item{...}{additional aesthetics for \code{\link[ggplot2:geom_path]{geom_line}}
+    to set: \code{alpha}, \code{colour}, \code{linetype} and \code{size}.
+  }
 }
 
 \details{
@@ -34,7 +42,7 @@
 
 
 \seealso{
-\code{\link{roc}}, \code{\link{plot.roc}}, \pkg{\link[ggplot2]{ggplot2}}
+\code{\link{roc}}, \code{\link{plot.roc}}, \pkg{\link[ggplot2:ggplot2-package]{ggplot2}}
 }
 \examples{
 # Create a basic roc object
@@ -42,7 +50,7 @@ data(aSAH)
 rocobj <- roc(aSAH$outcome, aSAH$s100b)
 rocobj2 <- roc(aSAH$outcome, aSAH$wfns)
 
-library(ggplot2)
+if (require(ggplot2)) {
 g <- ggroc(rocobj)
 g
 # with additional aesthetics:
@@ -67,6 +75,10 @@ roc.list <- roc(outcome ~ s100b + ndka + wfns, data = aSAH)
 g.list <- ggroc(roc.list)
 g.list
 
+# You can change the aesthetics as you normally would with ggplot2:
+g.list + scale_colour_brewer(palette="RdGy")
+g.list + scale_colour_manual(values = c("red", "blue", "black"))
+
 # with additional aesthetics:
 g3 <- ggroc(roc.list, linetype=2)
 g3
@@ -82,5 +94,5 @@ g.list + facet_grid(.~name) + theme(legend.position="none")
 g.group <- ggroc(roc.list, aes="group")
 g.group
 g.group + facet_grid(.~name)
-
+}
 }

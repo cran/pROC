@@ -30,8 +30,7 @@ reuse.auc=TRUE, reuse.ci=FALSE, ...)
 	\code{\link[=smooth.roc]{smooth}} function.
   }
   \item{method}{\dQuote{binormal}, \dQuote{density}, \dQuote{fitdistr},
-    \dQuote{logcondens}, \dQuote{"logcondens.smooth"},
-    or a function returning a list of smoothed sensitivities and specificities.
+    \dQuote{logcondens}, \dQuote{"logcondens.smooth"}.
   }
   \item{n}{
     the number of equally spaced points where the smoothed curve will be
@@ -75,8 +74,7 @@ reuse.auc=TRUE, reuse.ci=FALSE, ...)
   \item{\dots}{further arguments passed to or from other methods, and
     especially to \code{\link{density}} (only \code{cut}, \code{adjust},
     and \code{kernel}, plus \code{window} for compatibility with S+) and
-    \code{\link[MASS]{fitdistr}}. Also passed to to \code{method} if it
-    is a function. 
+    \code{\link[MASS]{fitdistr}}.
   }
 }
 
@@ -143,13 +141,6 @@ reuse.auc=TRUE, reuse.ci=FALSE, ...)
     (respectively) log-concave density estimate of of the control and case
     observation with the \link[logcondens]{logConROC} function.
 
-  Finally, \code{method} can also be a function. It must
-  return a list with exactly 2 elements named \dQuote{sensitivities} and
-  \dQuote{specificities}, which must be numeric vectors between 0 and 1
-  or 100 (depending on the \code{percent} argument to
-  \code{\link{roc}}). It is passed all the arguments to the
-  \code{smooth} function.
-
   \code{smooth.default} forces the usage of the
   \code{\link[stats]{smooth}} function in the \pkg{stats} package, so
   that other code relying on \code{smooth} should continue to function
@@ -202,12 +193,6 @@ reuse.auc=TRUE, reuse.ci=FALSE, ...)
 } 
 
 \section{Errors}{
-  If \code{method} is a function, the return values will be checked
-  thoroughly for validity (list with two numeric elements of the same
-  length named \dQuote{sensitivities} and \dQuote{specificities} with
-  values in the range of possible values for sensitivities and
-  specificities).
-
   The message \dQuote{The 'density' function must return a numeric
     vector or a list with a 'y' item.} will be displayed if the
   \code{density} function did not return a valid output. The message
@@ -244,17 +229,17 @@ reuse.auc=TRUE, reuse.ci=FALSE, ...)
 
   Lutz Duembgen, Kaspar Rufibach (2011) ``logcondens: Computations Related
   to Univariate Log-Concave Density Estimation''. \emph{Journal of Statistical
-  Software}, \bold{39}, 1--28. URL: \href{http://www.jstatsoft.org/v39/i06/}{jstatsoft.org/v39/i06}.
+  Software}, \bold{39}, 1--28. URL: \href{https://www.jstatsoft.org/v39/i06/}{jstatsoft.org/v39/i06}.
   
   Xavier Robin, Natacha Turck, Alexandre Hainard, \emph{et al.}
   (2011) ``pROC: an open-source package for R and S+ to analyze and
   compare ROC curves''. \emph{BMC Bioinformatics}, \bold{7}, 77.
-  DOI: \href{http://dx.doi.org/10.1186/1471-2105-12-77}{10.1186/1471-2105-12-77}.
+  DOI: \doi{10.1186/1471-2105-12-77}.
 
   Kaspar Rufibach (2011) ``A Smooth ROC Curve Estimator Based on Log-Concave Density Estimates''.
   \emph{The International Journal of Biostatistics}, \bold{8}, accepted. DOI: 
-  \href{http://dx.doi.org/10.1515/1557-4679.1378}{10.1515/1557-4679.1378}. arXiv:
-  \href{http://arxiv.org/abs/1103.1787}{1103.1787}.
+  \doi{10.1515/1557-4679.1378}. arXiv:
+  \href{https://arxiv.org/abs/1103.1787}{1103.1787}.
 
   William N. Venables, Brian D. Ripley (2002). ``Modern Applied Statistics with S''. New York, Springer.
   \href{http://books.google.ch/books?id=974c4vKurNkC}{Google books}.
@@ -263,7 +248,7 @@ reuse.auc=TRUE, reuse.ci=FALSE, ...)
   non-parametric receiver operating characteristic (ROC) curves for
   continuous diagnostic tests''. \emph{Statistics in Medicine}
   \bold{18}, 2143--2156. DOI: 
-  \href{http://dx.doi.org/10.1002/(SICI)1097-0258(19971015)16\%3A19\%3C2143\%3A\%3AAID-SIM655\%3E3.0.CO\%3B2-3}{10.1002/(SICI)1097-0258(19971015)16:19<2143::AID-SIM655>3.0.CO;2-3}.
+  \doi{10.1002/(SICI)1097-0258(19971015)16:19<2143::AID-SIM655>3.0.CO;2-3}.
 }
 
 \seealso{
@@ -289,10 +274,12 @@ rs2 <- smooth(rocobj, method="density")
 plot(rs2, add=TRUE, col="blue")
 rs3 <- smooth(rocobj, method="fitdistr", density="lognormal")
 plot(rs3, add=TRUE, col="magenta")
+if (requireNamespace("logcondens")) {
 rs4 <- smooth(rocobj, method="logcondens")
 plot(rs4, add=TRUE, col="brown")
 rs5 <- smooth(rocobj, method="logcondens.smooth")
 plot(rs5, add=TRUE, col="orange")
+}
 legend("bottomright", legend=c("Empirical", "Binormal", "Density", "Log-normal",
                                "Log-concave density", "Smoothed log-concave density"),
        col=c("black", "green", "blue", "magenta", "brown", "orange"), lwd=2)
@@ -328,8 +315,10 @@ roc.norm <- roc(controls=rnorm(1000), cases=rnorm(1000)+1, plot=TRUE)
 plot(smooth(roc.norm), col="green", lwd=1, add=TRUE)
 plot(smooth(roc.norm, method="density"), col="red", lwd=1, add=TRUE)
 plot(smooth(roc.norm, method="fitdistr"), col="blue", lwd=1, add=TRUE)
+if (requireNamespace("logcondens")) {
 plot(smooth(roc.norm, method="logcondens"), col="brown", lwd=1, add=TRUE)
 plot(smooth(roc.norm, method="logcondens.smooth"), col="orange", lwd=1, add=TRUE)
+}
 legend("bottomright", legend=c("empirical", "binormal", "density", "fitdistr",
                                "logcondens", "logcondens.smooth"), 
        col=c(par("fg"), "green", "red", "blue", "brown", "orange"), lwd=c(2, 1, 1, 1))
@@ -343,8 +332,10 @@ plot(smooth(roc.norm.exp, method="fitdistr"), col="blue", lwd=1, add=TRUE)
 # Correct fitdistr
 plot(smooth(roc.norm.exp, method="fitdistr", density.controls="normal",
             density.cases="exponential"), col="purple", lwd=1, add=TRUE)
+if (requireNamespace("logcondens")) {
 plot(smooth(roc.norm.exp, method="logcondens"), col="brown", lwd=1, add=TRUE)
 plot(smooth(roc.norm.exp, method="logcondens.smooth"), col="orange", lwd=1, add=TRUE)
+}
 legend("bottomright", legend=c("empirical", "binormal", "density",
                                "wrong fitdistr", "correct fitdistr",
                                "logcondens", "logcondens.smooth"),
@@ -357,8 +348,10 @@ plot(smooth(roc.unif.exp, method="density"), col="red", lwd=1, add=TRUE)
 plot(smooth(roc.unif.exp, method="density", bw="ucv"), col="magenta", lwd=1, add=TRUE)
 # Wrong fitdistr: normality assumed by default (uniform distributions not handled)
 plot(smooth(roc.unif.exp, method="fitdistr"), col="blue", lwd=1, add=TRUE)
+if (requireNamespace("logcondens")) {
 plot(smooth(roc.unif.exp, method="logcondens"), col="brown", lwd=1, add=TRUE)
 plot(smooth(roc.unif.exp, method="logcondens.smooth"), col="orange", lwd=1, add=TRUE)
+}
 legend("bottomright", legend=c("empirical", "binormal", "density",
                                "density ucv", "wrong fitdistr",
                                "logcondens", "logcondens.smooth"),

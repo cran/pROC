@@ -32,7 +32,7 @@ roc_(data, response, predictor, ret = c("roc", "coords", "all_coords"), ...)
 
 \arguments{
   \item{response}{a factor, numeric or character vector of
-    responses, typically encoded with 0 (controls) and 1 (cases).
+    responses (true class), typically encoded with 0 (controls) and 1 (cases).
     Only two classes can be used in a ROC curve. If the vector
     contains more than two unique values, or if their order could be
     ambiguous, use \code{levels} to specify which values must be used as
@@ -349,12 +349,12 @@ aSAH  \%>\%
 \references{
   Tom Fawcett (2006) ``An introduction to ROC analysis''. \emph{Pattern
     Recognition Letters} \bold{27}, 861--874. DOI:
-  \href{http://dx.doi.org/10.1016/j.patrec.2005.10.010}{10.1016/j.patrec.2005.10.010}.
+  \doi{10.1016/j.patrec.2005.10.010}.
   
   Xavier Robin, Natacha Turck, Alexandre Hainard, \emph{et al.}
   (2011) ``pROC: an open-source package for R and S+ to analyze and
   compare ROC curves''. \emph{BMC Bioinformatics}, \bold{7}, 77.
-  DOI: \href{http://dx.doi.org/10.1186/1471-2105-12-77}{10.1186/1471-2105-12-77}.
+  DOI: \doi{10.1186/1471-2105-12-77}.
 }
 
 \seealso{

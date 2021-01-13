@@ -17,6 +17,20 @@ test_that("coords returns all thresholds by default", {
 })
 
 
+test_that("coords returns all thresholds by default with smooth.roc", {
+	obtained <- coords(smooth(r.s100b))
+	expect_equal(obtained, expected.coords.smooth[,c("specificity", "sensitivity")])
+	# but not if it's an empty numeric, as this might be indicative of user error
+	expect_error(coords(r.s100b, numeric(0)), "length")
+})
+
+
+test_that("coords returns all columns with ret = 'all' with smooth.roc", {
+	obtained <- coords(smooth(r.s100b), ret = "all")
+	expect_equal(obtained, expected.coords.smooth)
+})
+
+
 test_that("coords with transpose = FALSE works", {
 	return.rows <- c("threshold", "specificity", "sensitivity", "accuracy", "tn", "tp",  "fn", "fp", "npv", "ppv", "1-specificity", "1-sensitivity", "1-accuracy", "1-npv", "1-ppv", "youden", "closest.topleft")
 	obtained <- coords(r.s100b, "all", ret = return.rows, transpose = FALSE)
@@ -354,11 +368,11 @@ test_that("coords works with smooth.roc and transpose = FALSE", {
 	expect_equal(obtained, expect[reduced.cols,])
 	
 	# Default drop with numeric
-	obtained <- coords(smooth.s100b, c(0.2, 0.5), ret="se")
+	obtained <- coords(smooth.s100b, c(0.2, 0.5), input = "specificity", ret="se")
 	expect_is(obtained, "data.frame")
 	
 	# With numeric x
-	obtained <- coords(smooth.s100b, c(0.2, 0.5, 0.6), transpose = FALSE)
+	obtained <- coords(smooth.s100b, c(0.2, 0.5, 0.6), input = "specificity", transpose = FALSE)
 	expect_is(obtained, "data.frame")
 	expect_equal(dim(obtained), c(3, 2))
 	
@@ -385,42 +399,42 @@ test_that("coords works with smooth.roc and x = numeric", {
 	
 	reduced.cols <- c("specificity", "sensitivity", "youden")
 
-	obtained <- coords(smooth.s100b, c(0.5, 0.9), ret="all", transpose=TRUE)
+	obtained <- coords(smooth.s100b, c(0.5, 0.9), input = "sp", ret="all", transpose=TRUE)
 	expect_equal(obtained, expect)
 	
-	obtained <- coords(smooth.s100b, c(0.5, 0.9), ret=reduced.cols, transpose=TRUE)
+	obtained <- coords(smooth.s100b, c(0.5, 0.9), input = "spe", ret=reduced.cols, transpose=TRUE)
 	expect_equal(obtained, expect[reduced.cols,])
 	
-	obtained <- coords(smooth.s100b, 0.9, ret="all", drop = TRUE, transpose=TRUE)
+	obtained <- coords(smooth.s100b, 0.9, input = "specificity", ret="all", drop = TRUE, transpose=TRUE)
 	expect_equal(obtained, expect[, 2])
 	
-	obtained <- coords(smooth.s100b, 0.9, ret=reduced.cols, drop = TRUE, transpose=TRUE)
+	obtained <- coords(smooth.s100b, 0.9, input = "specificity", ret=reduced.cols, drop = TRUE, transpose=TRUE)
 	expect_equal(obtained, expect[reduced.cols, 2])
 	
-	obtained <- coords(smooth.s100b, 0.9, ret="all", drop = FALSE, transpose=TRUE)
+	obtained <- coords(smooth.s100b, 0.9, input = "specificity", ret="all", drop = FALSE, transpose=TRUE)
 	expect_equal(obtained, expect[, 2, drop=FALSE])
 	
-	obtained <- coords(smooth.s100b, 0.9, ret=reduced.cols, drop = FALSE, transpose=TRUE)
+	obtained <- coords(smooth.s100b, 0.9, input = "specificity", ret=reduced.cols, drop = FALSE, transpose=TRUE)
 	expect_equal(obtained, expect[reduced.cols, 2, drop=FALSE])
 	
-	obtained <- coords(smooth.s100b, c(0.5, 0.9), ret="all", as.list = TRUE, drop = TRUE)
+	obtained <- coords(smooth.s100b, c(0.5, 0.9), input = "specificity", ret="all", as.list = TRUE, drop = TRUE)
 	expect_equal(obtained[[1]], as.list(expect[, 1]))
 	expect_equal(obtained[[2]], as.list(expect[, 2]))
 	
-	obtained <- coords(smooth.s100b, c(0.5, 0.9), ret=reduced.cols, as.list = TRUE, drop = TRUE)
+	obtained <- coords(smooth.s100b, c(0.5, 0.9), input = "specificity", ret=reduced.cols, as.list = TRUE, drop = TRUE)
 	expect_equal(obtained[[1]], as.list(expect[reduced.cols, 1]))
 	expect_equal(obtained[[2]], as.list(expect[reduced.cols, 2]))
 	
-	obtained <- coords(smooth.s100b, 0.9, ret="all", as.list = TRUE, drop = TRUE)
+	obtained <- coords(smooth.s100b, 0.9, input = "specificity", ret="all", as.list = TRUE, drop = TRUE)
 	expect_equal(obtained, as.list(expect[, 2]))
 	
-	obtained <- coords(smooth.s100b, 0.9, ret=reduced.cols, as.list = TRUE, drop = TRUE)
+	obtained <- coords(smooth.s100b, 0.9, input = "specificity", ret=reduced.cols, as.list = TRUE, drop = TRUE)
 	expect_equal(obtained, as.list(expect[reduced.cols, 2]))
 	
-	obtained <- coords(smooth.s100b, 0.9, ret="all", as.list = TRUE, drop = FALSE)
+	obtained <- coords(smooth.s100b, 0.9, input = "specificity", ret="all", as.list = TRUE, drop = FALSE)
 	expect_equal(obtained[[1]], as.list(expect[, 2]))
 	
-	obtained <- coords(smooth.s100b, 0.9, ret=reduced.cols, as.list = TRUE, drop = FALSE)
+	obtained <- coords(smooth.s100b, 0.9, input = "specificity", ret=reduced.cols, as.list = TRUE, drop = FALSE)
 	expect_equal(obtained[[1]], as.list(expect[reduced.cols, 2]))
 })
 
@@ -525,6 +539,20 @@ test_that("coords with x = 'all' takes partial AUC into account", {
 })
 
 
+
+test_that("coords with x = 'all' takes partial AUC into account with smooth.roc", {
+	# with sp
+	obtained <- coords(smooth(r.s100b.partial1), "all", ret="sp", transpose=TRUE)
+	expect_equal(length(obtained), 139)
+	expect_equal(min(obtained), 0.90060885)
+	
+	# with se
+	obtained <- coords(smooth(r.s100b.partial2), "all", ret="se", transpose=TRUE)
+	expect_equal(length(obtained), 46)
+	expect_equal(min(obtained), 0.90019569)
+})
+
+
 test_that("coords with x = 'local maximas' takes partial AUC into account", {
 	# with sp
 	obtained <- coords(r.s100b.partial1, "local maximas", ret="t", transpose=TRUE)
@@ -598,6 +626,14 @@ test_that("Infinite values work with both directions", {
 	expect_equivalent(co, data.frame(threshold = c(-Inf, Inf), specificity = c(0, 1), sensitivity = c(1, 0)))
 })
 
-test_that("as.matrix works", {
-	
+test_that("Coords pick the right end of 'flat' bits of the curve, according to direction", {
+	# expect_equal(r.s100b$sensitivities[2], 0.975609756097561) # tested elsewhere
+	expect_equivalent(
+		coords(r.s100b, 0.975609756097561, "se", "sp", transpose = TRUE),
+		0.13888888888888889 # and not 0
+	)
+	expect_equivalent(
+		coords(r.s100b, 1, "sp", "se", transpose = TRUE),
+		0.2926829268292683 # and not 0
+	)
 })

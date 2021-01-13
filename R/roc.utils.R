@@ -273,33 +273,53 @@ sort.smooth.roc <- function(roc) {
   return(roc)
 }
 
+# The list of valid coordinate arguments, without 'thresholds'
+roc.utils.valid.coords <- c("specificity", "sensitivity", "accuracy",
+	"tn", "tp", "fn", "fp",
+	"npv", "ppv", "fdr",
+	"fpr", "tpr", "tnr", "fnr", 
+	"1-specificity", "1-sensitivity", "1-accuracy", "1-npv", "1-ppv",
+	"precision", "recall",
+	"youden", "closest.topleft")
+
 # Arguments which can be returned by coords
 # @param threshold: FALSE for smooth.roc where threshold isn't valid
 roc.utils.match.coords.ret.args <- function(x, threshold = TRUE) {
-  valid.ret.args <- c("specificity", "sensitivity", "accuracy",
-  					"tn", "tp", "fn", "fp",
-  					"npv", "ppv", "fdr",
-  					"fpr", "tpr", "tnr", "fnr", 
-  					"1-specificity", "1-sensitivity", "1-accuracy", "1-npv", "1-ppv",
-  					"precision", "recall",
-  					"youden", "closest.topleft")
-  if ("all" %in% x) {
-  	if (length(x) > 1) {
-  		stop("ret='all' can't be used with other 'ret' options.")
-  	}
-  	x <- valid.ret.args
-  	if (threshold) {
-  		x <- c("threshold", x)
-  	}
-  }
-  if (threshold) {
-  	valid.ret.args <- c("threshold", valid.ret.args)
-  }
-  x <- replace(x, x=="topleft", "closest.topleft")
-  x <- replace(x, x=="t", "threshold")
-  x <- replace(x, x=="npe", "1-npv")
-  x <- replace(x, x=="ppe", "1-ppv")
-  match.arg(x, valid.ret.args, several.ok=TRUE)
+	valid.ret.args <- roc.utils.valid.coords
+	if (threshold) {
+		valid.ret.args <- c("threshold", valid.ret.args)
+	}
+
+	if ("all" %in% x) {
+		if (length(x) > 1) {
+			stop("ret='all' can't be used with other 'ret' options.")
+		}
+		x <- valid.ret.args
+	}
+	x <- replace(x, x=="topleft", "closest.topleft")
+	x <- replace(x, x=="t", "threshold")
+	x <- replace(x, x=="npe", "1-npv")
+	x <- replace(x, x=="ppe", "1-ppv")
+	return(match.arg(x, valid.ret.args, several.ok=TRUE))
+}
+
+# Arguments which can be used as input for coords
+# @param threshold: FALSE for smooth.roc where threshold isn't valid
+roc.utils.match.coords.input.args <- function(x, threshold = TRUE) {
+	valid.args <- roc.utils.valid.coords
+	if (threshold) {
+		valid.args <- c("threshold", valid.args)
+	}
+	x <- replace(x, x=="topleft", "closest.topleft")
+	x <- replace(x, x=="t", "threshold")
+	x <- replace(x, x=="npe", "1-npv")
+	x <- replace(x, x=="ppe", "1-ppv")
+	matched <- match.arg(x, valid.args, several.ok=FALSE)
+	# We only handle monotone coords
+	if (! coord.is.monotone[matched]) {
+		stop(sprintf("Coordinate '%s' is not monotone and cannot be used as input.", matched))
+	}
+	return(matched)
 }
 
 # Compute the min/max for partial AUC
@@ -372,11 +392,15 @@ load.suggested.package <- function(pkg) {
 
 
 # Calculate coordinates
-# @param substr.percent: 1 or 100
-# @param se, sp
-# @param ncases, ncontrols
+# @param roc: the roc curve, used to guess if data is in percent and number of cases and controls.
+# @param thr, se, sp
+# @param best.weights: see coords 
 # @return data.frame
-roc.utils.calc.coords <- function(substr.percent, thr, se, sp, ncases, ncontrols, best.weights) {
+roc.utils.calc.coords <- function(roc, thr, se, sp, best.weights) {
+	ncases <- ifelse(methods::is(roc, "smooth.roc"), length(attr(roc, "roc")$cases), length(roc$cases))
+	ncontrols <- ifelse(methods::is(roc, "smooth.roc"), length(attr(roc, "roc")$controls), length(roc$controls))
+	substr.percent <- ifelse(roc$percent, 100, 1)
+	
 	tp <- se * ncases / substr.percent
 	fn <- ncases - tp
 	tn <- sp * ncontrols / substr.percent
@@ -488,6 +512,59 @@ roc.utils.optim.crit <- function(se, sp, max, weights, method) {
 	return(optim.crit)
 }
 
+coord.is.monotone <- c(
+	"threshold"=TRUE,
+	"sensitivity"=TRUE,
+	"specificity"=TRUE,
+	"accuracy"=FALSE,
+	"tn"=TRUE, 
+	"tp"=TRUE,
+	"fn"=TRUE,
+	"fp"=TRUE,       
+	"npv"=FALSE,
+	"ppv"=FALSE,
+	"tpr"=TRUE,
+	"tnr"=TRUE,
+	"fpr"=TRUE,
+	"fnr"=TRUE,
+	"fdr"=FALSE,
+	"1-specificity"=TRUE,
+	"1-sensitivity"=TRUE,
+	"1-accuracy"=FALSE,
+	"1-npv"=FALSE,
+	"1-ppv"=FALSE,
+	"precision"=FALSE,
+	"recall"=TRUE,
+	"youden"=FALSE,
+	"closest.topleft"=FALSE
+)
+
+coord.is.decreasing <- c(
+	"threshold"=NA, # Depends on direction
+	"sensitivity"=TRUE,
+	"specificity"=FALSE,
+	"accuracy"=NA,
+	"tn"=FALSE, 
+	"tp"=TRUE,
+	"fn"=FALSE,
+	"fp"=TRUE,       
+	"npv"=NA,
+	"ppv"=NA,
+	"tpr"=TRUE,
+	"tnr"=FALSE,
+	"fpr"=TRUE,
+	"fnr"=FALSE,
+	"fdr"=NA,
+	"1-specificity"=TRUE,
+	"1-sensitivity"=FALSE,
+	"1-accuracy"=NA,
+	"1-npv"=NA,
+	"1-ppv"=NA,
+	"precision"=NA,
+	"recall"=TRUE,
+	"youden"=NA,
+	"closest.topleft"=NA
+)
 
 # Get response and predictor(s) from a formula.
 # This function takes care of all the logic to handle
