@@ -8,14 +8,18 @@
 \alias{roc.test.smooth.roc}
 
 \title{
-  Compare the AUC of two ROC curves
+  Compare two ROC curves
 }
 \description{
-  This function compares the AUC or partial AUC of two correlated (or
-  paired) or uncorrelated (unpaired) ROC curves. Several syntaxes are
-  available: two object of class roc (which can be AUC or smoothed ROC),
-  or either three vectors (response, predictor1, predictor2) or a
-  response vector and a matrix or data.frame with two columns
+  This function compares two correlated (or paired) or uncorrelated (unpaired)
+  ROC curves. Delong and bootstrap methods test for a difference in the
+  (partial) AUC of the ROC curves. The Venkatraman method tests if the two
+  curves are perfectly superposed. The sensitivity and specificity methods
+  test if the sensitivity (respectively specificity) of the ROC curves are
+  different at the given level of specificity (respectively sensitivity).
+  Several syntaxes are available: two object of class roc (which can be AUC
+  or smoothed ROC), or either three vectors (response, predictor1, predictor2)
+  or a response vector and a matrix or data.frame with two columns
   (predictors).
 }
 \usage{
@@ -25,7 +29,7 @@
 specificity = NULL, alternative = c("two.sided", "less", "greater"),
 paired=NULL, reuse.auc=TRUE, boot.n=2000, boot.stratified=TRUE,
 ties.method="first", progress=getOption("pROCProgress")$name,
-parallel=FALSE, ...)
+parallel=FALSE, conf.level=0.95, ...)
 \S3method{roc.test}{auc}(roc1, roc2, ...)
 \S3method{roc.test}{smooth.roc}(roc1, roc2, ...)
 \S3method{roc.test}{formula}(formula, data, ...)
@@ -97,6 +101,8 @@ na.rm=TRUE, method=NULL, ...)
   \item{parallel}{if TRUE, the bootstrap is processed in parallel, using 
     parallel backend provided by plyr (foreach).
   }
+  \item{conf.level}{a numeric scalar between 0 and 1 (non-inclusive) which
+    species the confidence level to use for any calculated CI's.}
   \item{\dots}{further arguments passed to or from other methods,
     especially arguments for \code{\link{roc}} and \code{roc.test.roc}
     when calling \code{roc.test.default} or \code{roc.test.formula}.
@@ -300,6 +306,7 @@ na.rm=TRUE, method=NULL, ...)
   \item{statistic}{the value of the Z (\code{method="delong"}) or D
     (\code{method="bootstrap"}) statistics.
   }
+  \item{conf.int}{the confidence interval of the test (currently only returned for the paired DeLong's test). Has an attribute \code{conf.level} specifiying the level of the test.}
   \item{alternative}{the alternative hypothesis.}
   \item{method}{the character string \dQuote{DeLong's test for two
       correlated ROC curves} (if \code{method="delong"}) or

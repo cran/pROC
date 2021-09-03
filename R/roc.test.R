@@ -116,6 +116,7 @@ roc.test.roc <- function(roc1, roc2,
 						 ties.method="first",
 						 progress=getOption("pROCProgress")$name,
 						 parallel=FALSE,
+						 conf.level=0.95,
 						 ...) {
 	alternative <- match.arg(alternative)
 	data.names <- paste(deparse(substitute(roc1)), "and", deparse(substitute(roc2)))
@@ -249,6 +250,15 @@ roc.test.roc <- function(roc1, roc2,
 			}
 			if (roc1$direction != roc2$direction)
 				warning("DeLong's test should not be applied to ROC curves with a different direction.")
+			
+			# Check if conf.level is specified correctly. This is currently
+			# only used for the delong paired method, which is why it lives 
+			# here for now.
+			if (!is.numeric(conf.level)) {
+				stop("conf.level must be numeric between 0 and 1.")
+			} else if (0 > conf.level | 1 < conf.level) {
+				stop("conf.level must be between 0 and 1.")
+			}
 		}
 		else if (method == "venkatraman") {
 			if (has.partial.auc(roc1))
@@ -304,10 +314,14 @@ roc.test.roc <- function(roc1, roc2,
 	
 	if (method == "delong") {
 		if (paired) {
-			stat <- delong.paired.test(roc1, roc2)
+			delong.calcs <- delong.paired.calculations(roc1, roc2)
+			stat <- delong.paired.test(delong.calcs)
+			stat.ci <- ci.delong.paired(delong.calcs, conf.level)
 			names(stat) <- "Z"
 			htest$statistic <- stat
 			htest$method <- "DeLong's test for two correlated ROC curves"
+			htest$conf.int <- c(stat.ci$lower, stat.ci$upper)
+			attr(htest$conf.int, "conf.level") <- stat.ci$level
 			
 			if (alternative == "two.sided")
 				pval <- 2*pnorm(-abs(stat))
@@ -353,7 +367,7 @@ roc.test.roc <- function(roc1, roc2,
 		htest$parameter <- parameter
 		pval <- sum(stats[[2]]>=stats[[1]])/boot.n
 		htest$p.value <- pval
-		names(null.value) <- "difference in ROC operating points"
+		names(htest$null.value) <- "difference in at least one ROC operating point"
 		htest$estimate <- NULL # AUC not relevant in venkatraman
 	}
 	else { # method == "bootstrap" or "sensitivity" or "specificity"
@@ -373,6 +387,8 @@ roc.test.roc <- function(roc1, roc2,
 				htest$method <- "Specificity test for two correlated ROC curves"
 			else
 				htest$method <- "Specificity test for two ROC curves"
+			names(htest$null.value) <- sprintf("difference in sensitivity at %s specificity",
+											   specificity)
 		}
 		else if (method == "sensitivity") {
 			if (! is.numeric(sensitivity) || length(sensitivity) != 1) {
@@ -383,6 +399,9 @@ roc.test.roc <- function(roc1, roc2,
 				htest$method <- "Sensitivity test for two correlated ROC curves"
 			else
 				htest$method <- "Sensitivity test for two ROC curves"
+			
+			names(htest$null.value) <- sprintf("difference in specificity at %s sensitivity",
+											   sensitivity)
 		}
 		else {
 			stat <- bootstrap.test(roc1, roc2, "boot", NULL, paired, boot.n, boot.stratified, smoothing.args, progress, parallel)

@@ -13,24 +13,42 @@ test_that("roc.test works", {
 	expect_is(t3, "htest")
 })
 
+
+test_that("DeLong roc.test works when curves are identical", {
+	t4 <- roc.test(r.wfns, r.wfns)
+	expect_is(t4, "htest")
+	expect_equal(t4$p.value, 1)
+	expect_equal(t4$statistic, c(Z=0))
+})
+
+
 test_that("roc.test statistic and p are as expected with defaults", {
 	expect_equal(t1$statistic, c(Z=2.20898359144091))
 	expect_equal(t1$p.value, 0.0271757822291882)
+	expect_equal(t1$conf.int[[1]], 0.0104061769564846)
+	expect_equal(t1$conf.int[[2]], 0.174214419249478)
 	expect_match(t1$method, "DeLong")
 	expect_match(t1$method, "correlated")
 	expect_identical(t1$alternative, "two.sided")
+	expect_identical(attr(t1$conf.int, "conf.level"), 0.95)
 	
 	expect_equal(t2$statistic, c(Z=2.79777591868904))
 	expect_equal(t2$p.value, 0.00514557970691098)
+	expect_equal(t2$conf.int[[1]], 0.0634011709339876)
+	expect_equal(t2$conf.int[[2]], 0.3600405634833566)
 	expect_match(t2$method, "DeLong")
 	expect_match(t2$method, "correlated")
 	expect_identical(t2$alternative, "two.sided")
+	expect_identical(attr(t2$conf.int, "conf.level"), 0.95)
 	
 	expect_equal(t3$statistic, c(Z=-1.39077002573558))
 	expect_equal(t3$p.value, 0.164295175223054)
+	expect_equal(t3$conf.int[[1]], -0.2876917446341914)
+	expect_equal(t3$conf.int[[2]], 0.0488706064228094)
 	expect_match(t3$method, "DeLong")
 	expect_match(t3$method, "correlated")
 	expect_identical(t3$alternative, "two.sided")
+	expect_identical(attr(t3$conf.int, "conf.level"), 0.95)
 })
 
 test_that("two.sided roc.test produces identical p values when roc curves are reversed", {
