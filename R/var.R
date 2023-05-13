@@ -50,14 +50,14 @@ var.roc <- function(roc,
   if (is.null(roc$auc) | !reuse.auc)
     roc$auc <- auc(roc, ...)
   
-  if (roc.utils.is.perfect.curve(roc)) {
+  if (roc_utils_is_perfect_curve(roc)) {
   	warning("var() of a ROC curve with AUC == 1 is always 0 and can be misleading.")
   }
 
   # do all the computations in fraction, re-transform in percent later
   percent <- roc$percent
   if (percent) {
-  	roc <- roc.utils.unpercent(roc)
+  	roc <- roc_utils_unpercent(roc)
   }
 
   # Check the method
@@ -67,7 +67,7 @@ var.roc <- function(roc,
       # partial auc: go for bootstrap
       method <- "bootstrap"
     }
-    else if (class(roc) == "smooth.roc") {
+    else if (inherits(roc, "smooth.roc")) {
       # smoothing: bootstrap
       method <- "bootstrap"
     }
@@ -104,10 +104,10 @@ var.roc <- function(roc,
     var <- var(V$Y) / n + var(V$X) / m
   }
   else if (method == "obuchowski") {
-    var <- var.roc.obuchowski(roc) / length(roc$cases)
+    var <- var_roc_obuchowski(roc) / length(roc$cases)
   }
   else {
-    var <- var.roc.bootstrap(roc, boot.n, boot.stratified, progress, parallel, ...)
+    var <- var_roc_bootstrap(roc, boot.n, boot.stratified, progress, parallel, ...)
   }
   
   if (percent) {
@@ -116,12 +116,12 @@ var.roc <- function(roc,
   return(var)
 }
 
-var.roc.bootstrap <- function(roc, boot.n, boot.stratified, progress, parallel, ...) {
-  if(class(progress) != "list")
-    progress <- roc.utils.get.progress.bar(progress, title="AUC variance", label="Bootstrap in progress...", ...)
+var_roc_bootstrap <- function(roc, boot.n, boot.stratified, progress, parallel, ...) {
+  if(inherits(progress, "list"))
+    progress <- roc_utils_get_progress_bar(progress, title="AUC variance", label="Bootstrap in progress...", ...)
 
   ## Smoothed ROC curve variance
-  if (class(roc) == "smooth.roc") {
+  if (inherits(roc, "smooth.roc")) {
     smoothing.args <- roc$smoothing.args
     smoothing.args$smooth <- TRUE
     non.smoothed.roc <- attr(roc, "roc")

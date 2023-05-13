@@ -8,8 +8,8 @@
   Coordinates of a ROC curve
 }
 \description{
-  This function returns the coordinates of the ROC curve at the
-  specified point.
+  This function returns the coordinates of the ROC curve at one
+  or several specified point(s).
 }
 \usage{
 coords(...)
@@ -57,7 +57,8 @@ as.matrix=FALSE, ...)
     of length 1.
   }
   \item{best.method}{if \code{x="best"}, the method to determine the
-    best threshold. See details in the \sQuote{Best thresholds} section.
+    best threshold. Defaults to "youden". See details in the
+    \sQuote{Best thresholds} section.
   }
   \item{best.weights}{if \code{x="best"}, the weights to determine the
     best threshold. See details in the \sQuote{Best thresholds} section.
@@ -114,9 +115,9 @@ as.matrix=FALSE, ...)
   optimal threshold is determined.
   \describe{
     \item{\dQuote{youden}}{
-      Youden's J statistic (Youden, 1950) is employed. The optimal cut-off is the threshold
-      that maximizes the distance to the identity (diagonal) line. Can
-      be shortened to \dQuote{y}.
+      Youden's J statistic (Youden, 1950) is employed (default). The optimal 
+      cut-off is the threshold that maximizes the distance to the identity
+      (diagonal) line. Can be shortened to \dQuote{y}.
 
       The optimality criterion is:
       \deqn{max(sensitivities + specificities)}{max(sensitivities + specificities)}

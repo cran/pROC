@@ -22,7 +22,7 @@ print.smooth.roc <- function(x, digits=max(3, getOption("digits") - 3), call=TRU
   if (call)
     cat("\nCall:\n", deparse(x$call), "\n\n", sep="")
   # Always print number of patients, controls, thresholds, levels?
-  print.dataline(attr(x, "roc")) # take this from original roc
+  print_dataline(attr(x, "roc")) # take this from original roc
 
   # Smoothing
   cat("Smoothing: ")
@@ -126,7 +126,7 @@ print.roc <- function(x, digits=max(3, getOption("digits") - 3), call=TRUE, ...)
   if (call)
     cat("\nCall:\n", deparse(x$call), "\n\n", sep="")
   # Always print number of patients, controls, thresholds, levels?
-  print.dataline(x)
+  print_dataline(x)
 
   # AUC if exists
   if (!is.null(x$auc)) {
@@ -220,30 +220,50 @@ print.ci.coords <- function(x, digits=max(3, getOption("digits") - 3), ...) {
   invisible(x)
 }
 
-print.dataline <- function(x) {
+print_dataline <- function(x) {
   # Case / Controls call
   if ("cases" %in%  names(x$call) && "controls" %in% names(x$call)) {
     cat("Data: ", length(x$controls), " controls ", x$direction, " ", length(x$cases), " cases.\n", sep="")
   }
   else {
-    # get predictor name
-    if ("predictor" %in% names(x$call))
-      predictor.name <- as.character(x$call[match("predictor", names(x$call))])
-    else if (!is.null(x$call$formula)) 
-      predictor.name <- attr(terms(as.formula(x$call$formula), data=x$data), "term.labels")
-    else
-      return()
-    # Get response
-    if ("response" %in% names(x$call))
-      response.name <- as.character(x$call[match("response", names(x$call))])
-    else if (!is.null(x$call$formula)) {
-      formula.attrs <- attributes(terms(as.formula(x$call$formula), data=x$data))
-      response.name <- rownames(formula.attrs$factors)[formula.attrs$response]
+  	if ("predictor.name" %in% names(x)) {
+  		predictor.name <- x$predictor.name
+  	}
+    else if ("predictor" %in% names(x$call)) {
+    	predictor.name <- as.character(x$call[match("predictor", names(x$call))])
     }
-    else if ("x" %in% names(x$call))
-      response.name <- as.character(x$call[match("x", names(x$call))])
-    else
-      return()
+    else if (!is.null(x$call$formula)) {
+    	# TODO: remove this case in a future version.
+    	# This is kept for backward-compatibility with older objects.
+    	# See issue #101.
+    	indx <- match(c("formula", "data", "weights", "subset", "na.action"), names(x$call), nomatch=0)
+    	temp <- x$call[c(1,indx)]
+    	temp[[1]] <- as.name("model.frame")
+    	m <- eval.parent(temp, n = 2)
+    	response.name <- names(m)[1]
+    	predictor.name <- names(m)[-1]
+    }
+    else {
+    	predictor.name <- "(unknown)"
+    }
+    # Get response
+  	if ("response.name" %in% names(x)) {
+  		response.name <- x$response.name
+  	}
+    else if ("response" %in% names(x$call)) {
+    	response.name <- as.character(x$call[match("response", names(x$call))])
+    }
+    else if (!is.null(x$call$formula)) {
+    	# We've already extracted it with the predictor
+    	# TODO: remove this case in a future version.
+    	# See above.
+    }
+    else if ("x" %in% names(x$call)) {
+    	response.name <- as.character(x$call[match("x", names(x$call))])
+    }
+    else {
+    	response.name <- "(unknown)"
+    }
     cat("Data: ", predictor.name, " in ", length(x$controls), " controls (", response.name, " ", x$levels[1], ") ", x$direction, " ", length(x$cases), " cases (", response.name, " ", x$levels[2], ").\n", sep="")
   }
 }

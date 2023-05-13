@@ -44,7 +44,7 @@ test_that("print.multiclass.roc works", {
 	expect_known_output(print(multiclass.roc(aSAH$gos6, aSAH$wfns, partial.auc=c(1, .9), partial.auc.correct=TRUE)), "print_output/multiclass_partial_correct")
 })
 
-test_that("print.multiclass.roc multivariate works", {
+test_that("print.multiclass_roc_multivariate works", {
 	n <- c(100, 80, 150)
 	responses <- factor(c(rep("X1", n[1]), rep("X2", n[2]), rep("X3", n[3])))
 	set.seed(42)
@@ -139,3 +139,20 @@ test_that("print works with ci.sp", {
 	expect_known_output(print(ci.sp(r.ndka, boot.n = 3, progress = "none")), "print_output/r.ndka.ci.sp")
 })
 
+test_that("print works with a formula passed as variable", {
+	x <- outcome ~ ndka
+	expect_known_output(print(roc(x, aSAH)), "print_output/ndka_formula_var")
+})
+
+test_that("print works with a formula with data attached", {
+	attach(aSAH)
+	x <- outcome ~ ndka
+	expect_known_output(print(roc(x)), "print_output/ndka_formula_var_attached")
+	expect_known_output(print(roc(outcome ~ ndka)), "print_output/ndka_formula_attached")
+})
+
+test_that("print works with a formula with data attached with 'with'", {
+	x <- outcome ~ ndka
+	expect_known_output(with(aSAH, print(roc(x))), "print_output/ndka_formula_var_attached")
+	expect_known_output(with(aSAH, print(roc(outcome ~ ndka))), "print_output/ndka_formula_attached")
+})

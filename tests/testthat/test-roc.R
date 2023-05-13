@@ -8,28 +8,28 @@ level.values <- list(
 
 expected.algorithm <- list()
 expected.algorithm[["wfns"]] <- list(
-	pROC:::roc.utils.perfs.all.safe,
-	pROC:::roc.utils.perfs.all.fast,
+	pROC:::roc_utils_perfs_all_safe,
+	pROC:::roc_utils_perfs_all_fast,
 	pROC:::rocUtilsPerfsAllC,
-	pROC:::roc.utils.perfs.all.test,
+	pROC:::roc_utils_perfs_all_test,
 	pROC:::rocUtilsPerfsAllC, # 6 thresholds
 	pROC:::rocUtilsPerfsAllC # ordered
 )
 expected.algorithm[["ndka"]] <- list(
-	pROC:::roc.utils.perfs.all.safe,
-	pROC:::roc.utils.perfs.all.fast,
+	pROC:::roc_utils_perfs_all_safe,
+	pROC:::roc_utils_perfs_all_fast,
 	pROC:::rocUtilsPerfsAllC,
-	pROC:::roc.utils.perfs.all.test,
-	pROC:::roc.utils.perfs.all.fast, # 110 thresholds
-	pROC:::roc.utils.perfs.all.fast # numeric
+	pROC:::roc_utils_perfs_all_test,
+	pROC:::roc_utils_perfs_all_fast, # 110 thresholds
+	pROC:::roc_utils_perfs_all_fast # numeric
 )
 expected.algorithm[["s100b"]] <-list(
-	pROC:::roc.utils.perfs.all.safe,
-	pROC:::roc.utils.perfs.all.fast,
+	pROC:::roc_utils_perfs_all_safe,
+	pROC:::roc_utils_perfs_all_fast,
 	pROC:::rocUtilsPerfsAllC,
-	pROC:::roc.utils.perfs.all.test,
+	pROC:::roc_utils_perfs_all_test,
 	pROC:::rocUtilsPerfsAllC, # 51 thresholds
-	pROC:::roc.utils.perfs.all.fast # numeric
+	pROC:::roc_utils_perfs_all_fast # numeric
 )
 
 smooth.methods <- c("binormal", "density", "fitdistr", "logcondens", "logcondens.smooth")
@@ -88,6 +88,7 @@ for (marker in c("ndka", "wfns", "s100b")) {
 						for (smooth.method in available.smooth.methods) {
 							context(sprintf("smooth(roc(...)) works with percent = %s, marker = %s, levels.direction = %s, direction = %s and smooth.method = %s", percent, marker, levels.direction, direction, smooth.method))
 							test_that("smoothing a ROC curve produces expected results", {
+								skip_if(getRversion() < "4.4.0")
 								if (smooth.method == "logcondens" || smooth.method == "logcondens.smooth") {
 									testthat::skip_if_not_installed("logcondens")
 								}
@@ -99,6 +100,7 @@ for (marker in c("ndka", "wfns", "s100b")) {
 								expect_equal(s$specificities, expected.roc[[marker]][[levels.direction]][[expected.direction]][["smooth"]][[smooth.method]][["specificities"]] * ifelse(percent, 100, 1))
 							})
 							test_that("building curve with smooth=TRUE produces expected results", {
+								skip_if(getRversion() < "4.4.0")
 								context(sprintf("roc(..., smooth=TRUE) works with percent = %s, marker = %s, levels.direction = %s, direction = %s and smooth.method = %s", percent, marker, levels.direction, direction, smooth.method))
 								if (smooth.method == "logcondens" || smooth.method == "logcondens.smooth") {
 									testthat::skip_if_not_installed("logcondens")
@@ -267,6 +269,7 @@ test_that("roc works with densitites", {
 })
 
 test_that("roc.density works with extra arguments", {
+	skip_if(getRversion() < "4.4.0")
 	range.ndka <- range(aSAH$ndka)
 	bw <- bw.nrd0(aSAH$ndka)
 	from <- min(aSAH$ndka) - (3 * bw)
@@ -278,12 +281,12 @@ test_that("roc.density works with extra arguments", {
 							   density.controls = density.controls$y,
 							   partial.auc = c(1, .9), partial.auc.focus = "se", 
 							   partial.auc.correct = TRUE)
-	expect_equal(as.numeric(density.roc.partial$auc), 0.506203453)
+	expect_equal(as.numeric(density.roc.partial$auc), 0.506196226093)
 	
 	density.roc.percent <- roc(density.cases = density.cases$y, 
 							   density.controls = density.controls$y,
 							   percent = TRUE)
-	expect_equal(as.numeric(density.roc.percent$auc), 60.44617865)
+	expect_equal(as.numeric(density.roc.percent$auc), 60.44728041)
 })
 
 test_that("roc doesn't accept density with other arguments", {
