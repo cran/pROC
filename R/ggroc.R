@@ -1,7 +1,8 @@
 
-#' Returns the coords as a data.frame in the right ordering for ggplot2 
+# Returns the coords as a data.frame in the right ordering for ggplot2 
 get.coords.for.ggplot <- function(roc) {
 	df <- coords(roc, "all", transpose = FALSE)
+	df[["1-specificity"]] <- ifelse(roc$percent, 100, 1) - df[["specificity"]]
 	return(df[rev(seq(nrow(df))),])
 }
 
@@ -9,21 +10,25 @@ get.aes.for.ggplot <- function(roc, legacy.axes, extra_aes = c()) {
 	# Prepare the aesthetics
 	if(roc$percent) {
 		if (legacy.axes) {
-			aes_list <- list(x = "1-specificity", y = "sensitivity")
+			aes_list <- list(x = "1-specificity",
+							 y = "sensitivity")
 			xlims <- ggplot2::scale_x_continuous(lim=c(0, 100))		
 		}
 		else {
-			aes_list <- list(x = "specificity", y = "sensitivity")
+			aes_list <- list(x = "specificity",
+							 y = "sensitivity")
 			xlims <- ggplot2::scale_x_reverse(lim=c(100, 0))
 		}
 	}
 	else {
 		if (legacy.axes) {
-			aes_list <- list(x = "1-specificity", y = "sensitivity")
+			aes_list <- list(x = "1-specificity",
+							 y = "sensitivity")
 			xlims <- ggplot2::scale_x_continuous(lim=c(0, 1))
 		}
 		else {
-			aes_list <- list(x = "specificity", y = "sensitivity")
+			aes_list <- list(x = "specificity",
+							 y = "sensitivity")
 			xlims <- ggplot2::scale_x_reverse(lim=c(1, 0))
 		}
 	}
@@ -31,7 +36,9 @@ get.aes.for.ggplot <- function(roc, legacy.axes, extra_aes = c()) {
 	for (ae in extra_aes) {
 		aes_list[[ae]] <- "name"
 	}
-	aes <- do.call(ggplot2::aes_string, aes_list)
+	.data <- rlang::.data
+	quoted_aes_list <- lapply(aes_list, function(x) ggplot2::expr(.data[[x]]))
+	aes <- do.call(ggplot2::aes, quoted_aes_list)
 	
 	return(list(aes=aes, xlims=xlims))
 }
@@ -61,7 +68,7 @@ ggroc.roc <- function(data, legacy.axes = FALSE, ...) {
 
 ggroc.smooth.roc <- ggroc.roc
 
-ggroc.list <- function(data, aes = c("colour", "alpha", "linetype", "size", "group"), legacy.axes = FALSE, ...) {
+ggroc.list <- function(data, aes = c("colour", "alpha", "linetype", "linewidth", "size", "group"), legacy.axes = FALSE, ...) {
 	load.ggplot2()
 	if (missing(aes)) {
 		aes <- "colour"

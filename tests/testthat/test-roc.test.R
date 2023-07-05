@@ -3,11 +3,13 @@ data(aSAH)
 
 context("roc.test")
 
+# define variables shared among multiple tests here
+roc.test_env <- environment()
 
 test_that("roc.test works", {
-	t1 <<- roc.test(r.wfns, r.s100b)
-	t2 <<- roc.test(r.wfns, r.ndka)
-	t3 <<- roc.test(r.ndka, r.s100b)
+	roc.test_env$t1 <- roc.test(r.wfns, r.s100b)
+	roc.test_env$t2 <- roc.test(r.wfns, r.ndka)
+	roc.test_env$t3 <- roc.test(r.ndka, r.s100b)
 	expect_is(t1, "htest")
 	expect_is(t2, "htest")
 	expect_is(t3, "htest")
@@ -67,9 +69,9 @@ test_that("two.sided roc.test produces identical p values when roc curves are re
 
 test_that("unpaired roc.test works", {
 	# Warns about pairing
-	expect_warning(t1up <<- roc.test(r.wfns, r.s100b, paired = FALSE))
-	expect_warning(t2up <<- roc.test(r.wfns, r.ndka, paired = FALSE))
-	expect_warning(t3up <<- roc.test(r.ndka, r.s100b, paired = FALSE))
+	expect_warning(roc.test_env$t1up <- roc.test(r.wfns, r.s100b, paired = FALSE))
+	expect_warning(roc.test_env$t2up <- roc.test(r.wfns, r.ndka, paired = FALSE))
+	expect_warning(roc.test_env$t3up <- roc.test(r.ndka, r.s100b, paired = FALSE))
 })
 
 test_that("unpaired roc.test statistic and p are as expected", {
@@ -166,9 +168,11 @@ test_that("roc.formula supports subset and na.omit", {
 	aSAH.missing <- aSAH
 	aSAH.missing$wfns[1:20] <- NA
 	aSAH.missing$ndka[1:20] <- NA
+	expect_warning(roctest1 <- roc.test(outcome ~ wfns + ndka, data = aSAH.missing, na.action = na.omit, quiet = TRUE), "na.omit")
+	roctest2 <- roc.test(aSAH$outcome[21:113], aSAH$wfns[21:113], aSAH$ndka[21:113], quiet = TRUE)
 	expect_identical(
-		roc.test(outcome ~ wfns + ndka, data = aSAH.missing, na.action = na.omit, quiet = TRUE)[check.only.items],
-		roc.test(aSAH$outcome[21:113], aSAH$wfns[21:113], aSAH$ndka[21:113], quiet = TRUE)[check.only.items]
+		roctest1[check.only.items],
+		roctest2[check.only.items]
 	)
 	#na.fail should fail
 	expect_error(roc.test(outcome ~ wfns + ndka, data = aSAH.missing, na.action = na.fail, quiet = TRUE))
@@ -176,9 +180,11 @@ test_that("roc.formula supports subset and na.omit", {
 	expect_error(roc.test(outcome ~ wfns + ndka, data = aSAH, weights = seq_len(nrow(aSAH))), regexp = "weights are not supported")
 	
 	# Both na.action and subset
+	expect_warning(roctest1 <- roc.test(outcome ~ wfns + ndka, data = aSAH.missing, na.action = na.omit, subset = (gender == "Female"), quiet = TRUE), "na.omit")
+	roctest2 <- roc.test(aSAH$outcome[21:113][aSAH[21:113,]$gender == "Female"], aSAH$wfns[21:113][aSAH[21:113,]$gender == "Female"], aSAH$ndka[21:113][aSAH[21:113,]$gender == "Female"], quiet = TRUE)
 	expect_identical(
-		roc.test(outcome ~ wfns + ndka, data = aSAH.missing, na.action = na.omit, subset = (gender == "Female"), quiet = TRUE)[check.only.items],
-		roc.test(aSAH$outcome[21:113][aSAH[21:113,]$gender == "Female"], aSAH$wfns[21:113][aSAH[21:113,]$gender == "Female"], aSAH$ndka[21:113][aSAH[21:113,]$gender == "Female"], quiet = TRUE)[check.only.items]
+		roctest1[check.only.items],
+		roctest2[check.only.items]
 	)
 })
 
@@ -210,7 +216,7 @@ test_that("one-sided roc.test work with direction='>' and produce expected resul
 	expect_equal(m1lt$p.value, 0.986412108885406)
 })
 
-test_that("paired roc.test works with bootstrap", {
+test_that_no_progress("paired roc.test works with bootstrap", {
 	skip_slow()
 	ht <- roc.test(r.wfns, r.s100b, method = "bootstrap", boot.n = 12, paired = TRUE)
 	expect_bootstrap_htest(ht)
@@ -219,7 +225,7 @@ test_that("paired roc.test works with bootstrap", {
 	expect_equal(unname(ht$parameter), c(12, 1))
 })
 
-test_that("unpaired roc.test works with bootstrap", {
+test_that_no_progress("unpaired roc.test works with bootstrap", {
 	skip_slow()
 	expect_warning(ht <- roc.test(r.s100b, r.wfns, method = "bootstrap", boot.n = 12, paired = FALSE), "paired")
 	expect_bootstrap_htest(ht)
@@ -228,7 +234,7 @@ test_that("unpaired roc.test works with bootstrap", {
 	expect_equal(unname(ht$parameter), c(12, 1))
 })
 
-test_that("paired, non stratified roc.test works with bootstrap", {
+test_that_no_progress("paired, non stratified roc.test works with bootstrap", {
 	skip_slow()
 	ht <- roc.test(r.s100b, r.wfns, method = "bootstrap", boot.n = 12, paired = TRUE, boot.stratified = FALSE)
 	expect_bootstrap_htest(ht)
@@ -237,7 +243,7 @@ test_that("paired, non stratified roc.test works with bootstrap", {
 	expect_equal(unname(ht$parameter), c(12, 0))
 })
 
-test_that("unpaired, non stratified roc.test works with bootstrap", {
+test_that_no_progress("unpaired, non stratified roc.test works with bootstrap", {
 	skip_slow()
 	expect_warning(ht <- roc.test(r.s100b, r.wfns, method = "bootstrap", boot.n = 12, paired = FALSE, boot.stratified = FALSE), "paired")
 	expect_bootstrap_htest(ht)
@@ -246,7 +252,7 @@ test_that("unpaired, non stratified roc.test works with bootstrap", {
 	expect_equal(unname(ht$parameter), c(12, 0))
 })
 
-test_that("bootstrap roc.test works with mixed roc, auc and smooth.roc objects", {
+test_that_no_progress("bootstrap roc.test works with mixed roc, auc and smooth.roc objects", {
 	skip_slow()
 	for (roc1 in list(r.s100b, auc(r.s100b), smooth(r.s100b), r.s100b.partial2, r.s100b.partial2$auc)) {
 		for (roc2 in list(r.wfns, auc(r.wfns), smooth(r.wfns), r.wfns.partial1, r.wfns.partial1$auc)) {
@@ -254,9 +260,10 @@ test_that("bootstrap roc.test works with mixed roc, auc and smooth.roc objects",
 			stratified <- sample(c(TRUE, FALSE), 1)
 			paired <- sample(c(TRUE, FALSE), 1)
 			alternative = sample(c("two.sided", "less", "greater"), 1)
-			ht <- roc.test(roc1, roc2, method = "bootstrap", 
+			suppressWarnings( # All sorts of warnings are expected
+				ht <- roc.test(roc1, roc2, method = "bootstrap", 
 						   boot.n = n, paired = paired, boot.stratified = stratified,
-						   alternative = alternative)
+						   alternative = alternative))
 			expect_bootstrap_htest(ht)
 			expect_equal(ht$alternative, alternative)
 			if (paired) {
@@ -270,7 +277,7 @@ test_that("bootstrap roc.test works with mixed roc, auc and smooth.roc objects",
 	}
 })
 
-test_that("se/sp roc.test works with mixed roc, auc and smooth.roc objects", {
+test_that_no_progress("se/sp roc.test works with mixed roc, auc and smooth.roc objects", {
 	skip_slow()
 	for (roc1 in list(r.s100b, auc(r.s100b), smooth(r.s100b), r.s100b.partial2, r.s100b.partial2$auc)) {
 		for (roc2 in list(r.wfns, auc(r.wfns), smooth(r.wfns), r.wfns.partial1, r.wfns.partial1$auc)) {
@@ -279,11 +286,12 @@ test_that("se/sp roc.test works with mixed roc, auc and smooth.roc objects", {
 				stratified <- sample(c(TRUE, FALSE), 1)
 				paired <- sample(c(TRUE, FALSE), 1)
 				alternative = sample(c("two.sided", "less", "greater"), 1)
-				ht <- roc.test(roc1, roc2, method = method, 
+				suppressWarnings( # All sorts of warnings are expected
+					ht <- roc.test(roc1, roc2, method = method, 
 							   sensitivity = 0.8,
 							   specificity = 0.8,
 							   boot.n = n, paired = paired, boot.stratified = stratified,
-							   alternative = alternative)
+							   alternative = alternative))
 				expect_bootstrap_htest(ht)
 				expect_equal(ht$alternative, alternative)
 				if (paired) {
