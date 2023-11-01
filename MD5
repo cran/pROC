@@ -1,6 +1,6 @@
-00b15ae562833d743f926e9f79fd66ce *DESCRIPTION
+c6eb6cf07f59a2ce28f04cc0d410d200 *DESCRIPTION
 a0ef34a2fdd7d941325a0816e1133d06 *NAMESPACE
-2640e4789570028b9775a7f36d20a647 *NEWS
+0056333a97b28ba7d9dbebbe27c6d6f2 *NEWS
 733a035f55579ce3bce8a274fb4bc2ea *R/RcppExports.R
 986b425be214866a411c22cde9bbb853 *R/are.paired.R
 e65bcc8997ce5641a2c38606c7a3f9fc *R/auc.R
@@ -15,7 +15,7 @@ ed6caf38ef155f41cf7019e61581e20e *R/ci.se.R
 b2ba842abe3fe9df50aa1736e6eb69a0 *R/coords.R
 6f213893cb065420898f714d0af4365c *R/cov.R
 3220a90333b3bf4012118c1359b5d1c1 *R/delong.R
-f9e71e9ae3c463d8c7601efd84562a67 *R/ggroc.R
+cac96565b24557381775e16c878295f7 *R/ggroc.R
 36d6466ce122578cb9df5fbbef204e5f *R/groupGeneric.R
 9ae5686b982716f005e176c11be79ff8 *R/has.partial.auc.R
 01e337d32009a2773736fb711d623a78 *R/lines.roc.R
@@ -29,13 +29,13 @@ c123ca1538e732491edbd0ddb6c4edea *R/onLoad.R
 9b7ed760b1d725c837db67a780e4edb6 *R/print.R
 cdbb9d8179af3bb3875908ffbafe307e *R/roc.R
 a6f5c293b563a853b6f577dfefc5f995 *R/roc.test.R
-48403119e7875ec32fb147d3467f4932 *R/roc.utils.R
+03d2de36aab6552d337a60dd6f9724fa *R/roc.utils.R
 10fdd306b65eda6e535fa75967edaab9 *R/roc.utils.percent.R
 c3a5a60357144874bc0e5195fc0e1319 *R/smooth.R
 804fc50e1a7f426c2ea1eec04c3a05d1 *R/var.R
 4026da78c98725f60fb25c39bcb774af *R/venkatraman.R
-5586cd7140b339d72edb964f1ca33700 *README.md
-f61db891eb928123aba4412ca322f508 *build/partial.rdb
+85cefac6e1935d7f58345f0b54b0dbfd *README.md
+92cbee63c64a4fc4755f50f704699965 *build/partial.rdb
 e33e5e7b38d7ed92fcc33e9b0bea30ff *data/aSAH.RData
 9afeef64698795744899eacd1d22da6c *inst/CITATION
 a504422c763dfae05e32b565257c0bc8 *inst/extra/algorithms.speed.test.R
@@ -57,7 +57,7 @@ b8d3742974398c8b72d15e6628492dba *man/ci.coords.Rd
 efb1b17b81a6595554b6c3fc984d5ccb *man/coords.Rd
 16c2d7f8c400c15b3f5a67ab069563cb *man/coords_transpose.Rd
 c17cefa7cd05197d4b54366ba5ae4ba0 *man/cov.Rd
-05e3d9628116327a55c6663e5dc01fb6 *man/ggroc.Rd
+b07cd07c3ed83c00c3e7c6dd94d4371f *man/ggroc.Rd
 413f7b80f60d02f9406d5148bb599d31 *man/groupGeneric.Rd
 048bc5f42aa77f0da8dbf0273d44ca30 *man/has.partial.auc.Rd
 84c33e9f954442a44d4294c20827434b *man/lines.roc.Rd
@@ -76,6 +76,7 @@ ae4ff78e6069112fb987bac4e6f0d02d *man/roc.Rd
 9883349305bdff6faa8bbaea422cdfe7 *src/delong.cpp
 e0d2a90a5dd220bd4f904f118378dcc1 *src/perfsAll.cpp
 413b7c1733922a221f4648a4d2d166cf *tests/testthat.R
+b41954a07c214f58f46a21b987e3f575 *tests/testthat/_snaps/ggroc/ggroc-list-colour.svg
 e93f4a9edaeb938d4a764bf42d30a434 *tests/testthat/_snaps/ggroc/ggroc-list-extra-aes-screenshot.svg
 d7bafa111b2d099392370ee2fa3ca8f1 *tests/testthat/_snaps/ggroc/ggroc-list-group-facet-screenshot.svg
 b5ebe431901ba96078f2da938e7e8977 *tests/testthat/_snaps/ggroc/ggroc-list-multi-aes.svg
@@ -172,7 +173,7 @@ f37ca3b432ffab933f0e1c81d427cde4 *tests/testthat/test-ci.se.R
 57fceaedee5a471a07b28197a779b965 *tests/testthat/test-coords.R
 8b352530c4d55b91eadb8c85719694af *tests/testthat/test-cov.R
 65b4e98051acd9dabed164bc40cb9aaf *tests/testthat/test-deLongPlacementsCpp.R
-b8e43c20264b68392cadf58c55d8f413 *tests/testthat/test-ggroc.R
+7e3fcf84bc33e3ec91735354499719d8 *tests/testthat/test-ggroc.R
 910ea339e78263d181b75328325a9252 *tests/testthat/test-large.R
 8c9fa6e465d02e9bca5da662e5352d44 *tests/testthat/test-multiclass.R
 252c1e6a9fc983930134e97e06a57e34 *tests/testthat/test-numeric-Inf.R
@@ -180,8 +181,9 @@ afc167391c16dfa743ad14125c108fd4 *tests/testthat/test-numeric-accuracy.R
 4ba602960ab7829ba5d092b2cc47fb18 *tests/testthat/test-onload.R
 2190a191b29b50cc974fe88f0c8c943c *tests/testthat/test-plot.R
 bedc628bf1e86614f1f69f39da1953bf *tests/testthat/test-power.roc.test.R
-45e4c94f29559a43974137f57834f3cc *tests/testthat/test-print.R
-462ce96c5739569f8ed4faf41888375d *tests/testthat/test-roc.R
+07190a9971acc7fc29e456ce524ae46a *tests/testthat/test-print.R
+9762fe76bd4dfc895edd9adec8fe11cc *tests/testthat/test-progress.R
+40a5feb1b8e7b1116483393d043c2bd1 *tests/testthat/test-roc.R
 3aada777acc0cdcd889d05282daf7323 *tests/testthat/test-roc.test-venkatraman.R
 43097b3e689292711df038be23a849fa *tests/testthat/test-roc.test.R
 26601d777b66ca2db7d108973a46883d *tests/testthat/test-roc.utils.R

@@ -387,6 +387,58 @@ test_that("roc works with ordered predictor", {
 	# In reality we want to say something like  c(-Inf, "a", "b", "c", "d", "e", Inf)
 })
 
+
+test_that("roc works with spaces in formula", {
+	test_dat <- aSAH[c("outcome", "wfns", "age", "ndka")]
+	colnames(test_dat)[3] <- "A ge"
+	
+	# All data
+	r <- roc(outcome ~ ., data=test_dat, quiet=TRUE)
+	expect_equal(length(r), 3)
+	expect_equal(names(r), c("wfns", "A ge", "ndka"))
+	expect_equal(r$`A ge`$predictor, aSAH$age)
+	
+	# One column
+	r <- roc(outcome ~ `A ge`, data=test_dat, quiet=TRUE)
+	expect_equal(r$predictor, aSAH$age)
+	
+	# Two columns
+	r <- roc(outcome ~ `A ge` + ndka, data=test_dat, quiet=TRUE)
+	expect_equal(names(r), c("A ge", "ndka"))
+	expect_equal(r$`A ge`$predictor, aSAH$age)
+	
+	# Two columns, different order
+	r <- roc(outcome ~ ndka + `A ge`, data=test_dat, quiet=TRUE)
+	expect_equal(names(r), c("ndka", "A ge"))
+	expect_equal(r$`A ge`$predictor, aSAH$age)
+})
+
+
+test_that("roc works with `with` and formula", {
+	# This is the correct way to do things... with on the formula
+	formW <- with(aSAH, as.formula("outcome ~ wfns"))
+	roc(formW)
+	
+	# This must fail gracefully
+	form <- as.formula("outcome ~ wfns")
+	expect_error(roc(form), "outcome")
+	
+	# Now this can work with #111
+	with(aSAH, roc(form))
+	
+	# Wrapping functinos can mess things up...
+	wrap_roc <- function(formula) {
+		roc(formula)
+	}
+	with(aSAH, wrap_roc(form))
+	
+	wrap_roc2 <- function(formula) {
+		with(aSAH, roc(formula))
+	}
+	wrap_roc2(form)
+})
+
+
 # The code below can be used to refresh the "expected.roc" data, just in case...
 # expected.roc <- list()
 # for (marker in c("ndka", "wfns", "s100b")) {
